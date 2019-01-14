@@ -38,6 +38,7 @@
 #include "stm32f4xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "n64.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -106,6 +107,37 @@ void SysTick_Handler(void)
 void EXTI9_5_IRQHandler(void)
 {
   /* USER CODE BEGIN EXTI9_5_IRQn 0 */
+	// Read 64 command
+	__disable_irq();
+	uint32_t cmd;
+
+	cmd = readCommand();
+
+	my_wait_us_asm(2); // wait a small amount of time before replying
+
+	//-------- SEND RESPONSE
+	SetN64DataOutputMode();
+
+	switch(cmd)
+	{
+	  case 0x00: // identity
+	  case 0xFF: // N64 reset
+		  SendIdentityN64();
+		  break;
+	  case 0x01: // poll for N64 state
+		  SendControllerDataN64();
+		  break;
+	  case 0x02:
+	  case 0x03:
+	  default:
+		  // we do not process the read and write commands (memory pack)
+		  break;
+	}
+	//-------- DONE SENDING RESPOSE
+
+	SetN64DataInputMode();
+
+	__enable_irq();
 
   /* USER CODE END EXTI9_5_IRQn 0 */
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_8);
