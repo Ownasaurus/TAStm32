@@ -63,7 +63,7 @@
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN PFP */
-
+void my_wait_us_asm(int n);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
