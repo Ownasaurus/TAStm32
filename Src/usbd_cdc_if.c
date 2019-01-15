@@ -49,6 +49,8 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "usbd_cdc_if.h"
+#include "n64.h"
+#include "TASRun.h"
 
 /* USER CODE BEGIN INCLUDE */
 
@@ -298,37 +300,120 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t* pbuf, uint16_t length)
 static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 {
   /* USER CODE BEGIN 6 */
-	// PROCESS SERIAL DATA HERE
+	SerialState ss = SERIAL_PREFIX;
+	SerialRun sr = RUN_NONE;
+
 	for(int byteNum = 0;byteNum < *Len;byteNum++)
 	{
-		//TODO: add enum-based state machine when processing 1 byte at a time
-		switch(Buf[byteNum])
+		switch(ss)
 		{
-			case 'A': // Run #1
+			case SERIAL_COMPLETE: // in case more than 1 command is sent at a time
+			case SERIAL_PREFIX:
+				switch(Buf[byteNum])
+				{
+					case 'R': // Reset/clear all configuration
+						initialize_n64_buffer(); // zero out the input buffer and reset its pointers
+						ResetTASRuns();
+						CDC_Transmit_FS((uint8_t*)0x01, 1); // good response for reset
+						break;
+					case 'A': // Run #1 controller data
+						sr = RUN_A;
+						ss = SERIAL_CONTROLLER_DATA;
+						break;
+					case 'B': // Run #2 controller data
+						sr = RUN_B;
+						ss = SERIAL_CONTROLLER_DATA;
+						break;
+					case 'C': // Run #3 controller data
+						sr = RUN_C;
+						ss = SERIAL_CONTROLLER_DATA;
+						break;
+					case 'D': // Run #4 controller data
+						sr = RUN_D;
+						ss = SERIAL_CONTROLLER_DATA;
+						break;
+					case 'S': // Setup a run
+						ss = SERIAL_SETUP;
+						break;
+					default: // Error: prefix not understood
+						CDC_Transmit_FS((uint8_t*)0xFF, 1);
+						break;
+				}
 				break;
-			case 'B': // Run #2
+			case SERIAL_CONTROLLER_DATA:
+				// TODO: move data into data structure
 				break;
-			case 'C': // Run #3
+			case SERIAL_CONSOLE:
+				switch(Buf[byteNum])
+				{
+					case 'M': // setup Run #1
+						TASRunSetConsole(sr, CONSOLE_N64);
+						ss = SERIAL_NUM_CONTROLLERS;
+						break;
+					case 'S': // setup Run #1
+						TASRunSetConsole(sr, CONSOLE_SNES);
+						ss = SERIAL_NUM_CONTROLLERS;
+						break;
+					case 'N': // setup Run #1
+						TASRunSetConsole(sr, CONSOLE_NES);
+						ss = SERIAL_NUM_CONTROLLERS;
+						break;
+					default: // Error: console type not understood
+						CDC_Transmit_FS((uint8_t*)0xFC, 1);
+						break;
+				}
 				break;
-			case 'D': // Run #4
+			case SERIAL_SETUP:
+				switch(Buf[byteNum])
+				{
+					case 'A': // setup Run #1
+						sr = RUN_A;
+						ss = SERIAL_CONSOLE;
+						break;
+					case 'B': // setup Run #1
+						sr = RUN_B;
+						ss = SERIAL_CONSOLE;
+						break;
+					case 'C': // setup Run #1
+						sr = RUN_C;
+						ss = SERIAL_CONSOLE;
+						break;
+					case 'D': // setup Run #1
+						sr = RUN_D;
+						ss = SERIAL_CONSOLE;
+						break;
+					default: // Error: run number not understood
+						CDC_Transmit_FS((uint8_t*)0xFE, 1);
+						break;
+				}
 				break;
-			case 'R': // Reset/clear all configuration
+			case SERIAL_NUM_CONTROLLERS:
+				switch(Buf[byteNum])
+				{
+					case 1:
+					case 2:
+					case 3:
+					case 4:
+						TASRunSetNumControllers(sr, Buf[byteNum]);
+						ss = SERIAL_COMPLETE;
+						break;
+					default: // Error: num controllers not supported
+						CDC_Transmit_FS((uint8_t*)0xFD, 1);
+						break;
+				}
 				break;
-			case 'S': // Setup a run OR SNES
+			default:
 				break;
-			case 'M': // N64
-				break;
-			case 'N': // NES
-				break;
-			default: // Error: command not understood
-				CDC_Transmit_FS((uint8_t*)0xFF, 1);
-			break;
 		}
 	}
+
+  // the command(s) should end on a SERIAL_COMPLETE state
+  int8_t retval = (ss == SERIAL_COMPLETE) ? (USBD_OK) : 0;
+
   USBD_CDC_SetRxBuffer(&hUsbDeviceFS, &Buf[0]);
   USBD_CDC_ReceivePacket(&hUsbDeviceFS);
 
-  return (USBD_OK);
+  return retval;
   /* USER CODE END 6 */
 }
 
