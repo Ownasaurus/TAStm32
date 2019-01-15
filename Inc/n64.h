@@ -1,6 +1,8 @@
 #ifndef __N64__H
 #define __N64__H
 
+#include <stdint.h>
+
 typedef struct __attribute__((packed))
 {
     unsigned int a : 1; // 1 bit wide
@@ -38,6 +40,5 @@ void write_0();
 void SendStop();
 void SendByte(unsigned char b);
 void SendControllerDataN64();
-uint8_t insertN64Frame(N64ControllerData* frame);
 
 #endif

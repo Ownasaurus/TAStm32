@@ -3,37 +3,7 @@
 #include "n64.h"
 #include "stm32f4xx_hal.h"
 
-N64ControllerData n64_data[1024]; // stores the n64 input data
-N64ControllerData *buf; // points to the next place the received serial data will be stored
-N64ControllerData *end = &n64_data[4095]; // points to the end of the array for bounds checking
-N64ControllerData *current; // points to what the n64 will read next
-
 void my_wait_us_asm(int n);
-
-uint8_t insertN64Frame(N64ControllerData* frame)
-{
-	// first check buffer isn't full
-	if(buf == current-1)
-	{
-		return 0;
-	}
-
-	memcpy(buf,frame,sizeof(frame));
-
-	// loop around if necessary
-	if(buf != end)
-		buf++;
-	else buf = n64_data;
-
-	return 1;
-}
-
-void initialize_n64_buffer()
-{
-	memset(n64_data,0,sizeof(n64_data)); // clear controller state
-	buf = n64_data; // reset to beginning
-	current = n64_data; // reset to beginning
-}
 
 uint32_t readCommand()
 {
@@ -167,9 +137,8 @@ void SendByte(unsigned char b)
     }
 }
 
-void SendControllerDataN64()
+void SendControllerDataN64(unsigned long data)
 {
-    unsigned long data = *(unsigned long*)current;
     unsigned int size = sizeof(data) * 8; // should be 4 bytes * 8 = 32 bits
 
     for(unsigned int i = 0;i < size;i++)
@@ -185,9 +154,4 @@ void SendControllerDataN64()
     }
 
     SendStop();
-
-    // loop around if necessary
-    if(current != end)
-    	current++;
-    else current = n64_data;
 }

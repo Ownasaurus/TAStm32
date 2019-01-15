@@ -313,7 +313,6 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 				switch(Buf[byteNum])
 				{
 					case 'R': // Reset/clear all configuration
-						initialize_n64_buffer(); // zero out the input buffer and reset its pointers
 						ResetTASRuns();
 						CDC_Transmit_FS((uint8_t*)0x01, 1); // good response for reset
 						break;
@@ -342,9 +341,8 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 				}
 				break;
 			case SERIAL_CONTROLLER_DATA:
-				// TODO: support more than 1 run appropriately
 				frame = (N64ControllerData*)(&Buf[byteNum]);
-				insertN64Frame(frame);
+				AddN64Frame(sr, frame);
 				break;
 			case SERIAL_CONSOLE:
 				switch(Buf[byteNum])
@@ -411,12 +409,15 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 	}
 
   // the command(s) should end on a SERIAL_COMPLETE state
-  int8_t retval = (ss == SERIAL_COMPLETE) ? (USBD_OK) : 0;
+  if(ss != SERIAL_COMPLETE)
+  {
+	  CDC_Transmit_FS((uint8_t*)0xEE, 1); // unexpected end of command in the middle of the stream
+  }
 
   USBD_CDC_SetRxBuffer(&hUsbDeviceFS, &Buf[0]);
   USBD_CDC_ReceivePacket(&hUsbDeviceFS);
 
-  return retval;
+  return (USBD_OK);
   /* USER CODE END 6 */
 }
 

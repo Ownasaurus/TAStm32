@@ -108,6 +108,7 @@ void EXTI9_5_IRQHandler(void)
 {
   /* USER CODE BEGIN EXTI9_5_IRQn 0 */
 	// Read 64 command
+	unsigned long data;
 	__disable_irq();
 	uint32_t cmd;
 
@@ -125,7 +126,7 @@ void EXTI9_5_IRQHandler(void)
 		  SendIdentityN64();
 		  break;
 	  case 0x01: // poll for N64 state
-		  SendControllerDataN64();
+		  SendControllerDataN64(GetNextN64Frame());
 		  break;
 	  case 0x02:
 	  case 0x03:
