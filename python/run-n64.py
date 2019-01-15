@@ -6,6 +6,16 @@ import m64
 int_buffer = 768 # internal buffer size on replay device
 run_id = b'A'
 
+def serial_read(ser, count):
+    data = ser.read(count)
+    print('R: {}'.format(data))
+    return data
+
+def serial_write(ser, data):
+    r = ser.write(data)
+    print('S: {}'.format(data))
+    return r
+
 def main():
     if len(sys.argv) != 3:
         sys.stderr.write('Usage: ' + sys.argv[0] + ' <interface> <movie file>\n\n')
@@ -21,28 +31,28 @@ def main():
     except:
         print('ERROR: the specified file (' + sys.argv[2] + ') failed to open')
     buffer = m64.read_input(data)
-    ser.write(b'R') # send RESET command
-    ser.write(b'S' + run_id + b'M\x01')
+    serial_write(ser, b'R') # send RESET command
+    serial_write(ser, b'S' + run_id + b'M\x01')
     for latch in buffer[:int_buffer]:
-        ser.write(run_id)
-        ser.write(latch)
+        serial_write(ser, run_id)
+        serial_write(ser, latch)
     fn = int_buffer
     done = False
     print('Main Loop Start')
     while not done:
         try:
-            c = ser.read(1)
+            c = serial_read(ser, 1)
             if c == '':
                 continue
             numBytes = ser.inWaiting()
             if numBytes > 0:
-                c += ser.read(numBytes)
+                c += serial_read(ser, numBytes)
                 if numBytes > int_buffer:
                     print ("WARNING: High frame read detected: " + str(numBytes))
             latches = c.count(run_id)
             for latch in range(latches):
-                ser.write(run_id)
-                ser.write(buffer[fn])
+                serial_write(ser, run_id)
+                serial_write(ser, buffer[fn])
                 fn += 1
         except KeyboardInterrupt:
             print('^C Exiting')
