@@ -302,6 +302,7 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
   /* USER CODE BEGIN 6 */
 	SerialState ss = SERIAL_PREFIX;
 	SerialRun sr = RUN_NONE;
+	N64ControllerData* frame;
 
 	for(int byteNum = 0;byteNum < *Len;byteNum++)
 	{
@@ -341,7 +342,9 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 				}
 				break;
 			case SERIAL_CONTROLLER_DATA:
-				// TODO: move data into data structure
+				// TODO: support more than 1 run appropriately
+				frame = (N64ControllerData*)(&Buf[byteNum]);
+				insertN64Frame(frame);
 				break;
 			case SERIAL_CONSOLE:
 				switch(Buf[byteNum])

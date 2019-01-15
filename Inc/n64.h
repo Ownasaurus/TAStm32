@@ -38,5 +38,6 @@ void write_0();
 void SendStop();
 void SendByte(unsigned char b);
 void SendControllerDataN64();
+uint8_t insertN64Frame(N64ControllerData* frame);
 
 #endif
