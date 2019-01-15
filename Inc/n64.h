@@ -27,6 +27,7 @@ typedef struct __attribute__((packed))
 
 } N64ControllerData; // all bits are in the correct order... except for the analog
 
+void initialize_n64_buffer();
 uint32_t readCommand();
 uint8_t GetMiddleOfPulse();
 void SendIdentityN64();

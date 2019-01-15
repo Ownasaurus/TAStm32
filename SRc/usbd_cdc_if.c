@@ -255,6 +255,13 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t* pbuf, uint16_t length)
     break;
 
     case CDC_GET_LINE_CODING:
+        pbuf[0] = (uint8_t)BAUD_RATE;
+        pbuf[1] = (uint8_t)(BAUD_RATE >> 8);
+        pbuf[2] = (uint8_t)(BAUD_RATE >> 16);
+        pbuf[3] = (uint8_t)(BAUD_RATE >> 24);
+        pbuf[4] = CHAR_FORMAT;
+        pbuf[5] = PARITY_TYPE;
+        pbuf[6] = NUMBER_DATA_BITS;
 
     break;
 
@@ -291,7 +298,33 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t* pbuf, uint16_t length)
 static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 {
   /* USER CODE BEGIN 6 */
-  CDC_Transmit_FS(Buf, *Len); //TODO: TEST ECHO FOR DEBUGGING. JUST REPLY WITH FIRST BYTE SENT
+	// PROCESS SERIAL DATA HERE
+	for(int byteNum = 0;byteNum < *Len;byteNum++)
+	{
+		//TODO: add enum-based state machine when processing 1 byte at a time
+		switch(Buf[byteNum])
+		{
+			case 'A': // Run #1
+				break;
+			case 'B': // Run #2
+				break;
+			case 'C': // Run #3
+				break;
+			case 'D': // Run #4
+				break;
+			case 'R': // Reset/clear all configuration
+				break;
+			case 'S': // Setup a run OR SNES
+				break;
+			case 'M': // N64
+				break;
+			case 'N': // NES
+				break;
+			default: // Error: command not understood
+				CDC_Transmit_FS((uint8_t*)0xFF, 1);
+			break;
+		}
+	}
   USBD_CDC_SetRxBuffer(&hUsbDeviceFS, &Buf[0]);
   USBD_CDC_ReceivePacket(&hUsbDeviceFS);
 

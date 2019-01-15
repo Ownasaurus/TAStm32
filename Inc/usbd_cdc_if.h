@@ -77,7 +77,10 @@
   * @{
   */
 /* USER CODE BEGIN EXPORTED_DEFINES */
-
+#define BAUD_RATE 115200
+#define CHAR_FORMAT 0 // 1 stop bit
+#define PARITY_TYPE 0 // no parity
+#define NUMBER_DATA_BITS 8 // 8 data bits
 /* USER CODE END EXPORTED_DEFINES */
 
 /**

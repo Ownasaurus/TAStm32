@@ -1,10 +1,20 @@
 #include <stdint.h>
+#include <string.h>
 #include "n64.h"
 #include "stm32f4xx_hal.h"
 
-N64ControllerData n64_data;
+N64ControllerData n64_data[4096];
+N64ControllerData *tail;
+N64ControllerData *current;
 
 void my_wait_us_asm(int n);
+
+void initialize_n64_buffer()
+{
+	memset(n64_data,0,sizeof(n64_data)); // clear controller state
+	tail = n64_data;
+	current = n64_data;
+}
 
 uint32_t readCommand()
 {
