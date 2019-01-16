@@ -139,18 +139,22 @@ void SendByte(unsigned char b)
 
 void SendControllerDataN64(unsigned long data)
 {
-    unsigned int size = sizeof(data) * 8; // should be 4 bytes * 8 = 32 bits
+    // send one byte at a time from MSB to LSB
+	unsigned int size = sizeof(data); // should be 4 bytes
 
-    for(unsigned int i = 0;i < size;i++)
+    for(unsigned int i = 0;i < size;i++) // for each byte
     {
-        if((data >> i) & 1)
-        {
-            write_1();
-        }
-        else
-        {
-            write_0();
-        }
+    	for(unsigned int b = 7;b >=0;b--) // for each bit in the byte
+    	{
+			if((data >> (b+(i*8)) & 1))
+			{
+				write_1();
+			}
+			else
+			{
+				write_0();
+			}
+    	}
     }
 
     SendStop();

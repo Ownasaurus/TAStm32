@@ -5,23 +5,23 @@
 
 typedef struct __attribute__((packed))
 {
-    unsigned int a : 1; // 1 bit wide
-    unsigned int b : 1;
-    unsigned int z : 1;
-    unsigned int start : 1;
-    unsigned int up : 1;
-    unsigned int down : 1;
-    unsigned int left : 1;
-    unsigned int right : 1;
+	unsigned int right : 1;
+	unsigned int left : 1;
+	unsigned int down : 1;
+	unsigned int up : 1;
+	unsigned int start : 1;
+	unsigned int z : 1;
+	unsigned int b : 1;
+	unsigned int a : 1;
 
+	unsigned int c_right : 1;
+	unsigned int c_left : 1;
+	unsigned int c_down : 1;
+	unsigned int c_up : 1;
+	unsigned int r : 1;
+    unsigned int l : 1;
     unsigned int dummy1 : 1;
     unsigned int dummy2 : 1;
-    unsigned int l : 1;
-    unsigned int r : 1;
-    unsigned int c_up : 1;
-    unsigned int c_down : 1;
-    unsigned int c_left : 1;
-    unsigned int c_right : 1;
 
     char x_axis;
 

@@ -3,7 +3,7 @@ import sys
 import serial
 import m64
 
-int_buffer = 768 # internal buffer size on replay device
+int_buffer = 1024 # internal buffer size on replay device
 run_id = b'A'
 
 DEBUG = True

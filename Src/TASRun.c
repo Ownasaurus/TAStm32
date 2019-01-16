@@ -6,6 +6,8 @@ TASRun tasruns[4];
 
 N64ControllerData GetNextN64Frame(int runNum)
 {
+	//TODO confirm pointer math works
+
 	N64ControllerData* retval = (N64ControllerData*)tasruns[runNum].current;
 
 	if(tasruns[runNum].current != tasruns[runNum].end)
@@ -14,7 +16,7 @@ N64ControllerData GetNextN64Frame(int runNum)
 	}
 	else
 	{
-		(tasruns[runNum].current) = tasruns[runNum].runData;
+		tasruns[runNum].current = tasruns[runNum].runData;
 	}
 
 	return *retval;
@@ -26,8 +28,8 @@ void ResetTASRuns()
 	for(int x = 0;x < 4;x++)
 	{
 		tasruns[x].end = &(tasruns[x].runData[1024]);
-		tasruns[x].buf = (tasruns[x].runData);
-		tasruns[x].current = (tasruns[x].runData);
+		tasruns[x].buf = tasruns[x].runData;
+		tasruns[x].current = tasruns[x].runData;
 	}
 }
 
@@ -43,6 +45,8 @@ void TASRunSetConsole(int numRun, Console console)
 
 uint8_t AddN64Frame(int runIndex, N64ControllerData* frame)
 {
+	// TODO: confirm pointer math works
+
 	// first check buffer isn't full
 	if(tasruns[runIndex].buf == (tasruns[runIndex].current)-1)
 	{
@@ -56,7 +60,7 @@ uint8_t AddN64Frame(int runIndex, N64ControllerData* frame)
 	{
 		(tasruns[runIndex].buf)++;
 	}
-	else
+	else // buf is at end, so wrap around to beginning
 	{
 		tasruns[runIndex].buf = tasruns[runIndex].runData;
 	}
