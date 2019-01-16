@@ -47,10 +47,6 @@ def main():
     serial_wait_for(ser, b'\x01R')
     serial_write(ser, b'S' + run_id + b'M\x01')
     serial_wait_for(ser, b'\x01S')
-    for latch in buffer[:int_buffer]:
-        data = run_id + latch
-        serial_write(ser, data)
-        print('Sending Frame: {}'.format(fn))
     fn = 0
     for latch in range(int_buffer):
         data = run_id + buffer[fn]
