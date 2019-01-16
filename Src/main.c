@@ -112,7 +112,7 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USB_DEVICE_Init();
-  MX_USART2_UART_Init();
+  //MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
 
   //initialize_n64_buffer();

@@ -12,19 +12,19 @@ typedef enum
 } Console;
 
 
-typedef union
+/*typedef union
 {
 	N64ControllerData n64_data[1024];
-} TASData;
+} TASData;*/
 
 typedef struct
 {
 	Console console;
 	uint8_t numControllers;
-	TASData runData;
-	TASData *buf; // points to the next place the received serial data will be stored
-	TASData *end; // points to the end of the array for bounds checking
-	TASData *current; // points to what the n64 will read next
+	N64ControllerData runData[1024];
+	N64ControllerData *buf; // points to the next place the received serial data will be stored
+	N64ControllerData *end; // points to the end of the array for bounds checking
+	N64ControllerData *current; // points to what the n64 will read next
 } TASRun;
 
 void ResetTASRuns();

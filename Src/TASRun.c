@@ -6,15 +6,15 @@ TASRun tasruns[4];
 
 N64ControllerData GetNextN64Frame(int runNum)
 {
-	N64ControllerData* retval = tasruns[runNum].current;
+	N64ControllerData* retval = (N64ControllerData*)tasruns[runNum].current;
 
-	if(tasruns[runNum].buf != tasruns[runNum].end)
+	if(tasruns[runNum].current != tasruns[runNum].end)
 	{
-		(tasruns[runNum].buf)++;
+		(tasruns[runNum].current)++;
 	}
 	else
 	{
-		(tasruns[runNum].buf) = tasruns[runNum].runData.n64_data;
+		(tasruns[runNum].current) = tasruns[runNum].runData;
 	}
 
 	return *retval;
@@ -25,9 +25,9 @@ void ResetTASRuns()
 	memset(tasruns,0,sizeof(tasruns));
 	for(int x = 0;x < 4;x++)
 	{
-		tasruns[x].end = &(tasruns[x].runData.n64_data[1024]);
-		tasruns[x].buf = &(tasruns[x].runData);
-		tasruns[x].current = &(tasruns[x].runData);
+		tasruns[x].end = &(tasruns[x].runData[1024]);
+		tasruns[x].buf = (tasruns[x].runData);
+		tasruns[x].current = (tasruns[x].runData);
 	}
 }
 
@@ -49,7 +49,7 @@ uint8_t AddN64Frame(int runIndex, N64ControllerData* frame)
 		return 0;
 	}
 
-	memcpy(tasruns[runIndex].buf,frame,sizeof(frame));
+	memcpy(tasruns[runIndex].buf,frame,sizeof(*frame));
 
 	// loop around if necessary
 	if(tasruns[runIndex].buf != tasruns[runIndex].end)
@@ -58,7 +58,7 @@ uint8_t AddN64Frame(int runIndex, N64ControllerData* frame)
 	}
 	else
 	{
-		tasruns[runIndex].buf = tasruns[runIndex].runData.n64_data;
+		tasruns[runIndex].buf = tasruns[runIndex].runData;
 	}
 
 	return 1;
