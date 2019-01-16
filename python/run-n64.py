@@ -28,7 +28,7 @@ def serial_wait_for(ser, flag):
         raise RuntimeError()
 
 def main():
-    if len(sys.argv) != 3:
+    if not len(sys.argv) in [3,4]:
         sys.stderr.write('Usage: ' + sys.argv[0] + ' <interface> <movie file>\n\n')
         sys.exit(0)
     try:
@@ -42,11 +42,19 @@ def main():
     except:
         print('ERROR: the specified file (' + sys.argv[2] + ') failed to open')
         sys.exit(0)
+    try:
+        blanks = int(sys.argv[3])
+    except:
+        blanks = 0
     buffer = m64.read_input(data)
     serial_write(ser, b'R') # send RESET command
     serial_wait_for(ser, b'\x01R')
     serial_write(ser, b'S' + run_id + b'M\x01')
     serial_wait_for(ser, b'\x01S')
+    for blank in range(blanks):
+        data = run_id + b'\x00\x00\x00\x00'
+        serial_write(ser, data)
+        print('Sending Blank Frame: {}'.format(blank))
     fn = 0
     for latch in range(int_buffer):
         data = run_id + buffer[fn]
