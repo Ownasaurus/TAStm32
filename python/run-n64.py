@@ -6,15 +6,18 @@ import m64
 int_buffer = 768 # internal buffer size on replay device
 run_id = b'A'
 
+DEBUG = True
+
 def serial_read(ser, count):
     data = ser.read(count)
-    if len(data) != 0:
+    if len(data) != 0 and DEBUG:
         print('R: {}'.format(data))
     return data
 
 def serial_write(ser, data):
     r = ser.write(data)
-    print('S: {}'.format(data))
+    if DEBUG:
+        print('S: {}'.format(data))
     return r
 
 def serial_wait_for(ser, flag):
@@ -45,9 +48,15 @@ def main():
     serial_write(ser, b'S' + run_id + b'M\x01')
     serial_wait_for(ser, b'\x01S')
     for latch in buffer[:int_buffer]:
-        serial_write(ser, run_id)
-        serial_write(ser, latch)
-    fn = int_buffer
+        data = run_id + latch
+        serial_write(ser, data)
+        print('Sending Frame: {}'.format(fn))
+    fn = 0
+    for latch in range(int_buffer):
+        data = run_id + buffer[fn]
+        serial_write(ser, data)
+        print('Sending Frame: {}'.format(fn))
+        fn += 1
     done = False
     print('Main Loop Start')
     while not done:
@@ -62,8 +71,9 @@ def main():
                     print ("WARNING: High frame read detected: " + str(numBytes))
             latches = c.count(run_id)
             for latch in range(latches):
-                serial_write(ser, run_id)
-                serial_write(ser, buffer[fn])
+                data = run_id + buffer[fn]
+                serial_write(ser, data)
+                print('Sending Frame: {}'.format(fn))
                 fn += 1
         except KeyboardInterrupt:
             print('^C Exiting')
