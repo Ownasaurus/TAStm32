@@ -6,9 +6,14 @@ TASRun tasruns[4];
 
 N64ControllerData GetNextN64Frame(int runNum)
 {
-	//TODO confirm pointer math works
+	if(tasruns[runNum].size <= 0) // in case of buffer underflow
+	{
+		N64ControllerData blank;
+		memset(&blank,0,sizeof(N64ControllerData));
+		return blank; // send blank controller data
+	}
 
-	N64ControllerData* retval = (N64ControllerData*)tasruns[runNum].current;
+	N64ControllerData* retval = tasruns[runNum].current;
 
 	if(tasruns[runNum].current != tasruns[runNum].end)
 	{
@@ -19,6 +24,8 @@ N64ControllerData GetNextN64Frame(int runNum)
 		tasruns[runNum].current = tasruns[runNum].runData;
 	}
 
+	tasruns[runNum].size--;
+
 	return *retval;
 }
 
@@ -27,7 +34,7 @@ void ResetTASRuns()
 	memset(tasruns,0,sizeof(tasruns));
 	for(int x = 0;x < 4;x++)
 	{
-		tasruns[x].end = &(tasruns[x].runData[1024]);
+		tasruns[x].end = &(tasruns[x].runData[MAX_SIZE-1]);
 		tasruns[x].buf = tasruns[x].runData;
 		tasruns[x].current = tasruns[x].runData;
 	}
@@ -45,10 +52,8 @@ void TASRunSetConsole(int numRun, Console console)
 
 uint8_t AddN64Frame(int runIndex, N64ControllerData* frame)
 {
-	// TODO: confirm pointer math works
-
 	// first check buffer isn't full
-	if(tasruns[runIndex].buf == (tasruns[runIndex].current)-1)
+	if(tasruns[runIndex].size == MAX_SIZE)
 	{
 		return 0;
 	}
@@ -64,6 +69,8 @@ uint8_t AddN64Frame(int runIndex, N64ControllerData* frame)
 	{
 		tasruns[runIndex].buf = tasruns[runIndex].runData;
 	}
+
+	tasruns[runIndex].size++;
 
 	return 1;
 }

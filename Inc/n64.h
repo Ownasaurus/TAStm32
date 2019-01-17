@@ -27,7 +27,7 @@ typedef struct __attribute__((packed))
 
     char y_axis;
 
-} N64ControllerData; // all bits are in the correct order... except for the analog
+} N64ControllerData;
 
 void initialize_n64_buffer();
 uint32_t readCommand();

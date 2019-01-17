@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include "n64.h"
 
+#define MAX_SIZE 1024
+
 typedef enum
 {
 	CONSOLE_N64,
@@ -21,10 +23,11 @@ typedef struct
 {
 	Console console;
 	uint8_t numControllers;
-	N64ControllerData runData[1024];
+	N64ControllerData runData[MAX_SIZE];
 	N64ControllerData *buf; // points to the next place the received serial data will be stored
 	N64ControllerData *end; // points to the end of the array for bounds checking
 	N64ControllerData *current; // points to what the n64 will read next
+	uint16_t size;
 } TASRun;
 
 void ResetTASRuns();

@@ -144,7 +144,7 @@ void SendControllerDataN64(unsigned long data)
 
     for(unsigned int i = 0;i < size;i++) // for each byte
     {
-    	for(unsigned int b = 7;b >=0;b--) // for each bit in the byte
+    	for(int b = 7;b >=0;b--) // for each bit in the byte
     	{
 			if((data >> (b+(i*8)) & 1))
 			{

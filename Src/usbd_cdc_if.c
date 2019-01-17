@@ -343,7 +343,10 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 				break;
 			case SERIAL_CONTROLLER_DATA:
 				frame = (N64ControllerData*)(&Buf[byteNum]);
-				AddN64Frame(sr, frame);
+				if(AddN64Frame(sr, frame) == 0) // buffer must have been full
+				{
+					CDC_Transmit_FS((uint8_t*)"\xB0", 1);
+				}
 				byteNum += 3;
 				ss = SERIAL_COMPLETE;
 				sr = RUN_NONE;
