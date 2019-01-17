@@ -39,6 +39,8 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "n64.h"
+#include "TASrun.h"
+#include "usbd_cdc_if.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -108,7 +110,6 @@ void EXTI9_5_IRQHandler(void)
 {
   /* USER CODE BEGIN EXTI9_5_IRQn 0 */
 	// Read 64 command
-	unsigned long data;
 	__disable_irq();
 	uint32_t cmd;
 
@@ -126,7 +127,7 @@ void EXTI9_5_IRQHandler(void)
 		  SendIdentityN64();
 		  break;
 	  case 0x01: // poll for N64 state
-		  SendControllerDataN64(GetNextN64Frame());
+		  SendControllerDataN64(GetNextN64Frame(0));
 		  break;
 	  case 0x02:
 	  case 0x03:
@@ -139,6 +140,11 @@ void EXTI9_5_IRQHandler(void)
 	SetN64DataInputMode();
 
 	__enable_irq();
+
+	if(cmd == 0x01)
+	{
+		CDC_Transmit_FS((uint8_t*)"A", 1);
+	}
 
   /* USER CODE END EXTI9_5_IRQn 0 */
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_8);

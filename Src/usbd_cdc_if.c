@@ -300,8 +300,8 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t* pbuf, uint16_t length)
 static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 {
   /* USER CODE BEGIN 6 */
-	SerialState ss = SERIAL_PREFIX;
-	SerialRun sr = RUN_NONE;
+	static SerialState ss = SERIAL_PREFIX;
+	static SerialRun sr = RUN_NONE;
 	N64ControllerData* frame;
 
 	for(int byteNum = 0;byteNum < *Len;byteNum++)
@@ -314,7 +314,8 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 				{
 					case 'R': // Reset/clear all configuration
 						ResetTASRuns();
-						CDC_Transmit_FS((uint8_t*)0x01, 1); // good response for reset
+						CDC_Transmit_FS((uint8_t*)"\x01R", 2); // good response for reset
+						ss = SERIAL_COMPLETE;
 						break;
 					case 'A': // Run #1 controller data
 						sr = RUN_A;
@@ -336,13 +337,19 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 						ss = SERIAL_SETUP;
 						break;
 					default: // Error: prefix not understood
-						CDC_Transmit_FS((uint8_t*)0xFF, 1);
+						CDC_Transmit_FS((uint8_t*)"\xFF", 1);
 						break;
 				}
 				break;
 			case SERIAL_CONTROLLER_DATA:
 				frame = (N64ControllerData*)(&Buf[byteNum]);
-				AddN64Frame(sr, frame);
+				if(AddN64Frame(sr, frame) == 0) // buffer must have been full
+				{
+					CDC_Transmit_FS((uint8_t*)"\xB0", 1);
+				}
+				byteNum += 3;
+				ss = SERIAL_COMPLETE;
+				sr = RUN_NONE;
 				break;
 			case SERIAL_CONSOLE:
 				switch(Buf[byteNum])
@@ -360,7 +367,7 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 						ss = SERIAL_NUM_CONTROLLERS;
 						break;
 					default: // Error: console type not understood
-						CDC_Transmit_FS((uint8_t*)0xFC, 1);
+						CDC_Transmit_FS((uint8_t*)"\xFC", 1);
 						break;
 				}
 				break;
@@ -384,7 +391,7 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 						ss = SERIAL_CONSOLE;
 						break;
 					default: // Error: run number not understood
-						CDC_Transmit_FS((uint8_t*)0xFE, 1);
+						CDC_Transmit_FS((uint8_t*)"\xFE", 1);
 						break;
 				}
 				break;
@@ -396,10 +403,12 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 					case 3:
 					case 4:
 						TASRunSetNumControllers(sr, Buf[byteNum]);
+						CDC_Transmit_FS((uint8_t*)"\x01S", 2);
 						ss = SERIAL_COMPLETE;
+						sr = RUN_NONE;
 						break;
 					default: // Error: num controllers not supported
-						CDC_Transmit_FS((uint8_t*)0xFD, 1);
+						CDC_Transmit_FS((uint8_t*)"\xFD", 1);
 						break;
 				}
 				break;
@@ -409,10 +418,10 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 	}
 
   // the command(s) should end on a SERIAL_COMPLETE state
-  if(ss != SERIAL_COMPLETE)
+  /*if(ss != SERIAL_COMPLETE)
   {
-	  CDC_Transmit_FS((uint8_t*)0xEE, 1); // unexpected end of command in the middle of the stream
-  }
+	  CDC_Transmit_FS((uint8_t*)"\xEE", 1); // unexpected end of command in the middle of the stream
+  }*/
 
   USBD_CDC_SetRxBuffer(&hUsbDeviceFS, &Buf[0]);
   USBD_CDC_ReceivePacket(&hUsbDeviceFS);
