@@ -354,15 +354,15 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 			case SERIAL_CONSOLE:
 				switch(Buf[byteNum])
 				{
-					case 'M': // setup Run #1
+					case 'M': // setup N64
 						TASRunSetConsole(sr, CONSOLE_N64);
 						ss = SERIAL_NUM_CONTROLLERS;
 						break;
-					case 'S': // setup Run #1
+					case 'S': // setup SNES
 						TASRunSetConsole(sr, CONSOLE_SNES);
 						ss = SERIAL_NUM_CONTROLLERS;
 						break;
-					case 'N': // setup Run #1
+					case 'N': // setup NES
 						TASRunSetConsole(sr, CONSOLE_NES);
 						ss = SERIAL_NUM_CONTROLLERS;
 						break;
@@ -378,15 +378,15 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 						sr = RUN_A;
 						ss = SERIAL_CONSOLE;
 						break;
-					case 'B': // setup Run #1
+					case 'B': // setup Run #2
 						sr = RUN_B;
 						ss = SERIAL_CONSOLE;
 						break;
-					case 'C': // setup Run #1
+					case 'C': // setup Run #3
 						sr = RUN_C;
 						ss = SERIAL_CONSOLE;
 						break;
-					case 'D': // setup Run #1
+					case 'D': // setup Run #4
 						sr = RUN_D;
 						ss = SERIAL_CONSOLE;
 						break;

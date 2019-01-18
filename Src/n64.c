@@ -75,6 +75,13 @@ uint8_t GetMiddleOfPulse()
     return (GPIOA->IDR & 0x0100) ? 1U : 0U;
 }
 
+void SendStop()
+{
+	GPIOA->BSRR = (1 << 24);
+	my_wait_us_asm(1);
+	GPIOA->BSRR = (1 << 8);
+}
+
 void SendIdentityN64()
 {
     // reply 0x05, 0x00, 0x02
@@ -112,13 +119,6 @@ void write_0()
 	my_wait_us_asm(3);
 	GPIOA->BSRR = (1 << 8);
     my_wait_us_asm(1);
-}
-
-void SendStop()
-{
-	GPIOA->BSRR = (1 << 24);
-	my_wait_us_asm(1);
-	GPIOA->BSRR = (1 << 8);
 }
 
 // send a byte from LSB to MSB (proper serialization)

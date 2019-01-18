@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include "n64.h"
+#include "snes.h"
 
 #define MAX_SIZE 1024
 
@@ -14,19 +15,21 @@ typedef enum
 } Console;
 
 
-/*typedef union
+typedef union
 {
-	N64ControllerData n64_data[1024];
-} TASData;*/
+	N64ControllerData n64_data;
+	SNESControllerData snes_data;
+	NESControllerData nes_data;
+} RunData;
 
 typedef struct
 {
 	Console console;
 	uint8_t numControllers;
-	N64ControllerData runData[MAX_SIZE];
-	N64ControllerData *buf; // points to the next place the received serial data will be stored
-	N64ControllerData *end; // points to the end of the array for bounds checking
-	N64ControllerData *current; // points to what the n64 will read next
+	RunData runData[MAX_SIZE];
+	RunData *buf; // points to the next place the received serial data will be stored
+	RunData *end; // points to the end of the array for bounds checking
+	RunData *current; // points to what the n64 will read next
 	uint16_t size;
 } TASRun;
 

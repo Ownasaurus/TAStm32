@@ -13,7 +13,7 @@ N64ControllerData GetNextN64Frame(int runNum)
 		return blank; // send blank controller data
 	}
 
-	N64ControllerData* retval = tasruns[runNum].current;
+	N64ControllerData* retval = (N64ControllerData*)tasruns[runNum].current;
 
 	if(tasruns[runNum].current != tasruns[runNum].end)
 	{
@@ -34,9 +34,9 @@ void ResetTASRuns()
 	memset(tasruns,0,sizeof(tasruns));
 	for(int x = 0;x < 4;x++)
 	{
-		tasruns[x].end = &(tasruns[x].runData[MAX_SIZE-1]);
 		tasruns[x].buf = tasruns[x].runData;
 		tasruns[x].current = tasruns[x].runData;
+		tasruns[x].end = &(tasruns[x].runData[MAX_SIZE-1]);
 	}
 }
 
