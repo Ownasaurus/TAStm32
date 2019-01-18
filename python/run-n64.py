@@ -53,7 +53,7 @@ def main():
 
     buffer = m64.read_input(data)
     serial_write(ser, b'R') # send RESET command
-    err = serial_read(2)
+    err = serial_read(ser, 2)
     if err == b'\x01R':
         pass
     elif err == b'\xFF':
@@ -61,7 +61,7 @@ def main():
     else:
         raise RuntimeError('Unknown error during reset')
     serial_write(ser, b'S' + run_id + b'M\x01')
-    err = serial_read(2)
+    err = serial_read(ser, 2)
     if err == b'\x01S':
         pass
     elif err == b'\xFF':
@@ -74,12 +74,12 @@ def main():
         raise RuntimeError('Console Type not recognised')
     else:
         raise RuntimeError('Unknown error during run setup')
-    for blank in range(blanks):
+    for blank in range(args.blank):
         data = run_id + b'\x00\x00\x00\x00'
         serial_write(ser, data)
         print('Sending Blank Latch: {}'.format(blank))
     fn = 0
-    for latch in range(int_buffer-blanks):
+    for latch in range(int_buffer-args.blank):
         data = run_id + buffer[fn]
         serial_write(ser, data)
         print('Sending Latch: {}'.format(fn))
@@ -104,9 +104,6 @@ def main():
             for latch in range(latches):
                 data = run_id + buffer[fn]
                 serial_write(ser, data)
-                err = serial_read(1)
-                if err == b'\xB0':
-                    break
                 print('Sending Latch: {}'.format(fn))
                 fn += 1
             err = serial_read(ser, int_buffer)
