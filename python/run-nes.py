@@ -75,7 +75,7 @@ def main():
     else:
         raise RuntimeError('Unknown error during run setup')
     for blank in range(args.blank):
-        data = run_id + b'\x00\x00'
+        data = run_id + b'\x00'
         serial_write(ser, data)
         print('Sending Blank Latch: {}'.format(blank))
     fn = 0
