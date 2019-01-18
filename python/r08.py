@@ -5,7 +5,7 @@ import sys
 def read_header(data):
     return None
 
-def read_input(data, players=[0,1):
+def read_input(data, players=[0,1]):
     frame_struct = struct.Struct('ss')
     frame_iter = frame_struct.iter_unpack(data)
     input_data = []

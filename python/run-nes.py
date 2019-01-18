@@ -51,7 +51,7 @@ def main():
         print('ERROR: the specified file (' + args.movie + ') failed to open')
         sys.exit(0)
 
-    buffer = ro8.read_input(data, [0])
+    buffer = r08.read_input(data, [0])
     serial_write(ser, b'R') # send RESET command
     err = serial_read(ser, 2)
     if err == b'\x01R':

@@ -45,9 +45,20 @@ void TASRunSetNumControllers(int numRun, uint8_t numControllers)
 	tasruns[numRun].numControllers = numControllers;
 }
 
+Console TASRunGetConsole(int numRun)
+{
+	return tasruns[numRun].console;
+}
+
 void TASRunSetConsole(int numRun, Console console)
 {
 	tasruns[numRun].console = console;
+}
+
+void GetRunDataAndAdvance(RunData* rd, int index)
+{
+	memcpy(rd,tasruns[0].current,sizeof(*rd));
+	(tasruns[index].current)++;
 }
 
 void ExtractDataAndAdvance(RunData* rd, int index, uint8_t* Buf, int *byteNum)
@@ -74,6 +85,7 @@ void ExtractDataAndAdvance(RunData* rd, int index, uint8_t* Buf, int *byteNum)
 	memcpy(rd, &(Buf[(*byteNum)]), size); // copy only what is necessary
 	(*byteNum) += (size-1); // advance the index only what is necessary
 }
+
 uint8_t AddFrame(int runIndex, RunData* frame)
 {
 	// first check buffer isn't full

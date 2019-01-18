@@ -49,11 +49,9 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "usbd_cdc_if.h"
-#include "n64.h"
-#include "TASRun.h"
 
 /* USER CODE BEGIN INCLUDE */
-
+#include "TASRun.h"
 /* USER CODE END INCLUDE */
 
 /* Private typedef -----------------------------------------------------------*/

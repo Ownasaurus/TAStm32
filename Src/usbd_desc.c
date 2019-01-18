@@ -91,6 +91,7 @@
   * @{
   */
 
+/* USER CODE BEGIN PRIVATE_DEFINES */
 #define USBD_VID     0x0B07
 #define USBD_LANGID_STRING     1033
 #define USBD_MANUFACTURER_STRING     "Ownasaurus"
@@ -101,9 +102,6 @@
 #define USBD_INTERFACE_STRING_FS     "Serial Interface"
 
 #define USB_SIZ_BOS_DESC            0x0C
-
-/* USER CODE BEGIN PRIVATE_DEFINES */
-
 /* USER CODE END PRIVATE_DEFINES */
 
 /**

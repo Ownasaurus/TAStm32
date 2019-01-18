@@ -60,7 +60,9 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
-
+uint8_t p1_latched = 0;
+uint8_t p1_bit = 0;
+uint32_t frame;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -102,6 +104,71 @@ void SysTick_Handler(void)
 /* For the available peripheral interrupt handler names,                      */
 /* please refer to the startup file (startup_stm32f4xx.s).                    */
 /******************************************************************************/
+
+/**
+  * @brief This function handles EXTI line 1 interrupt.
+  */
+void EXTI1_IRQHandler(void)
+{
+	/* USER CODE BEGIN EXTI1_IRQn 0 */
+	// P1_LATCH
+	__disable_irq();
+
+	GPIOA->BSRR = (1 << 24); // raises D0
+
+	__enable_irq();
+
+	p1_latched = 1;
+
+	GetRunDataAndAdvance((RunData*)&frame, 0);
+	Console c = TASRunGetConsole(0);
+
+	if(c == CONSOLE_NES)
+	{
+		p1_bit = 7;
+	}
+	else if(c == CONSOLE_SNES)
+	{
+		p1_bit = 15;
+	}
+
+	CDC_Transmit_FS((uint8_t*)"A", 1);
+
+	/* USER CODE END EXTI1_IRQn 0 */
+	HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_1);
+	/* USER CODE BEGIN EXTI1_IRQn 1 */
+
+	/* USER CODE END EXTI1_IRQn 1 */
+}
+
+/**
+  * @brief This function handles EXTI line 2 interrupt.
+  */
+void EXTI2_IRQHandler(void)
+{
+	/* USER CODE BEGIN EXTI2_IRQn 0 */
+	// P1_CLOCK
+	// if button is pressed, set low for 6us
+	__disable_irq();
+
+	if((frame >> p1_bit) & 1)
+	{
+		GPIOA->BSRR = (1 << 8); // set line low
+		my_wait_us_asm(6);
+		GPIOA->BSRR = (1 << 24);
+	}
+	// if button is not pressed, remain high
+
+	p1_bit--; // to the next bit for the next clock
+
+	__enable_irq();
+
+	/* USER CODE END EXTI2_IRQn 0 */
+	HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_2);
+	/* USER CODE BEGIN EXTI2_IRQn 1 */
+
+	/* USER CODE END EXTI2_IRQn 1 */
+}
 
 /**
   * @brief This function handles EXTI line[9:5] interrupts.

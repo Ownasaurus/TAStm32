@@ -80,11 +80,19 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define B1_Pin GPIO_PIN_13
 #define B1_GPIO_Port GPIOC
+#define P1_Latch_Pin GPIO_PIN_1
+#define P1_Latch_GPIO_Port GPIOC
+#define P1_Latch_EXTI_IRQn EXTI1_IRQn
+#define P1_CLOCK_Pin GPIO_PIN_2
+#define P1_CLOCK_GPIO_Port GPIOC
+#define P1_CLOCK_EXTI_IRQn EXTI2_IRQn
+#define P1_DATA_1_Pin GPIO_PIN_3
+#define P1_DATA_1_GPIO_Port GPIOC
 #define LD2_Pin GPIO_PIN_5
 #define LD2_GPIO_Port GPIOA
-#define N64_DATA_Pin GPIO_PIN_8
-#define N64_DATA_GPIO_Port GPIOA
-#define N64_DATA_EXTI_IRQn EXTI9_5_IRQn
+#define P1_DATA_0_Pin GPIO_PIN_8
+#define P1_DATA_0_GPIO_Port GPIOA
+#define P1_DATA_0_EXTI_IRQn EXTI9_5_IRQn
 #define TMS_Pin GPIO_PIN_13
 #define TMS_GPIO_Port GPIOA
 #define TCK_Pin GPIO_PIN_14
