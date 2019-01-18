@@ -21,7 +21,7 @@ def select_serial_port(ports=None):
         while True:
             try:
                 choice = int(input('Select a port: '))
-                if choice in range(len(ports)):
+                if choice in list(range(len(ports))):
                     port = ports[choice]
             except:
                 continue
