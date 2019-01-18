@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 import sys
 import serial
-import argparse
 
 import serial_helper
+import argparse_helper
 import m64
 
 int_buffer = 1024 # internal buffer size on replay device
@@ -31,10 +31,7 @@ def serial_wait_for(ser, flag, err=None):
         raise RuntimeError(err)
 
 def main():
-    parser = argparse.ArgumentParser(description='...')
-    parser.add_argument('--serial', help='Preselect the serial port')
-    parser.add_argument('--blank', help='Number of blank frames to prepend to input', type=int, default=0)
-    parser.add_argument('--movie', help='Path to the movie file to play', required=True)
+    parser = argparse_helper.setup_parser()
     args = parser.parse_args()
     
     if args.serial == None:
@@ -46,7 +43,6 @@ def main():
     except serial.SerialException:
         print ('ERROR: the specified interface (' + ser + ') is in use')
         sys.exit(0)
-    sys.exit()
 
     try:
         with open(args.movie, 'rb') as f:
