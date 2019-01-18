@@ -36,7 +36,8 @@ typedef struct
 void ResetTASRuns();
 void TASRunSetNumControllers(int numRun, uint8_t numControllers);
 void TASRunSetConsole(int numRun, Console c);
-uint8_t AddN64Frame(int runIndex, N64ControllerData* frame);
+uint8_t AddFrame(int runIndex, RunData* frame);
+void ExtractDataAndAdvance(RunData* frame, int index, uint8_t* Buf, int *byteNum);
 N64ControllerData GetNextN64Frame(int runNum);
 
 #endif

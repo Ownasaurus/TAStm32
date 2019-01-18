@@ -50,7 +50,31 @@ void TASRunSetConsole(int numRun, Console console)
 	tasruns[numRun].console = console;
 }
 
-uint8_t AddN64Frame(int runIndex, N64ControllerData* frame)
+void ExtractDataAndAdvance(RunData* rd, int index, uint8_t* Buf, int *byteNum)
+{
+	uint8_t size = 0;
+
+	memset(rd, 0, sizeof(&rd)); // prepare the data container
+
+	switch(tasruns[index].console)
+	{
+		case CONSOLE_N64:
+			size = sizeof(N64ControllerData);
+			break;
+		case CONSOLE_SNES:
+			size = sizeof(SNESControllerData);
+			break;
+		case CONSOLE_NES:
+			size = sizeof(NESControllerData);
+			break;
+		default: // should never reach this
+			break;
+	}
+
+	memcpy(rd, &(Buf[(*byteNum)]), size); // copy only what is necessary
+	(*byteNum) += (size-1); // advance the index only what is necessary
+}
+uint8_t AddFrame(int runIndex, RunData* frame)
 {
 	// first check buffer isn't full
 	if(tasruns[runIndex].size == MAX_SIZE)

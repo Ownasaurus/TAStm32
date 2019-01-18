@@ -302,7 +302,7 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
   /* USER CODE BEGIN 6 */
 	static SerialState ss = SERIAL_PREFIX;
 	static SerialRun sr = RUN_NONE;
-	N64ControllerData* frame;
+	RunData frame;
 
 	for(int byteNum = 0;byteNum < *Len;byteNum++)
 	{
@@ -342,12 +342,11 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 				}
 				break;
 			case SERIAL_CONTROLLER_DATA:
-				frame = (N64ControllerData*)(&Buf[byteNum]);
-				if(AddN64Frame(sr, frame) == 0) // buffer must have been full
+				ExtractDataAndAdvance(&frame, sr, Buf, &byteNum);
+				if(AddFrame(sr, &frame) == 0) // buffer must have been full
 				{
 					CDC_Transmit_FS((uint8_t*)"\xB0", 1);
 				}
-				byteNum += 3;
 				ss = SERIAL_COMPLETE;
 				sr = RUN_NONE;
 				break;
