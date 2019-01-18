@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 import sys
 import serial
+import argparse
+
+import serial_helper
 import m64
 
 int_buffer = 1024 # internal buffer size on replay device
@@ -28,24 +31,30 @@ def serial_wait_for(ser, flag, err=None):
         raise RuntimeError(err)
 
 def main():
-    if not len(sys.argv) in [3,4]:
-        sys.stderr.write('Usage: ' + sys.argv[0] + ' <interface> <movie file>\n\n')
-        sys.exit(0)
+    parser = argparse.ArgumentParser(description='...')
+    parser.add_argument('--serial', help='Preselect the serial port')
+    parser.add_argument('--blank', help='Number of blank frames to prepend to input', type=int, default=0)
+    parser.add_argument('--movie', help='Path to the movie file to play', required=True)
+    args = parser.parse_args()
+    
+    if args.serial == None:
+        ser = serial_helper.select_serial_port()
+    else:
+        ser = args.serial
     try:
-        ser = serial.Serial(sys.argv[1], 115200, timeout=0.1)
+        ser = serial.Serial(ser, 115200, timeout=0.1)
     except serial.SerialException:
-        print ('ERROR: the specified interface (' + sys.argv[1] + ') is in use')
+        print ('ERROR: the specified interface (' + ser + ') is in use')
         sys.exit(0)
+    sys.exit()
+
     try:
-        with open(sys.argv[2], 'rb') as f:
+        with open(args.movie, 'rb') as f:
             data = f.read()
     except:
-        print('ERROR: the specified file (' + sys.argv[2] + ') failed to open')
+        print('ERROR: the specified file (' + args.movie + ') failed to open')
         sys.exit(0)
-    try:
-        blanks = int(sys.argv[3])
-    except:
-        blanks = 0
+
     buffer = m64.read_input(data)
     serial_write(ser, b'R') # send RESET command
     err = serial_read(2)
@@ -72,19 +81,15 @@ def main():
     for blank in range(blanks):
         data = run_id + b'\x00\x00\x00\x00'
         serial_write(ser, data)
-        err = serial_read(1)
-        if err == b'\xB0':
-            break
         print('Sending Blank Latch: {}'.format(blank))
     fn = 0
     for latch in range(int_buffer-blanks):
         data = run_id + buffer[fn]
         serial_write(ser, data)
-        err = serial_read(1)
-        if err == b'\xB0':
-            break
         print('Sending Latch: {}'.format(fn))
         fn += 1
+    err = serial_read(ser, int_buffer)
+    fn -= err.count(b'\xB0')
     done = False
     print('Main Loop Start')
     while not done:
@@ -108,6 +113,8 @@ def main():
                     break
                 print('Sending Latch: {}'.format(fn))
                 fn += 1
+            err = serial_read(ser, int_buffer)
+            fn -= err.count(b'\xB0')
         except serial.SerialException:
             print('ERROR: Serial Exception caught!')
             done = True
