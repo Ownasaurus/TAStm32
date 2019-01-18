@@ -23,6 +23,9 @@ def select_serial_port(ports=None):
                 choice = int(input('Select a port: '))
                 if choice in list(range(len(ports))):
                     port = ports[choice]
+                    break
+            except KeyboardInterrupt:
+                raise
             except:
                 continue
     return port.device
