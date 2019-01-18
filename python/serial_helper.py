@@ -35,7 +35,7 @@ def select_serial_port(ports=None):
         for dev in ports:
             if dev.vid == device_vid and dev.pid == device_pid:
                 devs.append(dev)
-        if len(devs)) == 1:
+        if len(devs) == 1:
             port = devs[0]
         else:
             p = 0

@@ -106,8 +106,8 @@ def main():
                 serial_write(ser, data)
                 print('Sending Latch: {}'.format(fn))
                 fn += 1
-            err = serial_read(ser, int_buffer)
-            fn -= err.count(b'\xB0')
+            # err = serial_read(ser, int_buffer)
+            # fn -= err.count(b'\xB0')
         except serial.SerialException:
             print('ERROR: Serial Exception caught!')
             done = True
