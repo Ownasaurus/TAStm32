@@ -60,8 +60,8 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
-uint8_t p1_latched = 0;
-uint8_t p1_bit = 0;
+int8_t p1_latched = 0;
+int8_t p1_bit = 0;
 uint32_t frame;
 /* USER CODE END PV */
 
@@ -108,6 +108,9 @@ void SysTick_Handler(void)
 /**
   * @brief This function handles EXTI line 1 interrupt.
   */
+
+// TODO: change to send an arbitrary number of bits based on clock pulses.
+// don't be base limited by p1_bit
 void EXTI1_IRQHandler(void)
 {
 	/* USER CODE BEGIN EXTI1_IRQn 0 */
@@ -130,6 +133,10 @@ void EXTI1_IRQHandler(void)
 	else if(c == CONSOLE_SNES)
 	{
 		p1_bit = 15;
+	}
+	else // this should never happen
+	{
+		p1_bit = -1;
 	}
 
 	CDC_Transmit_FS((uint8_t*)"A", 1);
@@ -155,7 +162,11 @@ void EXTI2_IRQHandler(void)
 	{
 		GPIOA->BSRR = (1 << 8); // set line low
 		my_wait_us_asm(6);
-		GPIOA->BSRR = (1 << 24);
+
+		if(p1_bit != 0) // last bit
+		{
+			GPIOA->BSRR = (1 << 24); // set line back high
+		}
 	}
 	// if button is not pressed, remain high
 
@@ -179,6 +190,7 @@ void EXTI9_5_IRQHandler(void)
 	// Read 64 command
 	__disable_irq();
 	uint32_t cmd;
+	N64ControllerData* frame;
 
 	cmd = readCommand();
 
@@ -194,7 +206,15 @@ void EXTI9_5_IRQHandler(void)
 		  SendIdentityN64();
 		  break;
 	  case 0x01: // poll for N64 state
-		  SendControllerDataN64(GetNextN64Frame(0));
+		  frame = GetNextN64Frame(0);
+		  if(frame == NULL) // buffer underflow
+		  {
+			  SendControllerDataN64(0); // send blank controller data
+		  }
+		  else
+		  {
+			  SendControllerDataN64(*frame);
+		  }
 		  break;
 	  case 0x02:
 	  case 0x03:
@@ -211,6 +231,9 @@ void EXTI9_5_IRQHandler(void)
 	if(cmd == 0x01)
 	{
 		CDC_Transmit_FS((uint8_t*)"A", 1);
+
+		if(frame == NULL) // there was a buffer underflow
+			CDC_Transmit_FS((uint8_t*)"\xB2", 1);
 	}
 
   /* USER CODE END EXTI9_5_IRQn 0 */

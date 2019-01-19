@@ -4,13 +4,11 @@
 
 TASRun tasruns[4];
 
-N64ControllerData GetNextN64Frame(int runNum)
+N64ControllerData* GetNextN64Frame(int runNum)
 {
 	if(tasruns[runNum].size <= 0) // in case of buffer underflow
 	{
-		N64ControllerData blank;
-		memset(&blank,0,sizeof(N64ControllerData));
-		return blank; // send blank controller data
+		return NULL;
 	}
 
 	N64ControllerData* retval = (N64ControllerData*)tasruns[runNum].current;
@@ -26,7 +24,7 @@ N64ControllerData GetNextN64Frame(int runNum)
 
 	tasruns[runNum].size--;
 
-	return *retval;
+	return retval;
 }
 
 void ResetTASRuns()

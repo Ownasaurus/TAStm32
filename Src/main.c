@@ -112,8 +112,6 @@ int main(void)
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
 
-  //initialize_n64_buffer();
-
   /* USER CODE END 2 */
 
   /* Infinite loop */
