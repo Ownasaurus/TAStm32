@@ -30,6 +30,7 @@ typedef struct
 	RunData *buf; // points to the next place the received serial data will be stored
 	RunData *end; // points to the end of the array for bounds checking
 	RunData *current; // points to what the n64 will read next
+	uint8_t bit; // only used for NES/SNES
 	uint16_t size;
 } TASRun;
 
@@ -40,6 +41,7 @@ uint8_t AddFrame(int runIndex, RunData* frame);
 Console TASRunGetConsole(int numRun);
 void GetRunDataAndAdvance(RunData* rd, int index);
 void ExtractDataAndAdvance(RunData* frame, int index, uint8_t* Buf, int *byteNum);
+uint8_t GetNextBit(int runNum);
 N64ControllerData* GetNextN64Frame(int runNum);
 
 #endif

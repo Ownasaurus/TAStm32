@@ -1,8 +1,57 @@
 #include <string.h>
 #include "n64.h"
+#include "snes.h"
 #include "TASRun.h"
 
 TASRun tasruns[4];
+
+uint8_t GetNextBit(int runNum)
+{
+	if(tasruns[runNum].size <= 0) // in case of buffer underflow
+	{
+		return 2; // this is not a binary bit and indicates an error
+	}
+
+	Console c = tasruns[runNum].console;
+	uint16_t value = 0;
+	uint8_t bit = tasruns[runNum].bit;
+
+	if(c == CONSOLE_NES)
+	{
+		memcpy(&value, tasruns[runNum].current, sizeof(SNESControllerData));
+	}
+	else if(c == CONSOLE_SNES)
+	{
+		memcpy(&value, tasruns[runNum].current, sizeof(NESControllerData));
+	}
+
+	int8_t retval = (value >> bit) & 1;
+
+	// we can simply advance the data by 1 bit
+	if(tasruns[runNum].bit > 0)
+	{
+		(tasruns[runNum].bit)--;
+	}
+	else // we need to move to the first bit of the next frame
+	{
+		if(tasruns[runNum].console == CONSOLE_NES) // nes
+			tasruns[runNum].bit = 7;
+		else tasruns[runNum].bit = 15; // snes
+
+		if(tasruns[runNum].current != tasruns[runNum].end)
+		{
+			(tasruns[runNum].current)++;
+		}
+		else
+		{
+			tasruns[runNum].current = tasruns[runNum].runData;
+		}
+
+		tasruns[runNum].size--;
+	}
+
+	return retval;
+}
 
 N64ControllerData* GetNextN64Frame(int runNum)
 {

@@ -60,9 +60,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
-int8_t p1_latched = 0;
-int8_t p1_bit = 0;
-uint32_t frame;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -121,25 +119,7 @@ void EXTI1_IRQHandler(void)
 
 	__enable_irq();
 
-	p1_latched = 1;
-
-	GetRunDataAndAdvance((RunData*)&frame, 0);
-	Console c = TASRunGetConsole(0);
-
-	if(c == CONSOLE_NES)
-	{
-		p1_bit = 7;
-	}
-	else if(c == CONSOLE_SNES)
-	{
-		p1_bit = 15;
-	}
-	else // this should never happen
-	{
-		p1_bit = -1;
-	}
-
-	CDC_Transmit_FS((uint8_t*)"A", 1);
+	CDC_Transmit_FS((uint8_t*)"A", 1); // notify that we latched
 
 	/* USER CODE END EXTI1_IRQn 0 */
 	HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_1);
@@ -158,21 +138,23 @@ void EXTI2_IRQHandler(void)
 	// if button is pressed, set low for 6us
 	__disable_irq();
 
-	if((frame >> p1_bit) & 1)
+	uint8_t nextBit = GetNextBit(0);
+
+	if(nextBit == 1) // make a 6us low pulse if and only if the bit is true
 	{
 		GPIOA->BSRR = (1 << 8); // set line low
 		my_wait_us_asm(6);
 
-		if(p1_bit != 0) // last bit
-		{
-			GPIOA->BSRR = (1 << 24); // set line back high
-		}
+		GPIOA->BSRR = (1 << 24); // set line back high
 	}
 	// if button is not pressed, remain high
 
-	p1_bit--; // to the next bit for the next clock
-
 	__enable_irq();
+
+	if(nextBit == 2) // error state indicating buffer has underflowed
+	{
+		CDC_Transmit_FS((uint8_t*)"\xB2", 1);
+	}
 
 	/* USER CODE END EXTI2_IRQn 0 */
 	HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_2);
