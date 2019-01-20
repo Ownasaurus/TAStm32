@@ -39,7 +39,7 @@ def main():
     else:
         ser = args.serial
     try:
-        ser = serial.Serial(ser, 115200, timeout=0.1)
+        ser = serial.Serial(ser, 115200, timeout=0)
     except serial.SerialException:
         print ('ERROR: the specified interface (' + ser + ') is in use')
         sys.exit(0)
@@ -106,8 +106,8 @@ def main():
                 serial_write(ser, data)
                 print('Sending Latch: {}'.format(fn))
                 fn += 1
-            # err = serial_read(ser, int_buffer)
-            # fn -= err.count(b'\xB0')
+            err = serial_read(ser, int_buffer)
+            fn -= err.count(b'\xB0')
         except serial.SerialException:
             print('ERROR: Serial Exception caught!')
             done = True
