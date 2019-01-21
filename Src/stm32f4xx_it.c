@@ -50,7 +50,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
- 
+#define D0_HIGH (1 << 24)
+#define D0_LOW (1 << 8)
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -60,7 +61,8 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
-
+volatile uint32_t p1_d0;
+volatile int8_t p1_bit;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -107,17 +109,54 @@ void SysTick_Handler(void)
   * @brief This function handles EXTI line 1 interrupt.
   */
 
-// TODO: change to send an arbitrary number of bits based on clock pulses.
-// don't be base limited by p1_bit
 void EXTI1_IRQHandler(void)
 {
 	/* USER CODE BEGIN EXTI1_IRQn 0 */
 	// P1_LATCH
 	__disable_irq();
 
-	GPIOA->BSRR = (1 << 24); // raises D0
+	RunData* dataptr = GetNextFrame(0);
+
+	if(dataptr)
+	{
+		memcpy(&p1_d0, dataptr, sizeof(RunData));
+		Console c = TASRunGetConsole(0);
+
+		// prepare overread values based on console
+		if(c == CONSOLE_NES) // 8 bit data
+		{
+			// check 25th bit to determine overread
+			if((p1_d0 >> 24) & 1) // if 25th bit is 1
+			{
+				p1_d0 |= 0x0FFF; // make the lower bits 1 as well
+			}
+			else // if the 25th bit is 0
+			{
+				p1_d0 &= 0xF000; // make the lower bits 0 as well
+			}
+		}
+		else if(c == CONSOLE_SNES) // 16 bit data
+		{
+			// check 17th bit to determine overread
+			if((p1_d0 >> 16) & 1) // if 16th bit is 1
+			{
+				p1_d0 |= 0x00FF; // make the lower bits 1 as well
+			}
+			else // if the 16th bit is 0
+			{
+				p1_d0 &= 0xFF00; // make the lower bits 0 as well
+			}
+		}
+
+		p1_bit = 31;
+	}
 
 	__enable_irq();
+
+	if(!dataptr) // notify buffer underflow
+	{
+		CDC_Transmit_FS((uint8_t*)"\xB2", 1); // notify buffer underflow
+	}
 
 	CDC_Transmit_FS((uint8_t*)"A", 1); // notify that we latched
 
@@ -138,23 +177,21 @@ void EXTI2_IRQHandler(void)
 	// if button is pressed, set low for 6us
 	__disable_irq();
 
-	uint8_t nextBit = GetNextBit(0);
-
-	if(nextBit == 1) // make a 6us low pulse if and only if the bit is true
+	if(p1_bit >= 0) // sanity check... but 32 or more bits should never be read in a single latch!
 	{
-		GPIOA->BSRR = (1 << 8); // set line low
-		my_wait_us_asm(6);
+		if((p1_d0 >> p1_bit) & 1) // button is pressed
+		{
+			GPIOA->BSRR = D0_LOW; // set data line low
+		}
+		else
+		{
+			GPIOA->BSRR = D0_HIGH; // set data line high
+		}
 
-		GPIOA->BSRR = (1 << 24); // set line back high
+		p1_bit--;
 	}
-	// if button is not pressed, remain high
 
 	__enable_irq();
-
-	if(nextBit == 2) // error state indicating buffer has underflowed
-	{
-		CDC_Transmit_FS((uint8_t*)"\xB2", 1);
-	}
 
 	/* USER CODE END EXTI2_IRQn 0 */
 	HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_2);

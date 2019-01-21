@@ -41,7 +41,7 @@ uint8_t AddFrame(int runIndex, RunData* frame);
 Console TASRunGetConsole(int numRun);
 void GetRunDataAndAdvance(RunData* rd, int index);
 void ExtractDataAndAdvance(RunData* frame, int index, uint8_t* Buf, int *byteNum);
-uint8_t GetNextBit(int runNum);
+RunData* GetNextFrame(int runNum);
 N64ControllerData* GetNextN64Frame(int runNum);
 
 #endif

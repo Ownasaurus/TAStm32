@@ -5,50 +5,26 @@
 
 TASRun tasruns[4];
 
-uint8_t GetNextBit(int runNum)
+RunData* GetNextFrame(int runNum)
 {
 	if(tasruns[runNum].size <= 0) // in case of buffer underflow
 	{
-		return 2; // this is not a binary bit and indicates an error
+		return NULL; // buffer underflow
 	}
 
-	Console c = tasruns[runNum].console;
-	uint16_t value = 0;
-	uint8_t bit = tasruns[runNum].bit;
+	RunData* retval = tasruns[runNum].current;
 
-	if(c == CONSOLE_NES)
+	// advance frame
+	if(tasruns[runNum].current != tasruns[runNum].end)
 	{
-		memcpy(&value, tasruns[runNum].current, sizeof(SNESControllerData));
+		(tasruns[runNum].current)++;
 	}
-	else if(c == CONSOLE_SNES)
+	else
 	{
-		memcpy(&value, tasruns[runNum].current, sizeof(NESControllerData));
+		tasruns[runNum].current = tasruns[runNum].runData;
 	}
 
-	int8_t retval = (value >> bit) & 1;
-
-	// we can simply advance the data by 1 bit
-	if(tasruns[runNum].bit > 0)
-	{
-		(tasruns[runNum].bit)--;
-	}
-	else // we need to move to the first bit of the next frame
-	{
-		if(tasruns[runNum].console == CONSOLE_NES) // nes
-			tasruns[runNum].bit = 7;
-		else tasruns[runNum].bit = 15; // snes
-
-		if(tasruns[runNum].current != tasruns[runNum].end)
-		{
-			(tasruns[runNum].current)++;
-		}
-		else
-		{
-			tasruns[runNum].current = tasruns[runNum].runData;
-		}
-
-		tasruns[runNum].size--;
-	}
+	tasruns[runNum].size--;
 
 	return retval;
 }
