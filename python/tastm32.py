@@ -2,6 +2,7 @@
 import sys
 import serial
 import struct
+import time
 
 import serial_helper
 import argparse_helper
