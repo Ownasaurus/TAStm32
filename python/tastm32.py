@@ -140,13 +140,13 @@ def main():
         sys.exit()
     if args.console == 'n64':
         buffer = m64.read_input(data)
-        blankframe = b'\x00\x00\x00\x00' * len(arg.players)
+        blankframe = b'\x00\x00\x00\x00' * len(args.players)
     elif args.console == 'snes':
         buffer = r16m.read_input(data)
-        blankframe = b'\x00\x00' * len(arg.players)
+        blankframe = b'\x00\x00' * len(args.players)
     elif args.console == 'nes':
         buffer = r08.read_input(data)
-        blankframe = b'\x00' * len(arg.players)
+        blankframe = b'\x00' * len(args.players)
 
     # Send Blank Frames
     for blank in range(args.blank):
