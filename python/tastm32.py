@@ -27,13 +27,13 @@ class TAStm32():
 
     def write(self, data):
         count = self.ser.write(data)
-        if DEBUG:
+        if DEBUG and data != b'':
             print('S:', data)
         return count
 
     def read(self, count):
         data = self.ser.read(count)
-        if DEBUG:
+        if DEBUG and data != b'':
             print('R:', data)
         return data
 
