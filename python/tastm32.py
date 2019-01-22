@@ -25,7 +25,7 @@ class TAStm32():
         self.activeRuns = {b'A': False, b'B': False, b'C': False, b'D': False}
 
     def write(self, data):
-        count = self.ser.write()
+        count = self.ser.write(data)
         if DEBUG:
             print('S:', data)
         return count
@@ -38,6 +38,7 @@ class TAStm32():
 
     def reset(self):
         self.write(b'R')
+        time.sleep(1)
         data = self.read(2)
         if data == b'\x01R':
             return True
@@ -107,6 +108,7 @@ class TAStm32():
             # TODO HANDLE WINDOW MODE
         command = b'S' + prefix + cbyte + int_to_byte(pbyte) + int_to_byte(sbyte)
         self.write(command)
+        time.sleep(1)
         data = self.read(2)
         if data == b'\x01S':
             return prefix
