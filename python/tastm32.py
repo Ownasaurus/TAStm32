@@ -161,6 +161,8 @@ def main():
         fn += 1
     err = dev.read(int_buffer)
     fn -= err.count(b'\xB0')
+    if err.count(b'\xB0') != 0:
+        print('Buffer Overflow x{}'.format(err.count(b'\xB0')))
 
     print('Main Loop Start')
     while True:
@@ -179,8 +181,10 @@ def main():
                 dev.write(data)
                 print('Sending Latch: {}'.format(fn))
                 fn += 1
-            err = dev.read(int_buffer)
+            err = dev.read(latches)
             fn -= err.count(b'\xB0')
+            if err.count(b'\xB0') != 0:
+                print('Buffer Overflow x{}'.format(err.count(b'\xB0')))
         except serial.SerialException:
             print('ERROR: Serial Exception caught!')
             break
