@@ -134,6 +134,7 @@ def main():
         print('ERROR: the specified file (' + args.movie + ') failed to open')
         sys.exit(0)
 
+    dev.reset()
     run_id = dev.setup_run(args.console, args.players, args.dpcm, args.overread, args.window)
     if run_id == None:
         raise RuntimeError('ERROR')
@@ -176,15 +177,15 @@ def main():
                 if numBytes > int_buffer:
                     print ("WARNING: High latch rate detected: " + str(numBytes))
             latches = c.count(run_id)
+            missed = c.count(b'\xB0')
+            if missed != 0:
+                fn -= missed
+                print('Buffer Overflow x{}'.format(err.count(b'\xB0')))
             for latch in range(latches):
                 data = run_id + buffer[fn]
                 dev.write(data)
                 print('Sending Latch: {}'.format(fn))
                 fn += 1
-            err = dev.read(latches)
-            fn -= err.count(b'\xB0')
-            if err.count(b'\xB0') != 0:
-                print('Buffer Overflow x{}'.format(err.count(b'\xB0')))
         except serial.SerialException:
             print('ERROR: Serial Exception caught!')
             break
