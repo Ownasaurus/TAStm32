@@ -301,6 +301,7 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 	static SerialState ss = SERIAL_PREFIX;
 	static SerialRun sr = RUN_NONE;
 	RunData frame;
+	uint8_t val;
 
 	for(int byteNum = 0;byteNum < *Len;byteNum++)
 	{
@@ -311,6 +312,12 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 				switch(Buf[byteNum])
 				{
 					case 'R': // Reset/clear all configuration
+
+						// disable interrupts on latch/clock/data for now
+						HAL_NVIC_DisableIRQ(EXTI1_IRQn);
+						HAL_NVIC_DisableIRQ(EXTI2_IRQn);
+						HAL_NVIC_DisableIRQ(EXTI9_5_IRQn);
+
 						ResetTASRuns();
 						CDC_Transmit_FS((uint8_t*)"\x01R", 2); // good response for reset
 						ss = SERIAL_COMPLETE;
@@ -353,14 +360,17 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 				{
 					case 'M': // setup N64
 						TASRunSetConsole(sr, CONSOLE_N64);
+						SetN64DataInputMode();
 						ss = SERIAL_NUM_CONTROLLERS;
 						break;
 					case 'S': // setup SNES
 						TASRunSetConsole(sr, CONSOLE_SNES);
+						SetN64DataOutputMode();
 						ss = SERIAL_NUM_CONTROLLERS;
 						break;
 					case 'N': // setup NES
 						TASRunSetConsole(sr, CONSOLE_NES);
+						SetN64DataOutputMode();
 						ss = SERIAL_NUM_CONTROLLERS;
 						break;
 					default: // Error: console type not understood
@@ -393,32 +403,44 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 				}
 				break;
 			case SERIAL_NUM_CONTROLLERS:
-				switch(Buf[byteNum])
+				//TODO: refine this
+
+				// calculate the number of players by calculating the number of set bits
+				val = Buf[byteNum];
+				uint8_t count = 0;
+				while (val)
 				{
-					case 1:
-					case 2:
-					case 3:
-					case 4:
-						TASRunSetNumControllers(sr, Buf[byteNum]);
-						CDC_Transmit_FS((uint8_t*)"\x01S", 2);
-						ss = SERIAL_COMPLETE;
-						sr = RUN_NONE;
-						break;
-					default: // Error: num controllers not supported
+					count += val & 1;
+					val >>= 1;
+				}
+
+				if(1 <= count && count <= 8)
+				{
+						TASRunSetNumControllers(sr, count);
+						ss = SERIAL_SETTINGS;
+				}
+				else // Error: num controllers not supported
+				{
 						CDC_Transmit_FS((uint8_t*)"\xFD", 1);
 						break;
 				}
+				break;
+			case SERIAL_SETTINGS:
+				//TODO: read settings byte
+				CDC_Transmit_FS((uint8_t*)"\x01S", 2);
+
+				// enable interrupts on latch/clock/data
+				HAL_NVIC_EnableIRQ(EXTI1_IRQn);
+				HAL_NVIC_EnableIRQ(EXTI2_IRQn);
+				HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
+
+				ss = SERIAL_COMPLETE;
+				sr = RUN_NONE;
 				break;
 			default:
 				break;
 		}
 	}
-
-  // the command(s) should end on a SERIAL_COMPLETE state
-  /*if(ss != SERIAL_COMPLETE)
-  {
-	  CDC_Transmit_FS((uint8_t*)"\xEE", 1); // unexpected end of command in the middle of the stream
-  }*/
 
   USBD_CDC_SetRxBuffer(&hUsbDeviceFS, &Buf[0]);
   USBD_CDC_ReceivePacket(&hUsbDeviceFS);

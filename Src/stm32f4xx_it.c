@@ -63,11 +63,14 @@
 /* USER CODE BEGIN PV */
 volatile uint32_t p1_d0;
 volatile int8_t p1_bit;
+volatile uint8_t recentLatch = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN PFP */
 void my_wait_us_asm(int n);
+void ResetAndEnable8msTimer();
+void Disable8msTimer();
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -77,6 +80,7 @@ void my_wait_us_asm(int n);
 
 /* External variables --------------------------------------------------------*/
 extern PCD_HandleTypeDef hpcd_USB_OTG_FS;
+extern TIM_HandleTypeDef htim3;
 /* USER CODE BEGIN EV */
 
 /* USER CODE END EV */
@@ -108,63 +112,77 @@ void SysTick_Handler(void)
 /**
   * @brief This function handles EXTI line 1 interrupt.
   */
-
 void EXTI1_IRQHandler(void)
 {
-	/* USER CODE BEGIN EXTI1_IRQn 0 */
+  /* USER CODE BEGIN EXTI1_IRQn 0 */
 	// P1_LATCH
 	__disable_irq();
 
-	RunData* dataptr = GetNextFrame(0);
-
-	if(dataptr)
+	if(recentLatch == 0) // no recent latch
 	{
-		memcpy(&p1_d0, dataptr, sizeof(RunData));
-		Console c = TASRunGetConsole(0);
+		//recentLatch = 1;
+		//ResetAndEnable8msTimer(); // start timer and proceed as normal
 
-		// prepare overread values based on console
-		if(c == CONSOLE_NES) // 8 bit data
+		RunData* dataptr = GetNextFrame(0);
+
+		if(dataptr)
 		{
-			// check 25th bit to determine overread
-			if((p1_d0 >> 24) & 1) // if 25th bit is 1
+			memcpy((uint32_t*)&p1_d0, dataptr, sizeof(RunData));
+			Console c = TASRunGetConsole(0);
+
+			// prepare overread values based on console
+			if(c == CONSOLE_NES) // 8 bit data
 			{
-				p1_d0 |= 0x0FFF; // make the lower bits 1 as well
+				p1_d0 = p1_d0 << 24;
+				// check 25th bit to determine overread
+				if((p1_d0 >> 24) & 1) // if 25th bit is 1
+				{
+					p1_d0 |= 0x00FFFFFF; // make the lower bits 1 as well
+				}
+				else // if the 25th bit is 0
+				{
+					p1_d0 &= 0xFF000000; // make the lower bits 0 as well
+				}
 			}
-			else // if the 25th bit is 0
+			else if(c == CONSOLE_SNES) // 16 bit data
 			{
-				p1_d0 &= 0xF000; // make the lower bits 0 as well
+				p1_d0 = p1_d0 << 16;
+				// check 17th bit to determine overread
+				if((p1_d0 >> 16) & 1) // if 16th bit is 1
+				{
+					p1_d0 |= 0x0000FFFF; // make the lower bits 1 as well
+				}
+				else // if the 16th bit is 0
+				{
+					p1_d0 &= 0xFFFF0000; // make the lower bits 0 as well
+				}
 			}
-		}
-		else if(c == CONSOLE_SNES) // 16 bit data
-		{
-			// check 17th bit to determine overread
-			if((p1_d0 >> 16) & 1) // if 16th bit is 1
-			{
-				p1_d0 |= 0x00FF; // make the lower bits 1 as well
-			}
-			else // if the 16th bit is 0
-			{
-				p1_d0 &= 0xFF00; // make the lower bits 0 as well
-			}
+
 		}
 
 		p1_bit = 31;
+
+		__enable_irq();
+
+		if(!dataptr) // notify buffer underflow
+		{
+			CDC_Transmit_FS((uint8_t*)"\xB2", 1); // notify buffer underflow
+		}
+
+		CDC_Transmit_FS((uint8_t*)"A", 1); // notify that we latched
 	}
-
-	__enable_irq();
-
-	if(!dataptr) // notify buffer underflow
+	else
 	{
-		CDC_Transmit_FS((uint8_t*)"\xB2", 1); // notify buffer underflow
+		p1_bit = 31; // reset back to beginning of "frame"
+
+		__enable_irq();
 	}
 
-	CDC_Transmit_FS((uint8_t*)"A", 1); // notify that we latched
+  /* USER CODE END EXTI1_IRQn 0 */
+  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_1);
+  /* USER CODE BEGIN EXTI1_IRQn 1 */
 
-	/* USER CODE END EXTI1_IRQn 0 */
-	HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_1);
-	/* USER CODE BEGIN EXTI1_IRQn 1 */
-
-	/* USER CODE END EXTI1_IRQn 1 */
+  /* USER CODE END EXTI1_IRQn 1 */
 }
 
 /**
@@ -172,10 +190,10 @@ void EXTI1_IRQHandler(void)
   */
 void EXTI2_IRQHandler(void)
 {
-	/* USER CODE BEGIN EXTI2_IRQn 0 */
+  /* USER CODE BEGIN EXTI2_IRQn 0 */
 	// P1_CLOCK
 	// if button is pressed, set low for 6us
-	__disable_irq();
+	//__disable_irq();
 
 	if(p1_bit >= 0) // sanity check... but 32 or more bits should never be read in a single latch!
 	{
@@ -191,13 +209,13 @@ void EXTI2_IRQHandler(void)
 		p1_bit--;
 	}
 
-	__enable_irq();
+	//__enable_irq();
 
-	/* USER CODE END EXTI2_IRQn 0 */
-	HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_2);
-	/* USER CODE BEGIN EXTI2_IRQn 1 */
+  /* USER CODE END EXTI2_IRQn 0 */
+  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_2);
+  /* USER CODE BEGIN EXTI2_IRQn 1 */
 
-	/* USER CODE END EXTI2_IRQn 1 */
+  /* USER CODE END EXTI2_IRQn 1 */
 }
 
 /**
@@ -263,6 +281,23 @@ void EXTI9_5_IRQHandler(void)
 }
 
 /**
+  * @brief This function handles TIM3 global interrupt.
+  */
+void TIM3_IRQHandler(void)
+{
+	/* USER CODE BEGIN TIM3_IRQn 0 */
+
+	recentLatch = 0;
+	Disable8msTimer(); // to ensure it was a 1-shot
+
+	/* USER CODE END TIM3_IRQn 0 */
+	HAL_TIM_IRQHandler(&htim3);
+	/* USER CODE BEGIN TIM3_IRQn 1 */
+
+	/* USER CODE END TIM3_IRQn 1 */
+}
+
+/**
   * @brief This function handles USB On The Go FS global interrupt.
   */
 void OTG_FS_IRQHandler(void)
@@ -277,6 +312,17 @@ void OTG_FS_IRQHandler(void)
 }
 
 /* USER CODE BEGIN 1 */
+void Disable8msTimer()
+{
+	TIM3->CR1 &= (~((uint16_t)TIM_CR1_CEN)); // disable timer 3
+}
 
+void ResetAndEnable8msTimer()
+{
+	TIM3->CNT = 0; // reset count
+	TIM3->SR = 0; // reset flags
+
+	TIM3->CR1 |= TIM_CR1_CEN; // enable timer 3
+}
 /* USER CODE END 1 */
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
