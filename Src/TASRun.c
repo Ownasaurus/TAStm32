@@ -86,31 +86,31 @@ void GetRunDataAndAdvance(RunData* rd, int index)
 
 void ExtractDataAndAdvance(RunData* rd, int index, uint8_t* Buf, int *byteNum)
 {
-	uint8_t size = 0;
-	uint8_t advance = 0;
+	uint8_t bytesPerFrame = 0;
+	uint8_t maxPlayers = 0;
 
 	memset(rd, 0, sizeof(*rd)); // prepare the data container
 
 	switch(tasruns[index].console)
 	{
 		case CONSOLE_N64:
-			size = sizeof(N64ControllerData);
-			advance = 3;
+			bytesPerFrame = sizeof(N64ControllerData);
+			maxPlayers = 1;
 			break;
 		case CONSOLE_SNES:
-			size = sizeof(SNESControllerData);
-			advance = 7;
+			bytesPerFrame = sizeof(SNESControllerData);
+			maxPlayers = 4;
 			break;
 		case CONSOLE_NES:
-			size = sizeof(NESControllerData);
-			advance = 1;
+			bytesPerFrame = sizeof(NESControllerData);
+			maxPlayers = 2;
 			break;
 		default: // should never reach this
 			break;
 	}
 
-	memcpy(rd, &(Buf[(*byteNum)]), size); // copy only what is necessary
-	(*byteNum) += advance; // advance the index only what is necessary
+	memcpy(rd, &(Buf[(*byteNum)]), bytesPerFrame); // copy only what is necessary
+	(*byteNum) += ((bytesPerFrame * maxPlayers) - 1); // advance the index only what is necessary
 }
 
 uint8_t AddFrame(int runIndex, RunData* frame)

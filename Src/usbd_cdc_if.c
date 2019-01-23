@@ -429,10 +429,18 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 				//TODO: read settings byte
 				CDC_Transmit_FS((uint8_t*)"\x01S", 2);
 
-				// enable interrupts on latch/clock/data
-				HAL_NVIC_EnableIRQ(EXTI1_IRQn);
-				HAL_NVIC_EnableIRQ(EXTI2_IRQn);
-				HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
+				// enable interrupts as needed
+				Console c = TASRunGetConsole(0);
+
+				if(c == CONSOLE_NES || c == CONSOLE_SNES)
+				{
+					HAL_NVIC_EnableIRQ(EXTI1_IRQn);
+					HAL_NVIC_EnableIRQ(EXTI2_IRQn);
+				}
+				else if(c == CONSOLE_N64)
+				{
+					HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
+				}
 
 				ss = SERIAL_COMPLETE;
 				sr = RUN_NONE;

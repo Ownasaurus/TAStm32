@@ -50,8 +50,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define D0_HIGH (1 << 24)
-#define D0_LOW (1 << 8)
+#define D0_LOW (1 << 24)
+#define D0_HIGH (1 << 8)
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -61,9 +61,11 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
-volatile uint32_t p1_d0;
-volatile int8_t p1_bit;
+volatile uint32_t p1_d0 = 0;
+volatile uint32_t p1_d0_next = 0;
+volatile int8_t p1_bit = 0;
 volatile uint8_t recentLatch = 0;
+Console c = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -116,53 +118,53 @@ void EXTI1_IRQHandler(void)
 {
   /* USER CODE BEGIN EXTI1_IRQn 0 */
 	// P1_LATCH
-	__disable_irq();
 
 	if(recentLatch == 0) // no recent latch
 	{
 		//recentLatch = 1;
 		//ResetAndEnable8msTimer(); // start timer and proceed as normal
 
+		// quickly, copy the data in!
+		p1_d0 = p1_d0_next;
+		p1_bit = 31;
+
+		// now prepare the next frame!
 		RunData* dataptr = GetNextFrame(0);
 
 		if(dataptr)
 		{
-			memcpy((uint32_t*)&p1_d0, dataptr, sizeof(RunData));
-			Console c = TASRunGetConsole(0);
+			memcpy(&p1_d0_next, dataptr, sizeof(RunData));
+
+			c = TASRunGetConsole(0);
 
 			// prepare overread values based on console
 			if(c == CONSOLE_NES) // 8 bit data
 			{
-				p1_d0 = p1_d0 << 24;
+				p1_d0_next = p1_d0_next << 24;
 				// check 25th bit to determine overread
-				if((p1_d0 >> 24) & 1) // if 25th bit is 1
+				if((p1_d0_next >> 24) & 1) // if 25th bit is 1
 				{
-					p1_d0 |= 0x00FFFFFF; // make the lower bits 1 as well
+					p1_d0_next |= 0x00FFFFFF; // make the lower bits 1 as well
 				}
 				else // if the 25th bit is 0
 				{
-					p1_d0 &= 0xFF000000; // make the lower bits 0 as well
+					p1_d0_next &= 0xFF000000; // make the lower bits 0 as well
 				}
 			}
 			else if(c == CONSOLE_SNES) // 16 bit data
 			{
-				p1_d0 = p1_d0 << 16;
+				p1_d0_next = p1_d0_next << 16;
 				// check 17th bit to determine overread
-				if((p1_d0 >> 16) & 1) // if 16th bit is 1
+				if((p1_d0_next >> 16) & 1) // if 16th bit is 1
 				{
-					p1_d0 |= 0x0000FFFF; // make the lower bits 1 as well
+					p1_d0_next |= 0x0000FFFF; // make the lower bits 1 as well
 				}
 				else // if the 16th bit is 0
 				{
-					p1_d0 &= 0xFFFF0000; // make the lower bits 0 as well
+					p1_d0_next &= 0xFFFF0000; // make the lower bits 0 as well
 				}
 			}
-
 		}
-
-		p1_bit = 31;
-
-		__enable_irq();
 
 		if(!dataptr) // notify buffer underflow
 		{
@@ -173,9 +175,7 @@ void EXTI1_IRQHandler(void)
 	}
 	else
 	{
-		p1_bit = 31; // reset back to beginning of "frame"
-
-		__enable_irq();
+		p1_bit = 31; // reset back to beginning of "frame" and do not advance
 	}
 
   /* USER CODE END EXTI1_IRQn 0 */
@@ -192,24 +192,20 @@ void EXTI2_IRQHandler(void)
 {
   /* USER CODE BEGIN EXTI2_IRQn 0 */
 	// P1_CLOCK
-	// if button is pressed, set low for 6us
-	//__disable_irq();
 
 	if(p1_bit >= 0) // sanity check... but 32 or more bits should never be read in a single latch!
 	{
-		if((p1_d0 >> p1_bit) & 1) // button is pressed
+		if((p1_d0 >> p1_bit) & 1) // if the button is PRESSED, set the line LOW
 		{
-			GPIOA->BSRR = D0_LOW; // set data line low
+			GPIOA->BSRR = D0_LOW;
 		}
 		else
 		{
-			GPIOA->BSRR = D0_HIGH; // set data line high
+			GPIOA->BSRR = D0_HIGH;
 		}
 
 		p1_bit--;
 	}
-
-	//__enable_irq();
 
   /* USER CODE END EXTI2_IRQn 0 */
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_2);
