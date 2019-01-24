@@ -32,8 +32,11 @@ typedef struct
 	RunData *current; // points to what the n64 will read next
 	uint8_t bit; // only used for NES/SNES
 	uint16_t size;
+	uint8_t runStarted;
 } TASRun;
 
+uint8_t GetRunStarted(int numRun);
+void SetRunStarted(int numRun, uint8_t started);
 void ResetTASRuns();
 void TASRunSetNumControllers(int numRun, uint8_t numControllers);
 void TASRunSetConsole(int numRun, Console c);

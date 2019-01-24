@@ -318,6 +318,8 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 						HAL_NVIC_DisableIRQ(EXTI2_IRQn);
 						HAL_NVIC_DisableIRQ(EXTI9_5_IRQn);
 
+						SetRunStarted(0, 0); // mark run as not yet started
+
 						ResetTASRuns();
 						CDC_Transmit_FS((uint8_t*)"\x01R", 2); // good response for reset
 						ss = SERIAL_COMPLETE;

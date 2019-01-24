@@ -124,16 +124,35 @@ void EXTI1_IRQHandler(void)
 		//recentLatch = 1;
 		//ResetAndEnable8msTimer(); // start timer and proceed as normal
 
-		// quickly, copy the data in!
-		p1_d0 = p1_d0_next;
-		p1_bit = 31;
+		// if first latch, put the data straight in, bypassing the "next" buffer
+		if(!GetRunStarted(0))
+		{
+			RunData* dataptr = GetNextFrame(0);
+			memcpy((uint32_t*)&p1_d0, dataptr, sizeof(RunData));
+			SetRunStarted(0, 1);
+		}
+		else // otherwise quickly get it from the "next" buffer!
+		{
+			p1_d0 = p1_d0_next;
+		}
+
+		// write the first bit
+		if((p1_d0 >> 31) & 1) // if the button is PRESSED, set the line LOW
+		{
+			GPIOA->BSRR = D0_LOW;
+		}
+		else
+		{
+			GPIOA->BSRR = D0_HIGH;
+		}
+		p1_bit = 30; // set the next bit to be read
 
 		// now prepare the next frame!
 		RunData* dataptr = GetNextFrame(0);
 
 		if(dataptr)
 		{
-			memcpy(&p1_d0_next, dataptr, sizeof(RunData));
+			memcpy((uint32_t*)&p1_d0_next, dataptr, sizeof(RunData));
 
 			c = TASRunGetConsole(0);
 
@@ -150,16 +169,22 @@ void EXTI1_IRQHandler(void)
 				{
 					p1_d0_next &= 0xFF000000; // make the lower bits 0 as well
 				}
+
+				// this can be used to force overread HIGH (0)
+				//p1_d0_next &= 0xFF000000;
+
+				// this can be used to force overread LOW (1)
+				//p1_d0_next |= 0x00FFFFFF;
 			}
 			else if(c == CONSOLE_SNES) // 16 bit data
 			{
 				p1_d0_next = p1_d0_next << 16;
 				// check 17th bit to determine overread
-				if((p1_d0_next >> 16) & 1) // if 16th bit is 1
+				if((p1_d0_next >> 16) & 1) // if 17th bit is 1
 				{
 					p1_d0_next |= 0x0000FFFF; // make the lower bits 1 as well
 				}
-				else // if the 16th bit is 0
+				else // if the 17th bit is 0
 				{
 					p1_d0_next &= 0xFFFF0000; // make the lower bits 0 as well
 				}
@@ -173,7 +198,7 @@ void EXTI1_IRQHandler(void)
 
 		CDC_Transmit_FS((uint8_t*)"A", 1); // notify that we latched
 	}
-	else
+	else // we latched very recently
 	{
 		p1_bit = 31; // reset back to beginning of "frame" and do not advance
 	}
@@ -192,6 +217,8 @@ void EXTI2_IRQHandler(void)
 {
   /* USER CODE BEGIN EXTI2_IRQn 0 */
 	// P1_CLOCK
+
+	my_wait_us_asm(1); // wait a small amount of time before replying
 
 	if(p1_bit >= 0) // sanity check... but 32 or more bits should never be read in a single latch!
 	{

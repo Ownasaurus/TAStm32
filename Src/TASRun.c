@@ -52,6 +52,16 @@ N64ControllerData* GetNextN64Frame(int runNum)
 	return retval;
 }
 
+uint8_t GetRunStarted(int numRun)
+{
+	return tasruns[numRun].runStarted;
+}
+
+void SetRunStarted(int numRun, uint8_t started)
+{
+	tasruns[numRun].runStarted = started;
+}
+
 void ResetTASRuns()
 {
 	memset(tasruns,0,sizeof(tasruns));

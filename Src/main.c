@@ -114,9 +114,10 @@ int main(void)
   MX_USB_DEVICE_Init();
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
-  HAL_NVIC_DisableIRQ(EXTI1_IRQn);
-  HAL_NVIC_DisableIRQ(EXTI2_IRQn);
-  HAL_NVIC_DisableIRQ(EXTI9_5_IRQn);
+
+  // all of the interrupts should be disabled before reaching this point
+  // they will be re-enabled based on the console and number of controllers being utilized
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -325,13 +326,13 @@ static void MX_GPIO_Init(void)
 
   /* EXTI interrupt init*/
   HAL_NVIC_SetPriority(EXTI1_IRQn, 2, 0);
-  HAL_NVIC_EnableIRQ(EXTI1_IRQn);
+  //HAL_NVIC_EnableIRQ(EXTI1_IRQn);
 
   HAL_NVIC_SetPriority(EXTI2_IRQn, 1, 0);
-  HAL_NVIC_EnableIRQ(EXTI2_IRQn);
+  //HAL_NVIC_EnableIRQ(EXTI2_IRQn);
 
   HAL_NVIC_SetPriority(EXTI9_5_IRQn, 1, 0);
-  HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
+  //HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
 
 }
 
