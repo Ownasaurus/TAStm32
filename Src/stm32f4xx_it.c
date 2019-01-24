@@ -121,8 +121,8 @@ void EXTI1_IRQHandler(void)
 
 	if(recentLatch == 0) // no recent latch
 	{
-		//recentLatch = 1;
-		//ResetAndEnable8msTimer(); // start timer and proceed as normal
+		recentLatch = 1;
+		ResetAndEnable8msTimer(); // start timer and proceed as normal
 
 		// if first latch, put the data straight in, bypassing the "next" buffer
 		if(!GetRunStarted(0))
@@ -337,7 +337,7 @@ void OTG_FS_IRQHandler(void)
 /* USER CODE BEGIN 1 */
 void Disable8msTimer()
 {
-	TIM3->CR1 &= (~((uint16_t)TIM_CR1_CEN)); // disable timer 3
+	HAL_TIM_Base_Stop_IT(&htim3);
 }
 
 void ResetAndEnable8msTimer()
@@ -345,7 +345,7 @@ void ResetAndEnable8msTimer()
 	TIM3->CNT = 0; // reset count
 	TIM3->SR = 0; // reset flags
 
-	TIM3->CR1 |= TIM_CR1_CEN; // enable timer 3
+	HAL_TIM_Base_Start_IT(&htim3);
 }
 /* USER CODE END 1 */
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
