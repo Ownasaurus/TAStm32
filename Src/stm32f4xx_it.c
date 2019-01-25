@@ -200,7 +200,17 @@ void EXTI1_IRQHandler(void)
 	}
 	else // we latched very recently
 	{
-		p1_bit = 31; // reset back to beginning of "frame" and do not advance
+		// write the first bit
+		if((p1_d0 >> 31) & 1) // if the button is PRESSED, set the line LOW
+		{
+			GPIOA->BSRR = D0_LOW;
+		}
+		else
+		{
+			GPIOA->BSRR = D0_HIGH;
+		}
+
+		p1_bit = 30; // reset back to beginning of "frame" and do not advance
 	}
 
   /* USER CODE END EXTI1_IRQn 0 */
@@ -217,8 +227,6 @@ void EXTI2_IRQHandler(void)
 {
   /* USER CODE BEGIN EXTI2_IRQn 0 */
 	// P1_CLOCK
-
-	my_wait_us_asm(1); // wait a small amount of time before replying
 
 	if(p1_bit >= 0) // sanity check... but 32 or more bits should never be read in a single latch!
 	{
@@ -257,7 +265,7 @@ void EXTI9_5_IRQHandler(void)
 	my_wait_us_asm(2); // wait a small amount of time before replying
 
 	//-------- SEND RESPONSE
-	SetN64DataOutputMode();
+	SetP1Data0OutputMode();
 
 	switch(cmd)
 	{
@@ -284,7 +292,7 @@ void EXTI9_5_IRQHandler(void)
 	}
 	//-------- DONE SENDING RESPOSE
 
-	SetN64DataInputMode();
+	SetP1Data0InputMode();
 
 	__enable_irq();
 

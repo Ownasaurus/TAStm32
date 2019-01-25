@@ -33,8 +33,6 @@ void initialize_n64_buffer();
 uint32_t readCommand();
 uint8_t GetMiddleOfPulse();
 void SendIdentityN64();
-void SetN64DataInputMode();
-void SetN64DataOutputMode();
 void SendByte(unsigned char b);
 void SendControllerDataN64();
 

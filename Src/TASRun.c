@@ -2,6 +2,7 @@
 #include "n64.h"
 #include "snes.h"
 #include "TASRun.h"
+#include "stm32f4xx_hal.h"
 
 TASRun tasruns[4];
 
@@ -146,4 +147,18 @@ uint8_t AddFrame(int runIndex, RunData* frame)
 	tasruns[runIndex].size++;
 
 	return 1;
+}
+
+void SetP1Data0InputMode()
+{
+	// port A8 to input mode
+	GPIOA->MODER &= ~(1 << 17);
+	GPIOA->MODER &= ~(1 << 16);
+}
+
+void SetP1Data0OutputMode()
+{
+	// port A8 to output mode
+	GPIOA->MODER &= ~(1 << 17);
+	GPIOA->MODER |= (1 << 16);
 }

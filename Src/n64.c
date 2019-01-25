@@ -91,20 +91,6 @@ void SendIdentityN64()
     SendStop();
 }
 
-void SetN64DataInputMode()
-{
-	// port A8 to input mode
-	GPIOA->MODER &= ~(1 << 17);
-	GPIOA->MODER &= ~(1 << 16);
-}
-
-void SetN64DataOutputMode()
-{
-	// port A8 to output mode
-	GPIOA->MODER &= ~(1 << 17);
-	GPIOA->MODER |= (1 << 16);
-}
-
 void write_1()
 {
 	GPIOA->BSRR = (1 << 24);

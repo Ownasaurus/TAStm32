@@ -46,5 +46,7 @@ void GetRunDataAndAdvance(RunData* rd, int index);
 void ExtractDataAndAdvance(RunData* frame, int index, uint8_t* Buf, int *byteNum);
 RunData* GetNextFrame(int runNum);
 N64ControllerData* GetNextN64Frame(int runNum);
+void SetP1Data0InputMode();
+void SetP1Data0OutputMode();
 
 #endif

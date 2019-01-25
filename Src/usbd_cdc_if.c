@@ -60,7 +60,7 @@
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
-
+extern volatile uint8_t recentLatch;
 /* USER CODE END PV */
 
 /** @addtogroup STM32_USB_OTG_DEVICE_LIBRARY
@@ -318,6 +318,14 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 						HAL_NVIC_DisableIRQ(EXTI2_IRQn);
 						HAL_NVIC_DisableIRQ(EXTI9_5_IRQn);
 
+						// clear interrupt requests
+						HAL_NVIC_ClearPendingIRQ(EXTI1_IRQn);
+						HAL_NVIC_ClearPendingIRQ(EXTI2_IRQn);
+						HAL_NVIC_ClearPendingIRQ(EXTI9_5_IRQn);
+
+						// important to reset our state
+						recentLatch = 0;
+
 						SetRunStarted(0, 0); // mark run as not yet started
 
 						ResetTASRuns();
@@ -362,17 +370,17 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 				{
 					case 'M': // setup N64
 						TASRunSetConsole(sr, CONSOLE_N64);
-						SetN64DataInputMode();
+						SetP1Data0InputMode();
 						ss = SERIAL_NUM_CONTROLLERS;
 						break;
 					case 'S': // setup SNES
 						TASRunSetConsole(sr, CONSOLE_SNES);
-						SetN64DataOutputMode();
+						SetP1Data0OutputMode();
 						ss = SERIAL_NUM_CONTROLLERS;
 						break;
 					case 'N': // setup NES
 						TASRunSetConsole(sr, CONSOLE_NES);
-						SetN64DataOutputMode();
+						SetP1Data0OutputMode();
 						ss = SERIAL_NUM_CONTROLLERS;
 						break;
 					default: // Error: console type not understood
