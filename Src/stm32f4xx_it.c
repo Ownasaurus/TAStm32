@@ -129,6 +129,41 @@ void EXTI1_IRQHandler(void)
 		{
 			RunData* dataptr = GetNextFrame(0);
 			memcpy((uint32_t*)&p1_d0, dataptr, sizeof(RunData));
+			c = TASRunGetConsole(0);
+
+			// prepare overread values based on console
+			if(c == CONSOLE_NES) // 8 bit data
+			{
+				p1_d0 = p1_d0 << 24;
+				// check 25th bit to determine overread
+				if((p1_d0 >> 24) & 1) // if 25th bit is 1
+				{
+					p1_d0 |= 0x00FFFFFF; // make the lower bits 1 as well
+				}
+				else // if the 25th bit is 0
+				{
+					p1_d0 &= 0xFF000000; // make the lower bits 0 as well
+				}
+
+				// this can be used to force overread HIGH (0)
+				//p1_d0_next &= 0xFF000000;
+
+				// this can be used to force overread LOW (1)
+				//p1_d0_next |= 0x00FFFFFF;
+			}
+			else if(c == CONSOLE_SNES) // 16 bit data
+			{
+				p1_d0 = p1_d0 << 16;
+				// check 17th bit to determine overread
+				if((p1_d0 >> 16) & 1) // if 17th bit is 1
+				{
+					p1_d0 |= 0x0000FFFF; // make the lower bits 1 as well
+				}
+				else // if the 17th bit is 0
+				{
+					p1_d0 &= 0xFFFF0000; // make the lower bits 0 as well
+				}
+			}
 			SetRunStarted(0, 1);
 		}
 		else // otherwise quickly get it from the "next" buffer!
@@ -345,6 +380,9 @@ void OTG_FS_IRQHandler(void)
 /* USER CODE BEGIN 1 */
 void Disable8msTimer()
 {
+	TIM3->CNT = 0; // reset count
+	TIM3->SR = 0; // reset flags
+
 	HAL_TIM_Base_Stop_IT(&htim3);
 }
 

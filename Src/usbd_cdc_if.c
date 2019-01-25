@@ -318,10 +318,26 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 						HAL_NVIC_DisableIRQ(EXTI2_IRQn);
 						HAL_NVIC_DisableIRQ(EXTI9_5_IRQn);
 
-						// clear interrupt requests
-						HAL_NVIC_ClearPendingIRQ(EXTI1_IRQn);
-						HAL_NVIC_ClearPendingIRQ(EXTI2_IRQn);
-						HAL_NVIC_ClearPendingIRQ(EXTI9_5_IRQn);
+						// clear all interrupts
+						while (HAL_NVIC_GetPendingIRQ(EXTI1_IRQn))
+						{
+							__HAL_GPIO_EXTI_CLEAR_IT(P1_Latch_Pin);
+							HAL_NVIC_ClearPendingIRQ(EXTI1_IRQn);
+						}
+						while (HAL_NVIC_GetPendingIRQ(EXTI2_IRQn))
+						{
+							__HAL_GPIO_EXTI_CLEAR_IT(P1_CLOCK_Pin);
+							HAL_NVIC_ClearPendingIRQ(EXTI2_IRQn);
+						}
+						while (HAL_NVIC_GetPendingIRQ(EXTI9_5_IRQn))
+						{
+							__HAL_GPIO_EXTI_CLEAR_IT(P1_DATA_0_Pin);
+							HAL_NVIC_ClearPendingIRQ(EXTI9_5_IRQn);
+						}
+						while (HAL_NVIC_GetPendingIRQ(TIM3_IRQn))
+						{
+							HAL_NVIC_ClearPendingIRQ(TIM3_IRQn);
+						}
 
 						// important to reset our state
 						recentLatch = 0;
