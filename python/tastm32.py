@@ -74,20 +74,20 @@ class TAStm32():
             pbyte = 0
             for player in players:
                 p = int(player)
-                if p < 1 or p > 2:
+                if p < 0 or p > 1:
                     raise RuntimeError('Invalid player for N64')
                 else:
-                    pbyte = pbyte ^ 2**(8-p)
+                    pbyte = pbyte ^ 2**(7-p)
             sbyte = 0
         elif console == 'snes':
             cbyte = b'S'
             pbyte = 0
             for player in players:
                 p = int(player)
-                if p < 1 or p > 8:
+                if p < 0 or p > 7:
                     raise RuntimeError('Invalid player for SNES')
                 else:
-                    pbyte = pbyte ^ 2**(8-p)
+                    pbyte = pbyte ^ 2**(7-p)
             sbyte = 0
             if overread:
                 sbyte = sbyte ^ 0x40
@@ -97,10 +97,10 @@ class TAStm32():
             pbyte = 0
             for player in players:
                 p = int(player)
-                if p < 1 or p > 8:
+                if p < 0 or p > 7:
                     raise RuntimeError('Invalid player for NES')
                 else:
-                    pbyte = pbyte ^ 2**(8-p)
+                    pbyte = pbyte ^ 2**(7-p)
             sbyte = 0
             if dpcm:
                 sbyte = sbyte ^ 0x80
