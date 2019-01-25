@@ -121,7 +121,9 @@ def main():
     parser = argparse_helper.setup_parser_full()
     args = parser.parse_args()
     args.players = args.players.split(',')
-    
+    for x in range(len(args.players)):
+        args.players[x] = int(args.players[x])
+
     if args.serial == None:
         dev = TAStm32(serial_helper.select_serial_port())
     else:
