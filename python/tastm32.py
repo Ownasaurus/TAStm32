@@ -39,7 +39,7 @@ class TAStm32():
 
     def reset(self):
         self.write(b'R')
-        time.sleep(1)
+        time.sleep(0.1)
         data = self.read(2)
         if data == b'\x01R':
             return True
@@ -109,7 +109,7 @@ class TAStm32():
             # TODO HANDLE WINDOW MODE
         command = b'S' + prefix + cbyte + int_to_byte(pbyte) + int_to_byte(sbyte)
         self.write(command)
-        time.sleep(1)
+        time.sleep(0.1)
         data = self.read(2)
         if data == b'\x01S':
             return prefix
@@ -156,10 +156,13 @@ def main():
         print('Sending Blank Latch: {}'.format(blank))
     fn = 0
     for latch in range(int_buffer-args.blank):
-        data = run_id + buffer[fn]
-        dev.write(data)
-        print('Sending Latch: {}'.format(fn))
-        fn += 1
+        try:
+            data = run_id + buffer[fn]
+            dev.write(data)
+            print('Sending Latch: {}'.format(fn))
+            fn += 1
+        except IndexError:
+            pass
     err = dev.read(int_buffer)
     fn -= err.count(b'\xB0')
     if err.count(b'\xB0') != 0:
