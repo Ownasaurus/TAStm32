@@ -8,7 +8,7 @@ TASRun tasruns[4];
 
 RunData* GetNextFrame(int runNum)
 {
-	if(tasruns[runNum].size <= 0) // in case of buffer underflow
+	if(tasruns[runNum].size == 0) // in case of buffer underflow
 	{
 		return NULL; // buffer underflow
 	}
@@ -32,7 +32,7 @@ RunData* GetNextFrame(int runNum)
 
 N64ControllerData* GetNextN64Frame(int runNum)
 {
-	if(tasruns[runNum].size <= 0) // in case of buffer underflow
+	if(tasruns[runNum].size == 0) // in case of buffer underflow
 	{
 		return NULL;
 	}

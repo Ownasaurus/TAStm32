@@ -128,7 +128,11 @@ void EXTI1_IRQHandler(void)
 		if(!GetRunStarted(0))
 		{
 			RunData* dataptr = GetNextFrame(0);
+			//p1_d0 = dataptr
 			memcpy((uint32_t*)&p1_d0, dataptr, sizeof(RunData));
+
+			// swap bytes due to endainness
+
 			c = TASRunGetConsole(0);
 
 			// prepare overread values based on console
@@ -146,13 +150,14 @@ void EXTI1_IRQHandler(void)
 				}
 
 				// this can be used to force overread HIGH (0)
-				//p1_d0_next &= 0xFF000000;
+				//p1_d0 &= 0xFF000000;
 
 				// this can be used to force overread LOW (1)
-				//p1_d0_next |= 0x00FFFFFF;
+				//p1_d0 |= 0x00FFFFFF;
 			}
 			else if(c == CONSOLE_SNES) // 16 bit data
 			{
+				p1_d0 = ((p1_d0 >> 8) & 0xFF) | ((p1_d0 << 8) & 0xFF00);
 				p1_d0 = p1_d0 << 16;
 				// check 17th bit to determine overread
 				if((p1_d0 >> 16) & 1) // if 17th bit is 1
@@ -163,6 +168,12 @@ void EXTI1_IRQHandler(void)
 				{
 					p1_d0 &= 0xFFFF0000; // make the lower bits 0 as well
 				}
+
+				// this can be used to force overread HIGH (0)
+				//p1_d0 &= 0xFFFF0000;
+
+				// this can be used to force overread LOW (1)
+				//p1_d0 |= 0x0000FFFF;
 			}
 			SetRunStarted(0, 1);
 		}
@@ -188,42 +199,53 @@ void EXTI1_IRQHandler(void)
 		if(dataptr)
 		{
 			memcpy((uint32_t*)&p1_d0_next, dataptr, sizeof(RunData));
+		}
+		else
+		{
+			memset((uint32_t*)&p1_d0_next, 0, sizeof(RunData));
+		}
 
-			c = TASRunGetConsole(0);
+		c = TASRunGetConsole(0);
 
-			// prepare overread values based on console
-			if(c == CONSOLE_NES) // 8 bit data
+		// prepare overread values based on console
+		if(c == CONSOLE_NES) // 8 bit data
+		{
+			p1_d0_next = p1_d0_next << 24;
+			// check 25th bit to determine overread
+			if((p1_d0_next >> 24) & 1) // if 25th bit is 1
 			{
-				p1_d0_next = p1_d0_next << 24;
-				// check 25th bit to determine overread
-				if((p1_d0_next >> 24) & 1) // if 25th bit is 1
-				{
-					p1_d0_next |= 0x00FFFFFF; // make the lower bits 1 as well
-				}
-				else // if the 25th bit is 0
-				{
-					p1_d0_next &= 0xFF000000; // make the lower bits 0 as well
-				}
-
-				// this can be used to force overread HIGH (0)
-				//p1_d0_next &= 0xFF000000;
-
-				// this can be used to force overread LOW (1)
-				//p1_d0_next |= 0x00FFFFFF;
+				p1_d0_next |= 0x00FFFFFF; // make the lower bits 1 as well
 			}
-			else if(c == CONSOLE_SNES) // 16 bit data
+			else // if the 25th bit is 0
 			{
-				p1_d0_next = p1_d0_next << 16;
-				// check 17th bit to determine overread
-				if((p1_d0_next >> 16) & 1) // if 17th bit is 1
-				{
-					p1_d0_next |= 0x0000FFFF; // make the lower bits 1 as well
-				}
-				else // if the 17th bit is 0
-				{
-					p1_d0_next &= 0xFFFF0000; // make the lower bits 0 as well
-				}
+				p1_d0_next &= 0xFF000000; // make the lower bits 0 as well
 			}
+
+			// this can be used to force overread HIGH (0)
+			//p1_d0_next &= 0xFF000000;
+
+			// this can be used to force overread LOW (1)
+			//p1_d0_next |= 0x00FFFFFF;
+		}
+		else if(c == CONSOLE_SNES) // 16 bit data
+		{
+			p1_d0_next = ((p1_d0_next >> 8) & 0xFF) | ((p1_d0_next << 8) & 0xFF00);
+			p1_d0_next = p1_d0_next << 16;
+			// check 17th bit to determine overread
+			if((p1_d0_next >> 16) & 1) // if 17th bit is 1
+			{
+				p1_d0_next |= 0x0000FFFF; // make the lower bits 1 as well
+			}
+			else // if the 17th bit is 0
+			{
+				p1_d0_next &= 0xFFFF0000; // make the lower bits 0 as well
+			}
+
+			// this can be used to force overread HIGH (0)
+			//p1_d0_next &= 0xFFFF0000;
+
+			// this can be used to force overread LOW (1)
+			//p1_d0_next |= 0x0000FFFF;
 		}
 
 		if(!dataptr) // notify buffer underflow

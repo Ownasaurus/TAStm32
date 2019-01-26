@@ -9,7 +9,7 @@ import argparse_helper
 
 import r08, r16m, m64
 
-DEBUG = True
+DEBUG = False
 int_buffer = 1024 # internal buffer size on replay device
 
 int_to_byte_struct = struct.Struct('B')
