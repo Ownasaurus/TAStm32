@@ -14,23 +14,7 @@ def select_serial_port(ports=None):
         ports = list_serial_ports()
     if len(ports) == 0:
         raise RuntimeError('No serial port available')
-    elif len(ports) == 1:
-        dev = ports[0]
     else:
-        # p = 0
-        # for port in ports:
-            # print(p, port)
-            # p += 1
-        # while True:
-            # try:
-                # choice = int(input('Select a port: '))
-                # if choice in list(range(len(ports))):
-                    # port = ports[choice]
-                    # break
-            # except KeyboardInterrupt:
-                # raise
-            # except:
-                # continue
         devs = []
         for dev in ports:
             if dev.vid == device_vid and dev.pid == device_pid:
