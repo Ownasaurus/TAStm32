@@ -9,7 +9,6 @@ import argparse_helper
 
 import r08, r16m, m64
 
-DEBUG = False
 int_buffer = 1024 # internal buffer size on replay device
 
 int_to_byte_struct = struct.Struct('B')
@@ -120,6 +119,9 @@ class TAStm32():
 def main():
     parser = argparse_helper.setup_parser_full()
     args = parser.parse_args()
+
+    DEBUG = args.debug
+
     args.players = args.players.split(',')
     for x in range(len(args.players)):
         args.players[x] = int(args.players[x])
