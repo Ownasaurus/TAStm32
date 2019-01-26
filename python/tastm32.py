@@ -9,8 +9,6 @@ import argparse_helper
 
 import r08, r16m, m64
 
-DEBUG = False
-
 int_buffer = 1024 # internal buffer size on replay device
 
 int_to_byte_struct = struct.Struct('B')
@@ -119,6 +117,7 @@ class TAStm32():
             raise RuntimeError('Error during setup')
 
 def main():
+    global DEBUG
     parser = argparse_helper.setup_parser_full()
     args = parser.parse_args()
 
@@ -146,7 +145,7 @@ def main():
         raise RuntimeError('ERROR')
         sys.exit()
     if args.console == 'n64':
-        buffer = m64.read_input(data, args.players)
+        buffer = m64.read_input(data)
         blankframe = b'\x00\x00\x00\x00' * len(args.players)
     elif args.console == 'snes':
         buffer = r16m.read_input(data, args.players)

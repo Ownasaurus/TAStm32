@@ -29,7 +29,7 @@ def read_header(data):
     return header
 
 def read_input(data, header=None):
-    if header == None or header == [0]:
+    if header == None:
         header = read_header(data)
     print(header)
     if header['version'] == 1 or header['version'] == 2:
