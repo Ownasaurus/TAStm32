@@ -29,8 +29,9 @@ def read_header(data):
     return header
 
 def read_input(data, header=None):
-    if header == None:
+    if header == None or header == [0]:
         header = read_header(data)
+    print(header)
     if header['version'] == 1 or header['version'] == 2:
         start = 0x200
     elif header['version'] == 3:
