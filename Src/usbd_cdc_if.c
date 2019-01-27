@@ -300,7 +300,7 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
   /* USER CODE BEGIN 6 */
 	static SerialState ss = SERIAL_PREFIX;
 	static SerialRun sr = RUN_NONE;
-	RunData frame;
+	RunData frame[MAX_CONTROLLERS][MAX_DATA_LANES];
 	uint8_t val;
 
 	for(int byteNum = 0;byteNum < *Len;byteNum++)
@@ -314,14 +314,20 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 					case 'R': // Reset/clear all configuration
 
 						// disable interrupts on latch/clock/data for now
+						HAL_NVIC_DisableIRQ(EXTI0_IRQn);
 						HAL_NVIC_DisableIRQ(EXTI1_IRQn);
 						HAL_NVIC_DisableIRQ(EXTI2_IRQn);
 						HAL_NVIC_DisableIRQ(EXTI9_5_IRQn);
 
 						// clear all interrupts
+						while (HAL_NVIC_GetPendingIRQ(EXTI0_IRQn))
+						{
+							__HAL_GPIO_EXTI_CLEAR_IT(P2_CLOCK_Pin);
+							HAL_NVIC_ClearPendingIRQ(EXTI0_IRQn);
+						}
 						while (HAL_NVIC_GetPendingIRQ(EXTI1_IRQn))
 						{
-							__HAL_GPIO_EXTI_CLEAR_IT(P1_Latch_Pin);
+							__HAL_GPIO_EXTI_CLEAR_IT(P1_LATCH_Pin);
 							HAL_NVIC_ClearPendingIRQ(EXTI1_IRQn);
 						}
 						while (HAL_NVIC_GetPendingIRQ(EXTI2_IRQn))
@@ -332,6 +338,7 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 						while (HAL_NVIC_GetPendingIRQ(EXTI9_5_IRQn))
 						{
 							__HAL_GPIO_EXTI_CLEAR_IT(P1_DATA_0_Pin);
+							__HAL_GPIO_EXTI_CLEAR_IT(P2_LATCH_Pin);
 							HAL_NVIC_ClearPendingIRQ(EXTI9_5_IRQn);
 						}
 						while (HAL_NVIC_GetPendingIRQ(TIM3_IRQn))
@@ -429,27 +436,66 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 				}
 				break;
 			case SERIAL_NUM_CONTROLLERS:
-				//TODO: refine this
+				//TODO: actually get correct players/controllers instead of counting bits
 
-				// calculate the number of players by calculating the number of set bits
 				val = Buf[byteNum];
-				uint8_t count = 0;
-				while (val)
+				uint8_t p1 = (val >> 4);
+				uint8_t p2 = (val & 0xF);
+				uint8_t p1_lanes = 0, p2_lanes = 0;
+
+				if(p1 == 0x8)
 				{
-					count += val & 1;
-					val >>= 1;
+					p1_lanes = 1;
+				}
+				else if(p1 == 0xC)
+				{
+					p1_lanes = 2;
+				}
+				else if(p1 == 0xE)
+				{
+					p1_lanes = 3;
 				}
 
-				if(1 <= count && count <= 8)
+				if(p2 == 0x8)
 				{
-						TASRunSetNumControllers(sr, count);
-						ss = SERIAL_SETTINGS;
+					p2_lanes = 1;
 				}
-				else // Error: num controllers not supported
+				else if(p2 == 0xC)
 				{
-						CDC_Transmit_FS((uint8_t*)"\xFD", 1);
-						break;
+					p2_lanes = 2;
 				}
+				else if(p2 == 0xE)
+				{
+					p2_lanes = 3;
+				}
+
+				if(p1 != 0) // player 1 better have some kind of data!
+				{
+					if(p2 != 0) // 2 controllers
+					{
+						TASRunSetNumControllers(sr, 2);
+
+						if(p1_lanes == p2_lanes)
+						{
+							TASRunSetNumDataLanes(sr, p1_lanes);
+						}
+						else // error
+						{
+							CDC_Transmit_FS((uint8_t*)"\xFD", 1);
+						}
+					}
+					else // 1 controller
+					{
+						TASRunSetNumControllers(sr, 1);
+						TASRunSetNumDataLanes(sr, p1_lanes);
+					}
+				}
+				else
+				{
+					CDC_Transmit_FS((uint8_t*)"\xFD", 1);
+				}
+
+				ss = SERIAL_SETTINGS;
 				break;
 			case SERIAL_SETTINGS:
 				//TODO: read settings byte
@@ -460,6 +506,7 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 
 				if(c == CONSOLE_NES || c == CONSOLE_SNES)
 				{
+					HAL_NVIC_EnableIRQ(EXTI0_IRQn);
 					HAL_NVIC_EnableIRQ(EXTI1_IRQn);
 					HAL_NVIC_EnableIRQ(EXTI2_IRQn);
 				}

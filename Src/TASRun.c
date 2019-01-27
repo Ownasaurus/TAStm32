@@ -4,41 +4,20 @@
 #include "TASRun.h"
 #include "stm32f4xx_hal.h"
 
-TASRun tasruns[4];
+#define MAX_NUM_RUNS 2
 
-RunData* GetNextFrame(int runNum)
+TASRun tasruns[MAX_NUM_RUNS];
+
+RunData (*GetNextFrame(int runNum))[MAX_CONTROLLERS][MAX_DATA_LANES]
 {
 	if(tasruns[runNum].size == 0) // in case of buffer underflow
 	{
 		return NULL; // buffer underflow
 	}
 
-	RunData* retval = tasruns[runNum].current;
+	RunData (*retval)[MAX_CONTROLLERS][MAX_DATA_LANES] = tasruns[runNum].current;
 
 	// advance frame
-	if(tasruns[runNum].current != tasruns[runNum].end)
-	{
-		(tasruns[runNum].current)++;
-	}
-	else
-	{
-		tasruns[runNum].current = tasruns[runNum].runData;
-	}
-
-	tasruns[runNum].size--;
-
-	return retval;
-}
-
-N64ControllerData* GetNextN64Frame(int runNum)
-{
-	if(tasruns[runNum].size == 0) // in case of buffer underflow
-	{
-		return NULL;
-	}
-
-	N64ControllerData* retval = (N64ControllerData*)tasruns[runNum].current;
-
 	if(tasruns[runNum].current != tasruns[runNum].end)
 	{
 		(tasruns[runNum].current)++;
@@ -66,7 +45,7 @@ void SetRunStarted(int numRun, uint8_t started)
 void ResetTASRuns()
 {
 	memset(tasruns,0,sizeof(tasruns));
-	for(int x = 0;x < 4;x++)
+	for(int x = 0;x < MAX_NUM_RUNS;x++)
 	{
 		tasruns[x].buf = tasruns[x].runData;
 		tasruns[x].current = tasruns[x].runData;
@@ -79,6 +58,21 @@ void TASRunSetNumControllers(int numRun, uint8_t numControllers)
 	tasruns[numRun].numControllers = numControllers;
 }
 
+uint8_t TASRunGetNumControllers(int numRun)
+{
+	return tasruns[numRun].numControllers;
+}
+
+void TASRunSetNumDataLanes(int numRun, uint8_t numDataLanes)
+{
+	tasruns[numRun].numDataLanes = numDataLanes;
+}
+
+uint8_t TASRunGetNumDataLanes(int numRun)
+{
+	return tasruns[numRun].numDataLanes;
+}
+
 Console TASRunGetConsole(int numRun)
 {
 	return tasruns[numRun].console;
@@ -89,42 +83,48 @@ void TASRunSetConsole(int numRun, Console console)
 	tasruns[numRun].console = console;
 }
 
-void GetRunDataAndAdvance(RunData* rd, int index)
+void GetRunDataAndAdvance(RunData (*rd)[MAX_CONTROLLERS][MAX_DATA_LANES], int index)
 {
-	memcpy(rd,tasruns[0].current,sizeof(*rd));
+	memcpy(rd,tasruns[index].current,sizeof(*rd));
 	(tasruns[index].current)++;
 }
 
-void ExtractDataAndAdvance(RunData* rd, int index, uint8_t* Buf, int *byteNum)
+void ExtractDataAndAdvance(RunData (*rd)[MAX_CONTROLLERS][MAX_DATA_LANES], int index, uint8_t* Buf, int *byteNum)
 {
-	uint8_t bytesPerFrame = 0;
-	uint8_t maxPlayers = 0;
+	uint8_t bytesPerInput = 0;
+	uint8_t numControllers = tasruns[index].numControllers;
+	uint8_t numDataLanes = tasruns[index].numDataLanes;
 
 	memset(rd, 0, sizeof(*rd)); // prepare the data container
 
 	switch(tasruns[index].console)
 	{
 		case CONSOLE_N64:
-			bytesPerFrame = sizeof(N64ControllerData);
-			maxPlayers = 1;
+			bytesPerInput = sizeof(N64ControllerData);
 			break;
 		case CONSOLE_SNES:
-			bytesPerFrame = sizeof(SNESControllerData);
-			maxPlayers = 4;
+			bytesPerInput = sizeof(SNESControllerData);
 			break;
 		case CONSOLE_NES:
-			bytesPerFrame = sizeof(NESControllerData);
-			maxPlayers = 2;
+			bytesPerInput = sizeof(NESControllerData);
 			break;
 		default: // should never reach this
 			break;
 	}
 
-	memcpy(rd, &(Buf[(*byteNum)]), bytesPerFrame); // copy only what is necessary
-	(*byteNum) += ((bytesPerFrame * maxPlayers) - 1); // advance the index only what is necessary
+	for(int x = 0;x < numControllers;x++)
+	{
+		for(int y = 0;y < numDataLanes;y++)
+		{
+			memcpy(&rd[x][y], &(Buf[(*byteNum)]), bytesPerInput); // copy only what is necessary
+			(*byteNum) += bytesPerInput; // advance the index only what is necessary
+		}
+	}
+
+	(*byteNum)--; // back up 1 since the main loop will advance it one
 }
 
-uint8_t AddFrame(int runIndex, RunData* frame)
+uint8_t AddFrame(int runIndex, RunData (*frame)[MAX_CONTROLLERS][MAX_DATA_LANES])
 {
 	// first check buffer isn't full
 	if(tasruns[runIndex].size == MAX_SIZE)

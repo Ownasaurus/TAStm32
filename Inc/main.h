@@ -80,9 +80,16 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define B1_Pin GPIO_PIN_13
 #define B1_GPIO_Port GPIOC
-#define P1_Latch_Pin GPIO_PIN_1
-#define P1_Latch_GPIO_Port GPIOC
-#define P1_Latch_EXTI_IRQn EXTI1_IRQn
+#define P1_DATA_2_Pin GPIO_PIN_14
+#define P1_DATA_2_GPIO_Port GPIOC
+#define P2_DATA_0_Pin GPIO_PIN_15
+#define P2_DATA_0_GPIO_Port GPIOC
+#define P2_CLOCK_Pin GPIO_PIN_0
+#define P2_CLOCK_GPIO_Port GPIOC
+#define P2_CLOCK_EXTI_IRQn EXTI0_IRQn
+#define P1_LATCH_Pin GPIO_PIN_1
+#define P1_LATCH_GPIO_Port GPIOC
+#define P1_LATCH_EXTI_IRQn EXTI1_IRQn
 #define P1_CLOCK_Pin GPIO_PIN_2
 #define P1_CLOCK_GPIO_Port GPIOC
 #define P1_CLOCK_EXTI_IRQn EXTI2_IRQn
@@ -90,6 +97,13 @@ void Error_Handler(void);
 #define P1_DATA_1_GPIO_Port GPIOC
 #define LD2_Pin GPIO_PIN_5
 #define LD2_GPIO_Port GPIOA
+#define P2_LATCH_Pin GPIO_PIN_7
+#define P2_LATCH_GPIO_Port GPIOC
+#define P2_LATCH_EXTI_IRQn EXTI9_5_IRQn
+#define P2_DATA_2_Pin GPIO_PIN_8
+#define P2_DATA_2_GPIO_Port GPIOC
+#define P2_DATA_1_Pin GPIO_PIN_9
+#define P2_DATA_1_GPIO_Port GPIOC
 #define P1_DATA_0_Pin GPIO_PIN_8
 #define P1_DATA_0_GPIO_Port GPIOA
 #define P1_DATA_0_EXTI_IRQn EXTI9_5_IRQn
