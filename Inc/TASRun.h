@@ -32,7 +32,7 @@ typedef struct
 	RunData runData[MAX_SIZE][MAX_CONTROLLERS][MAX_DATA_LANES];
 	RunData (*buf)[MAX_CONTROLLERS][MAX_DATA_LANES]; // points to the next place the received serial data will be stored
 	RunData (*end)[MAX_CONTROLLERS][MAX_DATA_LANES]; // points to the end of the array for bounds checking
-	RunData (*current)[MAX_CONTROLLERS][MAX_DATA_LANES]; // points to what the n64 will read next
+	RunData (*current)[MAX_CONTROLLERS][MAX_DATA_LANES]; // points to what the console will read next
 	uint8_t bit; // only used for NES/SNES
 	uint16_t size;
 	uint8_t runStarted;
@@ -46,10 +46,9 @@ uint8_t TASRunGetNumControllers(int numRun);
 void TASRunSetNumDataLanes(int numRun, uint8_t numDataLanes);
 uint8_t TASRunGetNumDataLanes(int numRun);
 void TASRunSetConsole(int numRun, Console c);
-uint8_t AddFrame(int runIndex, RunData (*frame)[MAX_CONTROLLERS][MAX_DATA_LANES]);
+uint8_t AddFrame(int runIndex, RunData (frame)[MAX_CONTROLLERS][MAX_DATA_LANES]);
 Console TASRunGetConsole(int numRun);
-void GetRunDataAndAdvance(RunData (*rd)[MAX_CONTROLLERS][MAX_DATA_LANES], int index);
-void ExtractDataAndAdvance(RunData (*rd)[MAX_CONTROLLERS][MAX_DATA_LANES], int index, uint8_t* Buf, int *byteNum);
+void ExtractDataAndAdvance(RunData (rd)[MAX_CONTROLLERS][MAX_DATA_LANES], int index, uint8_t* Buf, int *byteNum);
 RunData (*GetNextFrame(int runNum))[MAX_CONTROLLERS][MAX_DATA_LANES];
 void SetP1Data0InputMode();
 void SetP1Data0OutputMode();

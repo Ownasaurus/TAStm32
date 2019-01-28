@@ -83,19 +83,13 @@ void TASRunSetConsole(int numRun, Console console)
 	tasruns[numRun].console = console;
 }
 
-void GetRunDataAndAdvance(RunData (*rd)[MAX_CONTROLLERS][MAX_DATA_LANES], int index)
-{
-	memcpy(rd,tasruns[index].current,sizeof(*rd));
-	(tasruns[index].current)++;
-}
-
-void ExtractDataAndAdvance(RunData (*rd)[MAX_CONTROLLERS][MAX_DATA_LANES], int index, uint8_t* Buf, int *byteNum)
+void ExtractDataAndAdvance(RunData (rd)[MAX_CONTROLLERS][MAX_DATA_LANES], int index, uint8_t* Buf, int *byteNum)
 {
 	uint8_t bytesPerInput = 0;
 	uint8_t numControllers = tasruns[index].numControllers;
 	uint8_t numDataLanes = tasruns[index].numDataLanes;
 
-	memset(rd, 0, sizeof(*rd)); // prepare the data container
+	memset(rd, 0, sizeof(RunData[MAX_CONTROLLERS][MAX_DATA_LANES])); // prepare the data container
 
 	switch(tasruns[index].console)
 	{
@@ -124,7 +118,7 @@ void ExtractDataAndAdvance(RunData (*rd)[MAX_CONTROLLERS][MAX_DATA_LANES], int i
 	(*byteNum)--; // back up 1 since the main loop will advance it one
 }
 
-uint8_t AddFrame(int runIndex, RunData (*frame)[MAX_CONTROLLERS][MAX_DATA_LANES])
+uint8_t AddFrame(int runIndex, RunData (frame)[MAX_CONTROLLERS][MAX_DATA_LANES])
 {
 	// first check buffer isn't full
 	if(tasruns[runIndex].size == MAX_SIZE)
@@ -132,7 +126,7 @@ uint8_t AddFrame(int runIndex, RunData (*frame)[MAX_CONTROLLERS][MAX_DATA_LANES]
 		return 0;
 	}
 
-	memcpy(tasruns[runIndex].buf,frame,sizeof(*frame));
+	memcpy(tasruns[runIndex].buf,frame,sizeof(RunData[MAX_CONTROLLERS][MAX_DATA_LANES]));
 
 	// loop around if necessary
 	if(tasruns[runIndex].buf != tasruns[runIndex].end)

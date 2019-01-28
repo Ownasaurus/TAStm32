@@ -380,8 +380,8 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 				}
 				break;
 			case SERIAL_CONTROLLER_DATA:
-				ExtractDataAndAdvance(&frame, sr, Buf, &byteNum);
-				if(AddFrame(sr, &frame) == 0) // buffer must have been full
+				ExtractDataAndAdvance(frame, sr, Buf, &byteNum);
+				if(AddFrame(sr, frame) == 0) // buffer must have been full
 				{
 					CDC_Transmit_FS((uint8_t*)"\xB0", 1);
 				}
