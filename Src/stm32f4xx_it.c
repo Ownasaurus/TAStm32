@@ -188,10 +188,9 @@ void EXTI1_IRQHandler(void)
   /* USER CODE BEGIN EXTI1_IRQn 0 */
 	// P1_LATCH
 
-	if(recentLatch == 0) // no recent latch
+	if(!TASRunGetDPCMFix(0)|| recentLatch == 0) // no recent latch
 	{
-		// COMMENT THIS LINE OUT TO DISABLE DPCM FIX
-		//recentLatch = 1;
+		recentLatch = 1;
 		ResetAndEnable8msTimer(); // start timer and proceed as normal
 
 		// if first latch, put the data straight in, bypassing the "next" buffer
@@ -206,7 +205,7 @@ void EXTI1_IRQHandler(void)
 			memcpy((uint32_t*)&p2_d1, &dataptr[0][1][1], sizeof(RunData));
 			memcpy((uint32_t*)&p2_d2, &dataptr[0][1][2], sizeof(RunData));
 
-			// swap bytes due to endainness
+			// swap bytes due to endianness
 
 			c = TASRunGetConsole(0);
 
@@ -220,7 +219,7 @@ void EXTI1_IRQHandler(void)
 				p2_d1 <<= 24;
 				p2_d2 <<= 24;
 				// check 25th bit to determine overread
-				if((p1_d0 >> 24) & 1) // if 25th bit is 1
+				/*if((p1_d0 >> 24) & 1) // if 25th bit is 1
 				{
 					p1_d0 |= 0x00FFFFFF; // make the lower bits 1 as well
 				}
@@ -267,13 +266,28 @@ void EXTI1_IRQHandler(void)
 				else // if the 25th bit is 0
 				{
 					p2_d2 &= 0xFF000000; // make the lower bits 0 as well
+				}*/
+
+				if(TASRunGetOverread(0)) // overread is 1/HIGH
+				{
+					// so set logical LOW (button pressed)
+					p1_d0 &= 0xFF000000;
+					p1_d1 &= 0xFF000000;
+					p1_d2 &= 0xFF000000;
+					p2_d0 &= 0xFF000000;
+					p2_d1 &= 0xFF000000;
+					p2_d2 &= 0xFF000000;
 				}
-
-				// this can be used to force overread HIGH (0)
-				//p1_d0 &= 0xFF000000;
-
-				// this can be used to force overread LOW (1)
-				//p1_d0 |= 0x00FFFFFF;
+				else // overrread is 0/LOW
+				{
+					// so set logical HIGH (button not pressed)
+					p1_d0 |= 0x00FFFFFF;
+					p1_d1 |= 0x00FFFFFF;
+					p1_d2 |= 0x00FFFFFF;
+					p2_d0 |= 0x00FFFFFF;
+					p2_d1 |= 0x00FFFFFF;
+					p2_d2 |= 0x00FFFFFF;
+				}
 			}
 			else if(c == CONSOLE_SNES) // 16 bit data
 			{
@@ -291,7 +305,7 @@ void EXTI1_IRQHandler(void)
 				p2_d1 <<= 16;
 				p2_d2 <<= 16;
 				// check 17th bit to determine overread
-				if((p1_d0 >> 16) & 1) // if 17th bit is 1
+				/*if((p1_d0 >> 16) & 1) // if 17th bit is 1
 				{
 					p1_d0 |= 0x0000FFFF; // make the lower bits 1 as well
 				}
@@ -338,13 +352,28 @@ void EXTI1_IRQHandler(void)
 				else // if the 17th bit is 0
 				{
 					p2_d2 &= 0xFFFF0000; // make the lower bits 0 as well
+				}*/
+
+				if(TASRunGetOverread(0)) // overread is 1/HIGH
+				{
+					// so set logical LOW (button pressed)
+					p1_d0 &= 0xFFFF0000;
+					p1_d1 &= 0xFFFF0000;
+					p1_d2 &= 0xFFFF0000;
+					p2_d0 &= 0xFFFF0000;
+					p2_d1 &= 0xFFFF0000;
+					p2_d2 &= 0xFFFF0000;
 				}
-
-				// this can be used to force overread HIGH (0)
-				//p1_d0 &= 0xFFFF0000;
-
-				// this can be used to force overread LOW (1)
-				//p1_d0 |= 0x0000FFFF;
+				else // overrread is 0/LOW
+				{
+					// so set logical HIGH (button not pressed)
+					p1_d0 |= 0x0000FFFF;
+					p1_d1 |= 0x0000FFFF;
+					p1_d2 |= 0x0000FFFF;
+					p2_d0 |= 0x0000FFFF;
+					p2_d1 |= 0x0000FFFF;
+					p2_d2 |= 0x0000FFFF;
+				}
 			}
 			SetRunStarted(0, 1);
 		}
@@ -446,7 +475,7 @@ void EXTI1_IRQHandler(void)
 			p2_d1_next <<= 24;
 			p2_d2_next <<= 24;
 			// check 25th bit to determine overread
-			if((p1_d0_next >> 24) & 1) // if 25th bit is 1
+			/*if((p1_d0_next >> 24) & 1) // if 25th bit is 1
 			{
 				p1_d0_next |= 0x00FFFFFF; // make the lower bits 1 as well
 			}
@@ -493,13 +522,28 @@ void EXTI1_IRQHandler(void)
 			else // if the 25th bit is 0
 			{
 				p2_d2_next &= 0xFF000000; // make the lower bits 0 as well
+			}*/
+
+			if(TASRunGetOverread(0)) // overread is 1/HIGH
+			{
+				// so set logical LOW (button pressed)
+				p1_d0_next &= 0xFF000000;
+				p1_d1_next &= 0xFF000000;
+				p1_d2_next &= 0xFF000000;
+				p2_d0_next &= 0xFF000000;
+				p2_d1_next &= 0xFF000000;
+				p2_d2_next &= 0xFF000000;
 			}
-
-			// this can be used to force overread HIGH (0)
-			//p1_d0_next &= 0xFF000000;
-
-			// this can be used to force overread LOW (1)
-			//p1_d0_next |= 0x00FFFFFF;
+			else // overrread is 0/LOW
+			{
+				// so set logical HIGH (button not pressed)
+				p1_d0_next |= 0x00FFFFFF;
+				p1_d1_next |= 0x00FFFFFF;
+				p1_d2_next |= 0x00FFFFFF;
+				p2_d0_next |= 0x00FFFFFF;
+				p2_d1_next |= 0x00FFFFFF;
+				p2_d2_next |= 0x00FFFFFF;
+			}
 		}
 		else if(c == CONSOLE_SNES) // 16 bit data
 		{
@@ -517,7 +561,7 @@ void EXTI1_IRQHandler(void)
 			p2_d1_next <<= 16;
 			p2_d2_next <<= 16;
 			// check 17th bit to determine overread
-			if((p1_d0_next >> 16) & 1) // if 17th bit is 1
+			/*if((p1_d0_next >> 16) & 1) // if 17th bit is 1
 			{
 				p1_d0_next |= 0x0000FFFF; // make the lower bits 1 as well
 			}
@@ -564,13 +608,28 @@ void EXTI1_IRQHandler(void)
 			else // if the 17th bit is 0
 			{
 				p2_d2_next &= 0xFFFF0000; // make the lower bits 0 as well
+			}*/
+
+			if(TASRunGetOverread(0)) // overread is 1/HIGH
+			{
+				// so set logical LOW (button pressed)
+				p1_d0_next &= 0xFFFF0000;
+				p1_d1_next &= 0xFFFF0000;
+				p1_d2_next &= 0xFFFF0000;
+				p2_d0_next &= 0xFFFF0000;
+				p2_d1_next &= 0xFFFF0000;
+				p2_d2_next &= 0xFFFF0000;
 			}
-
-			// this can be used to force overread HIGH (0)
-			//p1_d0_next &= 0xFFFF0000;
-
-			// this can be used to force overread LOW (1)
-			//p1_d0_next |= 0x0000FFFF;
+			else // overrread is 0/LOW
+			{
+				// so set logical HIGH (button not pressed)
+				p1_d0_next |= 0x0000FFFF;
+				p1_d1_next |= 0x0000FFFF;
+				p1_d2_next |= 0x0000FFFF;
+				p2_d0_next |= 0x0000FFFF;
+				p2_d1_next |= 0x0000FFFF;
+				p2_d2_next |= 0x0000FFFF;
+			}
 		}
 
 		if(!dataptr) // notify buffer underflow
@@ -582,7 +641,6 @@ void EXTI1_IRQHandler(void)
 	}
 	else // we latched very recently
 	{
-		//TODO: write for all registers
 		// write the first bit
 		if((p1_d0 >> 31) & 1) // if the button is PRESSED, set the line LOW
 		{
@@ -724,7 +782,7 @@ void EXTI9_5_IRQHandler(void)
 		  }
 		  else
 		  {
-			  SendControllerDataN64((*frame)[0][0]);
+			  SendControllerDataN64(frame[0][0][0]);
 		  }
 		  break;
 	  case 0x02:

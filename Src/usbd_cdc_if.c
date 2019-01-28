@@ -498,7 +498,11 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 				ss = SERIAL_SETTINGS;
 				break;
 			case SERIAL_SETTINGS:
-				//TODO: read settings byte
+				val = Buf[byteNum];
+
+				TASRunSetDPCMFix(0, ((val >> 7) & 1));
+				TASRunSetOverread(0, ((val >> 6) & 1));
+
 				CDC_Transmit_FS((uint8_t*)"\x01S", 2);
 
 				// enable interrupts as needed

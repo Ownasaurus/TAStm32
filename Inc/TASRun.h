@@ -36,11 +36,17 @@ typedef struct
 	uint8_t bit; // only used for NES/SNES
 	uint16_t size;
 	uint8_t runStarted;
+	uint8_t dpcmFix;
+	uint8_t overread;
 } TASRun;
 
 uint8_t GetRunStarted(int numRun);
 void SetRunStarted(int numRun, uint8_t started);
 void ResetTASRuns();
+void TASRunSetDPCMFix(int numRun, uint8_t dpcm);
+uint8_t TASRunGetDPCMFix(int numRun);
+void TASRunSetOverread(int numRun, uint8_t overread);
+uint8_t TASRunGetOverread(int numRun);
 void TASRunSetNumControllers(int numRun, uint8_t numControllers);
 uint8_t TASRunGetNumControllers(int numRun);
 void TASRunSetNumDataLanes(int numRun, uint8_t numDataLanes);

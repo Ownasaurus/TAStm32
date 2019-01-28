@@ -32,6 +32,26 @@ RunData (*GetNextFrame(int runNum))[MAX_CONTROLLERS][MAX_DATA_LANES]
 	return retval;
 }
 
+void TASRunSetOverread(int numRun, uint8_t overread)
+{
+	tasruns[numRun].overread = overread;
+}
+
+uint8_t TASRunGetOverread(int numRun)
+{
+	return tasruns[numRun].overread;
+}
+
+void TASRunSetDPCMFix(int numRun, uint8_t dpcm)
+{
+	tasruns[numRun].dpcmFix = dpcm;
+}
+
+uint8_t TASRunGetDPCMFix(int numRun)
+{
+	return tasruns[numRun].dpcmFix;
+}
+
 uint8_t GetRunStarted(int numRun)
 {
 	return tasruns[numRun].runStarted;
