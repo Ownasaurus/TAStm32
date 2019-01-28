@@ -56,8 +56,8 @@
 #define P1_D1_LOW_C   (1 << 19);
 #define P1_D2_HIGH_C  (1 << 14);
 #define P1_D2_LOW_C   (1 << 30);
-#define P2_D0_HIGH_C  (1 << 15);
-#define P2_D0_LOW_C   (1 << 31);
+#define P2_D0_HIGH_C  (1 << 6);
+#define P2_D0_LOW_C   (1 << 22);
 #define P2_D1_HIGH_C  (1 << 9);
 #define P2_D1_LOW_C   (1 << 25);
 #define P2_D2_HIGH_C  (1 << 8);
@@ -191,7 +191,7 @@ void EXTI1_IRQHandler(void)
 	if(recentLatch == 0) // no recent latch
 	{
 		// COMMENT THIS LINE OUT TO DISABLE DPCM FIX
-		recentLatch = 1;
+		//recentLatch = 1;
 		ResetAndEnable8msTimer(); // start timer and proceed as normal
 
 		// if first latch, put the data straight in, bypassing the "next" buffer
