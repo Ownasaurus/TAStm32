@@ -359,7 +359,7 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 						sr = RUN_A;
 						ss = SERIAL_CONTROLLER_DATA;
 						break;
-					case 'B': // Run #2 controller data
+					/*case 'B': // Run #2 controller data
 						sr = RUN_B;
 						ss = SERIAL_CONTROLLER_DATA;
 						break;
@@ -370,9 +370,12 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 					case 'D': // Run #4 controller data
 						sr = RUN_D;
 						ss = SERIAL_CONTROLLER_DATA;
-						break;
+						break;*/
 					case 'S': // Setup a run
 						ss = SERIAL_SETUP;
+						break;
+					case 'T': // Change DPCM mode
+						ss = SERIAL_DPCM;
 						break;
 					default: // Error: prefix not understood
 						CDC_Transmit_FS((uint8_t*)"\xFF", 1);
@@ -418,7 +421,7 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 						sr = RUN_A;
 						ss = SERIAL_CONSOLE;
 						break;
-					case 'B': // setup Run #2
+					/*case 'B': // setup Run #2
 						sr = RUN_B;
 						ss = SERIAL_CONSOLE;
 						break;
@@ -429,45 +432,31 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 					case 'D': // setup Run #4
 						sr = RUN_D;
 						ss = SERIAL_CONSOLE;
-						break;
+						break;*/
 					default: // Error: run number not understood
 						CDC_Transmit_FS((uint8_t*)"\xFE", 1);
 						break;
 				}
 				break;
 			case SERIAL_NUM_CONTROLLERS:
-				//TODO: actually get correct players/controllers instead of counting bits
-
 				val = Buf[byteNum];
 				uint8_t p1 = (val >> 4);
 				uint8_t p2 = (val & 0xF);
 				uint8_t p1_lanes = 0, p2_lanes = 0;
 
 				if(p1 == 0x8)
-				{
 					p1_lanes = 1;
-				}
 				else if(p1 == 0xC)
-				{
 					p1_lanes = 2;
-				}
 				else if(p1 == 0xE)
-				{
 					p1_lanes = 3;
-				}
 
 				if(p2 == 0x8)
-				{
 					p2_lanes = 1;
-				}
 				else if(p2 == 0xC)
-				{
 					p2_lanes = 2;
-				}
 				else if(p2 == 0xE)
-				{
 					p2_lanes = 3;
-				}
 
 				if(p1 != 0) // player 1 better have some kind of data!
 				{
@@ -517,6 +506,38 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 				else if(c == CONSOLE_N64)
 				{
 					HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
+				}
+
+				ss = SERIAL_COMPLETE;
+				sr = RUN_NONE;
+				break;
+			case SERIAL_DPCM:
+				val = Buf[byteNum];
+				if(val == 'A')
+				{
+					sr = RUN_A;
+				}
+				else
+				{
+					CDC_Transmit_FS((uint8_t*)"\xFE", 1);
+					break;
+				}
+
+				byteNum++;
+
+				val = Buf[byteNum];
+				if(val == 'A') // ACE mode (DPCM fix off)
+				{
+					TASRunSetDPCMFix(0, 0);
+				}
+				else if(val == 'N') // Normal Mode (DPCM fix on)
+				{
+					TASRunSetDPCMFix(0, 1);
+				}
+				else // unsupported
+				{
+					CDC_Transmit_FS((uint8_t*)"\xFB", 1);
+					break;
 				}
 
 				ss = SERIAL_COMPLETE;
