@@ -215,12 +215,13 @@ def main():
                 print('Sending Latch: {}'.format(fn))
                 fn += 1
                 frame += 1
-            for transition in args.transition:
-                if not transition[2]:
-                    if frame >= transition[0]:
-                        dev.send_transition(run_id, transition[1])
-                        transition[2] = True
-                        print('Sending Transition on Frame: {}\nTo Mode: {}'.format(frame, transition[1]))
+            if args.transition != None:
+                for transition in args.transition:
+                    if not transition[2]:
+                        if frame >= transition[0]:
+                            dev.send_transition(run_id, transition[1])
+                            transition[2] = True
+                            print('Sending Transition on Frame: {}\nTo Mode: {}'.format(frame, transition[1]))
         except serial.SerialException:
             print('ERROR: Serial Exception caught!')
             break
