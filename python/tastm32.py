@@ -94,6 +94,8 @@ class TAStm32():
                 else:
                     pbyte = pbyte ^ 2**(7-p)
             sbyte = 0
+            if dpcm:
+                sbyte = sbyte ^ 0x80
             if overread:
                 sbyte = sbyte ^ 0x40
             # TODO HANDLE WINDOW MODE
