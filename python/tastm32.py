@@ -17,6 +17,7 @@ def int_to_byte(interger):
 
 class TAStm32():
     def __init__(self, ser):
+        print('inside dev init', ser)
         try:
             self.ser = serial.Serial(ser, 115200, timeout=0)
         except serial.SerialException:
@@ -63,6 +64,12 @@ class TAStm32():
         else:
             self.activeRuns[b'A'] == True
             return b'A'
+
+    def send_transition(self, prefix, mode):
+        if self.activeRuns[prefix]:
+            if mode == b'N' or mode == b'A':
+                command = b'T' + prefix + mode
+                self.write(command)
 
     def setup_run(self, console, players=[1], dpcm=False, overread=False, window=0):
         prefix = self.get_run_prefix()
@@ -119,7 +126,18 @@ class TAStm32():
 def main():
     global DEBUG
     parser = argparse_helper.setup_parser_full()
+    
+    parser.add_argument('--transition', help='Add a transition', nargs=2, action='append')
+    
     args = parser.parse_args()
+
+    if args.transition != None:
+        for transition in args.transition:
+            transition.append(False)
+            if transition[1] == 'N':
+                transition[1] = b'N'
+            elif transition[1] == 'A':
+                transition[1] = b'A'
 
     DEBUG = args.debug
 
@@ -127,6 +145,7 @@ def main():
     for x in range(len(args.players)):
         args.players[x] = int(args.players[x])
 
+    print('outside creating dev', args.serial)
     if args.serial == None:
         dev = TAStm32(serial_helper.select_serial_port())
     else:
@@ -173,6 +192,8 @@ def main():
     if err.count(b'\xB0') != 0:
         print('Buffer Overflow x{}'.format(err.count(b'\xB0')))
 
+    frame = 0
+    frame_max = len(buffer)
     print('Main Loop Start')
     while True:
         try:
@@ -194,6 +215,13 @@ def main():
                 dev.write(data)
                 print('Sending Latch: {}'.format(fn))
                 fn += 1
+                frame += 1
+            for transition in args.transition:
+                if not transition[2]:
+                    if frame >= transition[0]:
+                        dev.send_transition(run_id, transition[1])
+                        transition[2] = True
+                        print('Sending Transition on Frame: {}\nTo Mode: {}'.format(frame, transition[1]))
         except serial.SerialException:
             print('ERROR: Serial Exception caught!')
             break
@@ -201,8 +229,8 @@ def main():
             print('^C Exiting')
             break
         except IndexError:
-            print('End of Input Exiting')
-            break
+            if frame > frame_max:
+                break
     print('Exiting')
     dev.ser.close()
     sys.exit(0)
