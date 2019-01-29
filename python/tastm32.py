@@ -210,9 +210,12 @@ def main():
                 fn -= missed
                 print('Buffer Overflow x{}'.format(err.count(b'\xB0')))
             for latch in range(latches):
-                data = run_id + buffer[fn]
-                dev.write(data)
-                print('Sending Latch: {}'.format(fn))
+                try:
+                    data = run_id + buffer[fn]
+                    dev.write(data)
+                    print('Sending Latch: {}'.format(fn))
+                except IndexError:
+                    pass
                 fn += 1
                 frame += 1
             if args.transition != None:
@@ -222,15 +225,14 @@ def main():
                             dev.send_transition(run_id, transition[1])
                             transition[2] = True
                             print('Sending Transition on Frame: {}\nTo Mode: {}'.format(frame, transition[1]))
+            if frame > frame_max:
+                break
         except serial.SerialException:
             print('ERROR: Serial Exception caught!')
             break
         except KeyboardInterrupt:
             print('^C Exiting')
             break
-        except IndexError:
-            if frame > frame_max:
-                break
     print('Exiting')
     dev.ser.close()
     sys.exit(0)
