@@ -52,16 +52,16 @@ class TAStm32():
                     if self.activeRuns[b'D']:
                         return None
                     else:
-                        self.activeRuns[b'D'] == True
+                        self.activeRuns[b'D'] = True
                         return b'D'
                 else:
-                    self.activeRuns[b'C'] == True
+                    self.activeRuns[b'C'] = True
                     return b'C'
             else:
-                self.activeRuns[b'B'] == True
+                self.activeRuns[b'B'] = True
                 return b'B'
         else:
-            self.activeRuns[b'A'] == True
+            self.activeRuns[b'A'] = True
             return b'A'
 
     def send_transition(self, prefix, mode):
