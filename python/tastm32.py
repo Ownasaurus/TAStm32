@@ -17,7 +17,6 @@ def int_to_byte(interger):
 
 class TAStm32():
     def __init__(self, ser):
-        print('inside dev init', ser)
         try:
             self.ser = serial.Serial(ser, 115200, timeout=0)
         except serial.SerialException:
@@ -134,6 +133,7 @@ def main():
     if args.transition != None:
         for transition in args.transition:
             transition.append(False)
+            transition[0] = int(transition[0])
             if transition[1] == 'N':
                 transition[1] = b'N'
             elif transition[1] == 'A':
@@ -145,7 +145,6 @@ def main():
     for x in range(len(args.players)):
         args.players[x] = int(args.players[x])
 
-    print('outside creating dev', args.serial)
     if args.serial == None:
         dev = TAStm32(serial_helper.select_serial_port())
     else:
