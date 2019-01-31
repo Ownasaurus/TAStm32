@@ -124,6 +124,50 @@ class TAStm32():
             self.activeRuns[prefix] = False
             raise RuntimeError('Error during setup')
 
+    def main_loop(self):
+        global fn
+        frame = 0
+        frame_max = len(buffer)
+        while True:
+            try:
+                c = self.read(1)
+                if c == '':
+                    continue
+                numBytes = self.ser.inWaiting()
+                if numBytes > 0:
+                    c += self.read(numBytes)
+                    if numBytes > int_buffer:
+                        print ("WARNING: High latch rate detected: " + str(numBytes))
+                latches = c.count(run_id)
+                missed = c.count(b'\xB0')
+                if missed != 0:
+                    fn -= missed
+                    print('Buffer Overflow x{}'.format(err.count(b'\xB0')))
+                for latch in range(latches):
+                    try:
+                        data = run_id + buffer[fn]
+                        self.write(data)
+                        print('Sending Latch: {}'.format(fn))
+                    except IndexError:
+                        pass
+                    fn += 1
+                    frame += 1
+                if args.transition != None:
+                    for transition in args.transition:
+                        if not transition[2]:
+                            if frame >= transition[0]:
+                                self.send_transition(run_id, transition[1])
+                                transition[2] = True
+                                print('Sending Transition on Frame: {}\nTo Mode: {}'.format(frame, transition[1]))
+                if frame > frame_max:
+                    break
+            except serial.SerialException:
+                print('ERROR: Serial Exception caught!')
+                break
+            except KeyboardInterrupt:
+                print('^C Exiting')
+                break
+
 def main():
     global DEBUG
     parser = argparse_helper.setup_parser_full()
@@ -192,49 +236,8 @@ def main():
     fn -= err.count(b'\xB0')
     if err.count(b'\xB0') != 0:
         print('Buffer Overflow x{}'.format(err.count(b'\xB0')))
-
-    frame = 0
-    frame_max = len(buffer)
     print('Main Loop Start')
-    while True:
-        try:
-            c = dev.read(1)
-            if c == '':
-                continue
-            numBytes = dev.ser.inWaiting()
-            if numBytes > 0:
-                c += dev.read(numBytes)
-                if numBytes > int_buffer:
-                    print ("WARNING: High latch rate detected: " + str(numBytes))
-            latches = c.count(run_id)
-            missed = c.count(b'\xB0')
-            if missed != 0:
-                fn -= missed
-                print('Buffer Overflow x{}'.format(err.count(b'\xB0')))
-            for latch in range(latches):
-                try:
-                    data = run_id + buffer[fn]
-                    dev.write(data)
-                    print('Sending Latch: {}'.format(fn))
-                except IndexError:
-                    pass
-                fn += 1
-                frame += 1
-            if args.transition != None:
-                for transition in args.transition:
-                    if not transition[2]:
-                        if frame >= transition[0]:
-                            dev.send_transition(run_id, transition[1])
-                            transition[2] = True
-                            print('Sending Transition on Frame: {}\nTo Mode: {}'.format(frame, transition[1]))
-            if frame > frame_max:
-                break
-        except serial.SerialException:
-            print('ERROR: Serial Exception caught!')
-            break
-        except KeyboardInterrupt:
-            print('^C Exiting')
-            break
+    dev.main_loop()
     print('Exiting')
     dev.ser.close()
     sys.exit(0)
