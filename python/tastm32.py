@@ -148,12 +148,13 @@ class TAStm32():
                 missed = c.count(b'\xB0')
                 if missed != 0:
                     fn -= missed
-                    print('Buffer Overflow x{}'.format(err.count(b'\xB0')))
+                    print('Buffer Overflow x{}'.format(missed))
                 for latch in range(latches):
                     try:
                         data = run_id + buffer[fn]
                         self.write(data)
-                        print('Sending Latch: {}'.format(fn))
+                        if fn % 100 == 0:
+                            print('Sending Latch: {}'.format(fn))
                     except IndexError:
                         pass
                     fn += 1
