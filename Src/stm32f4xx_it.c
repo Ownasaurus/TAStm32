@@ -87,7 +87,10 @@ volatile uint32_t p2_d2_next = 0;
 
 volatile int8_t p1_current_bit = 0;
 volatile int8_t p2_current_bit = 0;
+
 volatile uint8_t recentLatch = 0;
+volatile uint8_t toggleNext = 0;
+volatile uint8_t dpcmFix = 0;
 Console c = 0;
 /* USER CODE END PV */
 
@@ -187,16 +190,14 @@ void EXTI1_IRQHandler(void)
 {
   /* USER CODE BEGIN EXTI1_IRQn 0 */
 	// P1_LATCH
-	ToggleIfTransitionFound(0);
 
-	if(!TASRunGetDPCMFix(0)|| recentLatch == 0) // no recent latch
+	if(recentLatch == 0) // no recent latch
 	{
-		recentLatch = 1;
-		ResetAndEnable8msTimer(); // start timer and proceed as normal
-
 		// if first latch, put the data straight in, bypassing the "next" buffer
 		if(!GetRunStarted(0))
 		{
+			dpcmFix = TASRunGetDPCMFix(0); // read the DPCM fix
+
 			RunData (*dataptr)[MAX_CONTROLLERS][MAX_DATA_LANES] = GetNextFrame(0);
 			//p1_d0 = dataptr
 			memcpy((uint32_t*)&p1_d0, &dataptr[0][0][0], sizeof(RunData));
@@ -219,55 +220,6 @@ void EXTI1_IRQHandler(void)
 				p2_d0 <<= 24;
 				p2_d1 <<= 24;
 				p2_d2 <<= 24;
-				// check 25th bit to determine overread
-				/*if((p1_d0 >> 24) & 1) // if 25th bit is 1
-				{
-					p1_d0 |= 0x00FFFFFF; // make the lower bits 1 as well
-				}
-				else // if the 25th bit is 0
-				{
-					p1_d0 &= 0xFF000000; // make the lower bits 0 as well
-				}
-				if((p1_d1 >> 24) & 1) // if 25th bit is 1
-				{
-					p1_d1 |= 0x00FFFFFF; // make the lower bits 1 as well
-				}
-				else // if the 25th bit is 0
-				{
-					p1_d1 &= 0xFF000000; // make the lower bits 0 as well
-				}
-				if((p1_d2 >> 24) & 1) // if 25th bit is 1
-				{
-					p1_d2 |= 0x00FFFFFF; // make the lower bits 1 as well
-				}
-				else // if the 25th bit is 0
-				{
-					p1_d2 &= 0xFF000000; // make the lower bits 0 as well
-				}
-				if((p2_d0 >> 24) & 1) // if 25th bit is 1
-				{
-					p2_d0 |= 0x00FFFFFF; // make the lower bits 1 as well
-				}
-				else // if the 25th bit is 0
-				{
-					p2_d0 &= 0xFF000000; // make the lower bits 0 as well
-				}
-				if((p2_d1 >> 24) & 1) // if 25th bit is 1
-				{
-					p2_d1 |= 0x00FFFFFF; // make the lower bits 1 as well
-				}
-				else // if the 25th bit is 0
-				{
-					p2_d1 &= 0xFF000000; // make the lower bits 0 as well
-				}
-				if((p2_d2 >> 24) & 1) // if 25th bit is 1
-				{
-					p2_d2 |= 0x00FFFFFF; // make the lower bits 1 as well
-				}
-				else // if the 25th bit is 0
-				{
-					p2_d2 &= 0xFF000000; // make the lower bits 0 as well
-				}*/
 
 				if(TASRunGetOverread(0)) // overread is 1/HIGH
 				{
@@ -305,55 +257,6 @@ void EXTI1_IRQHandler(void)
 				p2_d0 <<= 16;
 				p2_d1 <<= 16;
 				p2_d2 <<= 16;
-				// check 17th bit to determine overread
-				/*if((p1_d0 >> 16) & 1) // if 17th bit is 1
-				{
-					p1_d0 |= 0x0000FFFF; // make the lower bits 1 as well
-				}
-				else // if the 17th bit is 0
-				{
-					p1_d0 &= 0xFFFF0000; // make the lower bits 0 as well
-				}
-				if((p1_d1 >> 16) & 1) // if 17th bit is 1
-				{
-					p1_d1 |= 0x0000FFFF; // make the lower bits 1 as well
-				}
-				else // if the 17th bit is 0
-				{
-					p1_d1 &= 0xFFFF0000; // make the lower bits 0 as well
-				}
-				if((p1_d2 >> 16) & 1) // if 17th bit is 1
-				{
-					p1_d2 |= 0x0000FFFF; // make the lower bits 1 as well
-				}
-				else // if the 17th bit is 0
-				{
-					p1_d2 &= 0xFFFF0000; // make the lower bits 0 as well
-				}
-				if((p2_d0 >> 16) & 1) // if 17th bit is 1
-				{
-					p2_d0 |= 0x0000FFFF; // make the lower bits 1 as well
-				}
-				else // if the 17th bit is 0
-				{
-					p2_d0 &= 0xFFFF0000; // make the lower bits 0 as well
-				}
-				if((p2_d1 >> 16) & 1) // if 17th bit is 1
-				{
-					p2_d1 |= 0x0000FFFF; // make the lower bits 1 as well
-				}
-				else // if the 17th bit is 0
-				{
-					p2_d1 &= 0xFFFF0000; // make the lower bits 0 as well
-				}
-				if((p2_d2 >> 16) & 1) // if 17th bit is 1
-				{
-					p2_d2 |= 0x0000FFFF; // make the lower bits 1 as well
-				}
-				else // if the 17th bit is 0
-				{
-					p2_d2 &= 0xFFFF0000; // make the lower bits 0 as well
-				}*/
 
 				if(TASRunGetOverread(0)) // overread is 1/HIGH
 				{
@@ -441,7 +344,19 @@ void EXTI1_IRQHandler(void)
 		GPIOC->BSRR = dataLines;
 
 		p1_current_bit = p2_current_bit = 30; // set the next bit to be read
-		TASRunIncrementFrameCount(0);
+
+		if(toggleNext)
+		{
+			dpcmFix = 1 - dpcmFix;
+		}
+
+		if(dpcmFix)
+		{
+			recentLatch = 1;
+			ResetAndEnable8msTimer(); // start timer and proceed as normal
+		}
+
+		toggleNext = TASRunIncrementFrameCount(0);
 
 		// now prepare the next frame!
 		RunData (*dataptr)[MAX_CONTROLLERS][MAX_DATA_LANES] = GetNextFrame(0);
@@ -476,55 +391,6 @@ void EXTI1_IRQHandler(void)
 			p2_d0_next <<= 24;
 			p2_d1_next <<= 24;
 			p2_d2_next <<= 24;
-			// check 25th bit to determine overread
-			/*if((p1_d0_next >> 24) & 1) // if 25th bit is 1
-			{
-				p1_d0_next |= 0x00FFFFFF; // make the lower bits 1 as well
-			}
-			else // if the 25th bit is 0
-			{
-				p1_d0_next &= 0xFF000000; // make the lower bits 0 as well
-			}
-			if((p1_d1_next >> 24) & 1) // if 25th bit is 1
-			{
-				p1_d1_next |= 0x00FFFFFF; // make the lower bits 1 as well
-			}
-			else // if the 25th bit is 0
-			{
-				p1_d1_next &= 0xFF000000; // make the lower bits 0 as well
-			}
-			if((p1_d2_next >> 24) & 1) // if 25th bit is 1
-			{
-				p1_d2_next |= 0x00FFFFFF; // make the lower bits 1 as well
-			}
-			else // if the 25th bit is 0
-			{
-				p1_d2_next &= 0xFF000000; // make the lower bits 0 as well
-			}
-			if((p2_d0_next >> 24) & 1) // if 25th bit is 1
-			{
-				p2_d0_next |= 0x00FFFFFF; // make the lower bits 1 as well
-			}
-			else // if the 25th bit is 0
-			{
-				p2_d0_next &= 0xFF000000; // make the lower bits 0 as well
-			}
-			if((p2_d1_next >> 24) & 1) // if 25th bit is 1
-			{
-				p2_d1_next |= 0x00FFFFFF; // make the lower bits 1 as well
-			}
-			else // if the 25th bit is 0
-			{
-				p2_d1_next &= 0xFF000000; // make the lower bits 0 as well
-			}
-			if((p2_d2_next >> 24) & 1) // if 25th bit is 1
-			{
-				p2_d2_next |= 0x00FFFFFF; // make the lower bits 1 as well
-			}
-			else // if the 25th bit is 0
-			{
-				p2_d2_next &= 0xFF000000; // make the lower bits 0 as well
-			}*/
 
 			if(TASRunGetOverread(0)) // overread is 1/HIGH
 			{
@@ -562,55 +428,6 @@ void EXTI1_IRQHandler(void)
 			p2_d0_next <<= 16;
 			p2_d1_next <<= 16;
 			p2_d2_next <<= 16;
-			// check 17th bit to determine overread
-			/*if((p1_d0_next >> 16) & 1) // if 17th bit is 1
-			{
-				p1_d0_next |= 0x0000FFFF; // make the lower bits 1 as well
-			}
-			else // if the 17th bit is 0
-			{
-				p1_d0_next &= 0xFFFF0000; // make the lower bits 0 as well
-			}
-			if((p1_d1_next >> 16) & 1) // if 17th bit is 1
-			{
-				p1_d1_next |= 0x0000FFFF; // make the lower bits 1 as well
-			}
-			else // if the 17th bit is 0
-			{
-				p1_d1_next &= 0xFFFF0000; // make the lower bits 0 as well
-			}
-			if((p1_d2_next >> 16) & 1) // if 17th bit is 1
-			{
-				p1_d2_next |= 0x0000FFFF; // make the lower bits 1 as well
-			}
-			else // if the 17th bit is 0
-			{
-				p1_d2_next &= 0xFFFF0000; // make the lower bits 0 as well
-			}
-			if((p2_d0_next >> 16) & 1) // if 17th bit is 1
-			{
-				p2_d0_next |= 0x0000FFFF; // make the lower bits 1 as well
-			}
-			else // if the 17th bit is 0
-			{
-				p2_d0_next &= 0xFFFF0000; // make the lower bits 0 as well
-			}
-			if((p2_d1_next >> 16) & 1) // if 17th bit is 1
-			{
-				p2_d1_next |= 0x0000FFFF; // make the lower bits 1 as well
-			}
-			else // if the 17th bit is 0
-			{
-				p2_d1_next &= 0xFFFF0000; // make the lower bits 0 as well
-			}
-			if((p2_d2_next >> 16) & 1) // if 17th bit is 1
-			{
-				p2_d2_next |= 0x0000FFFF; // make the lower bits 1 as well
-			}
-			else // if the 17th bit is 0
-			{
-				p2_d2_next &= 0xFFFF0000; // make the lower bits 0 as well
-			}*/
 
 			if(TASRunGetOverread(0)) // overread is 1/HIGH
 			{
@@ -822,8 +639,8 @@ void TIM3_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM3_IRQn 0 */
 
-	recentLatch = 0;
-	Disable8msTimer(); // to ensure it was a 1-shot
+  recentLatch = 0;
+  Disable8msTimer(); // to ensure it was a 1-shot
 
   /* USER CODE END TIM3_IRQn 0 */
   HAL_TIM_IRQHandler(&htim3);

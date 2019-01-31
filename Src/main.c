@@ -47,6 +47,7 @@
 #include <string.h>
 #include "usbd_cdc_if.h"
 #include "n64.h"
+#include "TASRun.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
