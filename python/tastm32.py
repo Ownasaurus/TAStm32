@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 import sys
+import os
 import serial
 import struct
 import time
+import gc
+import psutil
 
 import serial_helper
 import argparse_helper
@@ -125,6 +128,9 @@ class TAStm32():
             raise RuntimeError('Error during setup')
 
     def main_loop(self):
+        global DEBUG
+        global buffer
+        global run_id
         global fn
         frame = 0
         frame_max = len(buffer)
@@ -163,6 +169,17 @@ class TAStm32():
 
 def main():
     global DEBUG
+    global buffer
+    global run_id
+    global fn
+    
+    if(os.name == 'nt'):
+        psutil.Process().nice(psutil.REALTIME_PRIORITY_CLASS)
+    else:
+        psutil.Process().nice(20)
+    
+    gc.disable()
+    
     parser = argparse_helper.setup_parser_full()
     
     parser.add_argument('--transition', help='Add a transition', nargs=2, action='append')
