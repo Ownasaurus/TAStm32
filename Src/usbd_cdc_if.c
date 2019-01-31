@@ -512,6 +512,7 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 				sr = RUN_NONE;
 				break;
 			case SERIAL_DPCM:
+				// process 2nd character in command
 				val = Buf[byteNum];
 				if(val == 'A')
 				{
@@ -523,18 +524,17 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 					break;
 				}
 
-				byteNum++;
 
-				val = Buf[byteNum];
-				if(val == 'A') // ACE mode (DPCM fix off)
-				{
-					TASRunSetDPCMFix(0, 0);
-				}
-				else if(val == 'N') // Normal Mode (DPCM fix on)
-				{
-					TASRunSetDPCMFix(0, 1);
-				}
-				else // unsupported
+				byteNum++; // advance to 3rd character in command
+				// ignore the 3rd character, which is implicit
+
+				byteNum++; // advance to 4th character in command
+
+				// now we're at a uint32_t
+				uint32_t tempVal;
+				memcpy(&tempVal, &Buf[byteNum], 4);
+
+				if(!AddTransition(0, tempVal)) // adding transition failed
 				{
 					CDC_Transmit_FS((uint8_t*)"\xFB", 1);
 					break;

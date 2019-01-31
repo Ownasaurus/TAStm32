@@ -8,6 +8,7 @@
 #define MAX_SIZE 1024
 #define MAX_CONTROLLERS 2
 #define MAX_DATA_LANES 3
+#define MAX_TRANSITIONS 5
 
 typedef enum
 {
@@ -36,10 +37,14 @@ typedef struct
 	uint8_t bit; // only used for NES/SNES
 	uint16_t size;
 	uint8_t runStarted;
-	uint8_t dpcmFix;
+	volatile uint8_t dpcmFix;
 	uint8_t overread;
+	volatile uint32_t frameCount;
+	uint32_t transitions_dpcm[MAX_TRANSITIONS];
 } TASRun;
 
+void ToggleIfTransitionFound(int numRun);
+uint8_t AddTransition(int numRun, uint32_t frameNumber);
 uint8_t GetRunStarted(int numRun);
 void SetRunStarted(int numRun, uint8_t started);
 void ResetTASRuns();
@@ -52,6 +57,8 @@ uint8_t TASRunGetNumControllers(int numRun);
 void TASRunSetNumDataLanes(int numRun, uint8_t numDataLanes);
 uint8_t TASRunGetNumDataLanes(int numRun);
 void TASRunSetConsole(int numRun, Console c);
+uint32_t TASRunGetFrameCount(int numRun);
+void TASRunIncrementFrameCount(int numRun);
 uint8_t AddFrame(int runIndex, RunData (frame)[MAX_CONTROLLERS][MAX_DATA_LANES]);
 Console TASRunGetConsole(int numRun);
 void ExtractDataAndAdvance(RunData (rd)[MAX_CONTROLLERS][MAX_DATA_LANES], int index, uint8_t* Buf, int *byteNum);

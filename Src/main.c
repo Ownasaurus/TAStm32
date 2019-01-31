@@ -243,7 +243,7 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, P1_DATA_2_Pin|P1_DATA_1_Pin|P2_DATA_0_Pin|P2_DATA_2_Pin 
+  HAL_GPIO_WritePin(GPIOC, P1_DATA_1_Pin|P1_DATA_2_Pin|P2_DATA_0_Pin|P2_DATA_2_Pin 
                           |P2_DATA_1_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
@@ -255,18 +255,9 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : P1_DATA_2_Pin P1_DATA_1_Pin P2_DATA_0_Pin P2_DATA_2_Pin 
-                           P2_DATA_1_Pin */
-  GPIO_InitStruct.Pin = P1_DATA_2_Pin|P1_DATA_1_Pin|P2_DATA_0_Pin|P2_DATA_2_Pin 
-                          |P2_DATA_1_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : PC15 PC4 PC5 PC10 
+  /*Configure GPIO pins : PC14 PC15 PC5 PC10 
                            PC11 PC12 */
-  GPIO_InitStruct.Pin = GPIO_PIN_15|GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_10 
+  GPIO_InitStruct.Pin = GPIO_PIN_14|GPIO_PIN_15|GPIO_PIN_5|GPIO_PIN_10 
                           |GPIO_PIN_11|GPIO_PIN_12;
   GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
@@ -276,6 +267,15 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pin = P2_CLOCK_Pin|P1_LATCH_Pin|P1_CLOCK_Pin|P2_LATCH_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : P1_DATA_1_Pin P1_DATA_2_Pin P2_DATA_0_Pin P2_DATA_2_Pin 
+                           P2_DATA_1_Pin */
+  GPIO_InitStruct.Pin = P1_DATA_1_Pin|P1_DATA_2_Pin|P2_DATA_0_Pin|P2_DATA_2_Pin 
+                          |P2_DATA_1_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PA0 PA1 PA4 PA6 
@@ -326,13 +326,13 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
-  HAL_NVIC_SetPriority(EXTI0_IRQn, 1, 0);
+  HAL_NVIC_SetPriority(EXTI0_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(EXTI0_IRQn);
 
-  HAL_NVIC_SetPriority(EXTI1_IRQn, 2, 0);
+  HAL_NVIC_SetPriority(EXTI1_IRQn, 1, 0);
   HAL_NVIC_EnableIRQ(EXTI1_IRQn);
 
-  HAL_NVIC_SetPriority(EXTI2_IRQn, 1, 0);
+  HAL_NVIC_SetPriority(EXTI2_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(EXTI2_IRQn);
 
   HAL_NVIC_SetPriority(EXTI9_5_IRQn, 1, 0);

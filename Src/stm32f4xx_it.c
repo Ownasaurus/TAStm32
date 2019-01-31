@@ -54,8 +54,8 @@
 #define P1_D0_LOW_A   (1 << 24);
 #define P1_D1_HIGH_C  (1 << 3);
 #define P1_D1_LOW_C   (1 << 19);
-#define P1_D2_HIGH_C  (1 << 14);
-#define P1_D2_LOW_C   (1 << 30);
+#define P1_D2_HIGH_C  (1 << 4);
+#define P1_D2_LOW_C   (1 << 20);
 #define P2_D0_HIGH_C  (1 << 6);
 #define P2_D0_LOW_C   (1 << 22);
 #define P2_D1_HIGH_C  (1 << 9);
@@ -187,6 +187,7 @@ void EXTI1_IRQHandler(void)
 {
   /* USER CODE BEGIN EXTI1_IRQn 0 */
 	// P1_LATCH
+	ToggleIfTransitionFound(0);
 
 	if(!TASRunGetDPCMFix(0)|| recentLatch == 0) // no recent latch
 	{
@@ -440,6 +441,7 @@ void EXTI1_IRQHandler(void)
 		GPIOC->BSRR = dataLines;
 
 		p1_current_bit = p2_current_bit = 30; // set the next bit to be read
+		TASRunIncrementFrameCount(0);
 
 		// now prepare the next frame!
 		RunData (*dataptr)[MAX_CONTROLLERS][MAX_DATA_LANES] = GetNextFrame(0);

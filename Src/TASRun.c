@@ -32,6 +32,53 @@ RunData (*GetNextFrame(int runNum))[MAX_CONTROLLERS][MAX_DATA_LANES]
 	return retval;
 }
 
+void ToggleIfTransitionFound(int numRun)
+{
+	int x = 0;
+	while(x < MAX_TRANSITIONS)
+	{
+		if(tasruns[numRun].transitions_dpcm[x] == 0) // out of transitions to search for
+		{
+			return;
+		}
+
+		if(tasruns[numRun].transitions_dpcm[x] == tasruns[numRun].frameCount)
+		{
+			tasruns[numRun].dpcmFix = 1 - tasruns[numRun].dpcmFix;
+			return;
+		}
+
+		x++;
+	}
+}
+
+uint8_t AddTransition(int numRun, uint32_t frameNumber)
+{
+	int x = 0;
+	while(x < MAX_TRANSITIONS)
+	{
+		if(tasruns[numRun].transitions_dpcm[x] == 0) // first blank transition slot found
+		{
+			tasruns[numRun].transitions_dpcm[x] = frameNumber;
+			return 1;
+		}
+
+		x++;
+	}
+
+	return 0; // failure: no room to add transition
+}
+
+uint32_t TASRunGetFrameCount(int numRun)
+{
+	return tasruns[numRun].frameCount;
+}
+
+void TASRunIncrementFrameCount(int numRun)
+{
+	tasruns[numRun].frameCount++;
+}
+
 void TASRunSetOverread(int numRun, uint8_t overread)
 {
 	tasruns[numRun].overread = overread;
