@@ -64,10 +64,10 @@ class TAStm32():
             self.activeRuns[b'A'] = True
             return b'A'
 
-    def send_transition(self, prefix, mode):
+    def send_transition(self, prefix, frame, mode):
         if self.activeRuns[prefix]:
             if mode == b'N' or mode == b'A':
-                command = b'T' + prefix + mode
+                command = b'T' + prefix + mode + struct.pack('I', frame)
                 self.write(command)
 
     def setup_run(self, console, players=[1], dpcm=False, overread=False, window=0):
@@ -152,13 +152,6 @@ class TAStm32():
                         pass
                     fn += 1
                     frame += 1
-                if args.transition != None:
-                    for transition in args.transition:
-                        if not transition[2]:
-                            if frame >= transition[0]:
-                                self.send_transition(run_id, transition[1])
-                                transition[2] = True
-                                print('Sending Transition on Frame: {}\nTo Mode: {}'.format(frame, transition[1]))
                 if frame > frame_max:
                     break
             except serial.SerialException:
@@ -178,7 +171,6 @@ def main():
 
     if args.transition != None:
         for transition in args.transition:
-            transition.append(False)
             transition[0] = int(transition[0])
             if transition[1] == 'N':
                 transition[1] = b'N'
@@ -236,6 +228,9 @@ def main():
     fn -= err.count(b'\xB0')
     if err.count(b'\xB0') != 0:
         print('Buffer Overflow x{}'.format(err.count(b'\xB0')))
+    if args.transition != None:
+        for transition in args.transition:
+            dev.send_transition(run_id, *transition)
     print('Main Loop Start')
     dev.main_loop()
     print('Exiting')
