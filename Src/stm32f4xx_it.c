@@ -50,18 +50,18 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define P1_D0_HIGH_A  (1 << 8);
-#define P1_D0_LOW_A   (1 << 24);
-#define P1_D1_HIGH_C  (1 << 3);
-#define P1_D1_LOW_C   (1 << 19);
-#define P1_D2_HIGH_C  (1 << 4);
-#define P1_D2_LOW_C   (1 << 20);
-#define P2_D0_HIGH_C  (1 << 6);
-#define P2_D0_LOW_C   (1 << 22);
-#define P2_D1_HIGH_C  (1 << 9);
-#define P2_D1_LOW_C   (1 << 25);
-#define P2_D2_HIGH_C  (1 << 8);
-#define P2_D2_LOW_C   (1 << 24);
+const uint8_t P1_D0_HIGH_A = 8;
+const uint8_t P1_D0_LOW_A = 24;
+const uint8_t P1_D1_HIGH_C = 3;
+const uint8_t P1_D1_LOW_C = 19;
+const uint8_t P1_D2_HIGH_C = 4;
+const uint8_t P1_D2_LOW_C = 20;
+const uint8_t P2_D0_HIGH_C = 6;
+const uint8_t P2_D0_LOW_C = 22;
+const uint8_t P2_D1_HIGH_C = 9;
+const uint8_t P2_D1_LOW_C = 25;
+const uint8_t P2_D2_HIGH_C = 8;
+const uint8_t P2_D2_LOW_C = 24;
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -71,22 +71,24 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
-volatile uint32_t p1_d0 = 0;
 volatile uint32_t p1_d0_next = 0;
-volatile uint32_t p1_d1 = 0;
 volatile uint32_t p1_d1_next = 0;
-volatile uint32_t p1_d2 = 0;
 volatile uint32_t p1_d2_next = 0;
-
-volatile uint32_t p2_d0 = 0;
 volatile uint32_t p2_d0_next = 0;
-volatile uint32_t p2_d1 = 0;
 volatile uint32_t p2_d1_next = 0;
-volatile uint32_t p2_d2 = 0;
 volatile uint32_t p2_d2_next = 0;
 
-volatile int8_t p1_current_bit = 0;
-volatile int8_t p2_current_bit = 0;
+// leave enough room for SNES + overread
+volatile uint32_t P1_GPIOA_current[32];
+volatile uint32_t P1_GPIOA_next[32];
+volatile uint32_t P1_GPIOC_current[32];
+volatile uint32_t P1_GPIOC_next[32];
+
+volatile uint32_t P2_GPIOC_current[32];
+volatile uint32_t P2_GPIOC_next[32];
+
+volatile uint8_t p1_current_bit = 0;
+volatile uint8_t p2_current_bit = 0;
 
 volatile uint8_t recentLatch = 0;
 volatile uint8_t toggleNext = 0;
@@ -145,36 +147,11 @@ void EXTI0_IRQHandler(void)
   /* USER CODE BEGIN EXTI0_IRQn 0 */
 	// P2_CLOCK
 
-	if(p2_current_bit >= 0) // sanity check... but 32 or more bits should never be read in a single latch!
+	if(p2_current_bit < 32) // sanity check... but 32 or more bits should never be read in a single latch!
 	{
-		uint32_t dataLines = 0;
-		if((p2_d0 >> p2_current_bit) & 1) // if the button is PRESSED, set the line LOW
-		{
-			dataLines |= P2_D0_LOW_C;
-		}
-		else
-		{
-			dataLines |= P2_D0_HIGH_C;
-		}
-		if((p2_d1 >> p2_current_bit) & 1) // if the button is PRESSED, set the line LOW
-		{
-			dataLines |= P2_D1_LOW_C;
-		}
-		else
-		{
-			dataLines |= P2_D1_HIGH_C;
-		}
-		if((p2_d2 >> p2_current_bit) & 1) // if the button is PRESSED, set the line LOW
-		{
-			dataLines |= P2_D2_LOW_C;
-		}
-		else
-		{
-			dataLines |= P2_D2_HIGH_C;
-		}
-		GPIOC->BSRR = dataLines;
+		GPIOC->BSRR = P2_GPIOC_current[p2_current_bit];
 
-		p2_current_bit--;
+		p2_current_bit++;
 	}
   /* USER CODE END EXTI0_IRQn 0 */
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_0);
@@ -186,6 +163,7 @@ void EXTI0_IRQHandler(void)
 /**
   * @brief This function handles EXTI line 1 interrupt.
   */
+__attribute__((optimize("unroll-loops")))
 void EXTI1_IRQHandler(void)
 {
   /* USER CODE BEGIN EXTI1_IRQn 0 */
@@ -193,157 +171,17 @@ void EXTI1_IRQHandler(void)
 
 	if(recentLatch == 0) // no recent latch
 	{
-		// if first latch, put the data straight in, bypassing the "next" buffer
-		if(!GetRunStarted(0))
-		{
-			dpcmFix = TASRunGetDPCMFix(0); // read the DPCM fix
+		GPIOC->BSRR = P1_GPIOC_next[0] | P2_GPIOC_next[0];
+		GPIOA->BSRR = P1_GPIOA_next[0];
 
-			RunData (*dataptr)[MAX_CONTROLLERS][MAX_DATA_LANES] = GetNextFrame(0);
-			//p1_d0 = dataptr
-			memcpy((uint32_t*)&p1_d0, &dataptr[0][0][0], sizeof(RunData));
-			memcpy((uint32_t*)&p1_d1, &dataptr[0][0][1], sizeof(RunData));
-			memcpy((uint32_t*)&p1_d2, &dataptr[0][0][2], sizeof(RunData));
-			memcpy((uint32_t*)&p2_d0, &dataptr[0][1][0], sizeof(RunData));
-			memcpy((uint32_t*)&p2_d1, &dataptr[0][1][1], sizeof(RunData));
-			memcpy((uint32_t*)&p2_d2, &dataptr[0][1][2], sizeof(RunData));
+		memcpy((uint32_t*)&P1_GPIOA_current, (uint32_t*)&P1_GPIOA_next, 128);
+		memcpy((uint32_t*)&P1_GPIOC_current, (uint32_t*)&P1_GPIOC_next, 128);
 
-			// swap bytes due to endianness
+		memcpy((uint32_t*)&P2_GPIOC_current, (uint32_t*)&P2_GPIOC_next, 128);
 
-			c = TASRunGetConsole(0);
+		p1_current_bit = p2_current_bit = 1; // set the next bit to be read
 
-			// prepare overread values based on console
-			if(c == CONSOLE_NES) // 8 bit data
-			{
-				p1_d0 <<= 24;
-				p1_d1 <<= 24;
-				p1_d2 <<= 24;
-				p2_d0 <<= 24;
-				p2_d1 <<= 24;
-				p2_d2 <<= 24;
-
-				if(TASRunGetOverread(0)) // overread is 1/HIGH
-				{
-					// so set logical LOW (button pressed)
-					p1_d0 &= 0xFF000000;
-					p1_d1 &= 0xFF000000;
-					p1_d2 &= 0xFF000000;
-					p2_d0 &= 0xFF000000;
-					p2_d1 &= 0xFF000000;
-					p2_d2 &= 0xFF000000;
-				}
-				else // overrread is 0/LOW
-				{
-					// so set logical HIGH (button not pressed)
-					p1_d0 |= 0x00FFFFFF;
-					p1_d1 |= 0x00FFFFFF;
-					p1_d2 |= 0x00FFFFFF;
-					p2_d0 |= 0x00FFFFFF;
-					p2_d1 |= 0x00FFFFFF;
-					p2_d2 |= 0x00FFFFFF;
-				}
-			}
-			else if(c == CONSOLE_SNES) // 16 bit data
-			{
-				p1_d0 = ((p1_d0 >> 8) & 0xFF) | ((p1_d0 << 8) & 0xFF00);
-				p1_d1 = ((p1_d1 >> 8) & 0xFF) | ((p1_d1 << 8) & 0xFF00);
-				p1_d2 = ((p1_d2 >> 8) & 0xFF) | ((p1_d2 << 8) & 0xFF00);
-				p2_d0 = ((p2_d0 >> 8) & 0xFF) | ((p2_d0 << 8) & 0xFF00);
-				p2_d1 = ((p2_d1 >> 8) & 0xFF) | ((p2_d1 << 8) & 0xFF00);
-				p2_d2 = ((p2_d2 >> 8) & 0xFF) | ((p2_d2 << 8) & 0xFF00);
-
-				p1_d0 <<= 16;
-				p1_d1 <<= 16;
-				p1_d2 <<= 16;
-				p2_d0 <<= 16;
-				p2_d1 <<= 16;
-				p2_d2 <<= 16;
-
-				if(TASRunGetOverread(0)) // overread is 1/HIGH
-				{
-					// so set logical LOW (button pressed)
-					p1_d0 &= 0xFFFF0000;
-					p1_d1 &= 0xFFFF0000;
-					p1_d2 &= 0xFFFF0000;
-					p2_d0 &= 0xFFFF0000;
-					p2_d1 &= 0xFFFF0000;
-					p2_d2 &= 0xFFFF0000;
-				}
-				else // overrread is 0/LOW
-				{
-					// so set logical HIGH (button not pressed)
-					p1_d0 |= 0x0000FFFF;
-					p1_d1 |= 0x0000FFFF;
-					p1_d2 |= 0x0000FFFF;
-					p2_d0 |= 0x0000FFFF;
-					p2_d1 |= 0x0000FFFF;
-					p2_d2 |= 0x0000FFFF;
-				}
-			}
-			SetRunStarted(0, 1);
-		}
-		else // otherwise quickly get it from the "next" buffer!
-		{
-			p1_d0 = p1_d0_next;
-			p1_d1 = p1_d1_next;
-			p1_d2 = p1_d2_next;
-			p2_d0 = p2_d0_next;
-			p2_d1 = p2_d1_next;
-			p2_d2 = p2_d2_next;
-		}
-
-		// write the first bit
-		if((p1_d0 >> 31) & 1) // if the button is PRESSED, set the line LOW
-		{
-			GPIOA->BSRR = P1_D0_LOW_A;
-		}
-		else
-		{
-			GPIOA->BSRR = P1_D0_HIGH_A;
-		}
-		uint32_t dataLines = 0;
-		if((p1_d1 >> 31) & 1) // if the button is PRESSED, set the line LOW
-		{
-			dataLines |= P1_D1_LOW_C;
-		}
-		else
-		{
-			dataLines |= P1_D1_HIGH_C;
-		}
-		if((p1_d2 >> 31) & 1) // if the button is PRESSED, set the line LOW
-		{
-			dataLines |= P1_D2_LOW_C;
-		}
-		else
-		{
-			dataLines |= P1_D2_HIGH_C;
-		}
-		if((p2_d0 >> 31) & 1) // if the button is PRESSED, set the line LOW
-		{
-			dataLines |= P2_D0_LOW_C;
-		}
-		else
-		{
-			dataLines |= P2_D0_HIGH_C;
-		}
-		if((p2_d1 >> 31) & 1) // if the button is PRESSED, set the line LOW
-		{
-			dataLines |= P2_D1_LOW_C;
-		}
-		else
-		{
-			dataLines |= P2_D1_HIGH_C;
-		}
-		if((p2_d2 >> 31) & 1) // if the button is PRESSED, set the line LOW
-		{
-			dataLines |= P2_D2_LOW_C;
-		}
-		else
-		{
-			dataLines |= P2_D2_HIGH_C;
-		}
-		GPIOC->BSRR = dataLines;
-
-		p1_current_bit = p2_current_bit = 30; // set the next bit to be read
+		// now prepare for the next frame!
 
 		if(toggleNext)
 		{
@@ -358,7 +196,6 @@ void EXTI1_IRQHandler(void)
 
 		toggleNext = TASRunIncrementFrameCount(0);
 
-		// now prepare the next frame!
 		RunData (*dataptr)[MAX_CONTROLLERS][MAX_DATA_LANES] = GetNextFrame(0);
 
 		if(dataptr)
@@ -369,85 +206,76 @@ void EXTI1_IRQHandler(void)
 			memcpy((uint32_t*)&p2_d0_next, &dataptr[0][1][0], sizeof(RunData));
 			memcpy((uint32_t*)&p2_d1_next, &dataptr[0][1][1], sizeof(RunData));
 			memcpy((uint32_t*)&p2_d2_next, &dataptr[0][1][2], sizeof(RunData));
-		}
-		else
-		{
-			memset((uint32_t*)&p1_d0_next, 0, sizeof(RunData));
-			memset((uint32_t*)&p1_d1_next, 0, sizeof(RunData));
-			memset((uint32_t*)&p1_d2_next, 0, sizeof(RunData));
-			memset((uint32_t*)&p2_d0_next, 0, sizeof(RunData));
-			memset((uint32_t*)&p2_d1_next, 0, sizeof(RunData));
-			memset((uint32_t*)&p2_d2_next, 0, sizeof(RunData));
-		}
 
-		c = TASRunGetConsole(0);
+			c = TASRunGetConsole(0);
 
-		// prepare overread values based on console
-		if(c == CONSOLE_NES) // 8 bit data
-		{
-			p1_d0_next <<= 24;
-			p1_d1_next <<= 24;
-			p1_d2_next <<= 24;
-			p2_d0_next <<= 24;
-			p2_d1_next <<= 24;
-			p2_d2_next <<= 24;
+			int8_t databit = 0;
+			if(c == CONSOLE_NES)
+			{
+				databit = 7; // number of bits of NES - 1
+			}
+			else
+			{
+				databit = 15; // number of bits of SNES - 1
 
+				// fix endianness
+				p1_d0_next = ((p1_d0_next >> 8) & 0xFF) | ((p1_d0_next << 8) & 0xFF00);
+				p1_d1_next = ((p1_d1_next >> 8) & 0xFF) | ((p1_d1_next << 8) & 0xFF00);
+				p1_d2_next = ((p1_d2_next >> 8) & 0xFF) | ((p1_d2_next << 8) & 0xFF00);
+				p2_d0_next = ((p2_d0_next >> 8) & 0xFF) | ((p2_d0_next << 8) & 0xFF00);
+				p2_d1_next = ((p2_d1_next >> 8) & 0xFF) | ((p2_d1_next << 8) & 0xFF00);
+				p2_d2_next = ((p2_d2_next >> 8) & 0xFF) | ((p2_d2_next << 8) & 0xFF00);
+			}
+
+
+			int8_t regbit = 0;
+
+			// fill the regular data
+			while(databit >= 0)
+			{
+				P1_GPIOA_next[regbit] = (((p1_d0_next >> databit) & 1) << P1_D0_HIGH_A);
+				P1_GPIOA_next[regbit] += (((~P1_GPIOA_next[regbit]) & 0x0100) << 16);
+				P1_GPIOC_next[regbit] = (((p1_d1_next >> databit) & 1) << P1_D1_HIGH_C) |
+										(((p1_d2_next >> databit) & 1) << P1_D2_HIGH_C);
+				P1_GPIOC_next[regbit] += (((~P1_GPIOC_next[regbit]) & 0x0018) << 16);
+				P2_GPIOC_next[regbit] = (((p2_d0_next >> databit) & 1) << P2_D0_HIGH_C) |
+										(((p2_d1_next >> databit) & 1) << P2_D1_HIGH_C) |
+										(((p2_d2_next >> databit) & 1) << P2_D2_HIGH_C);
+				P2_GPIOC_next[regbit] += (((~P2_GPIOC_next[regbit]) & 0x0340) << 16);
+
+				regbit++;
+				databit--;
+			}
+
+			// fill the overread
 			if(TASRunGetOverread(0)) // overread is 1/HIGH
 			{
 				// so set logical LOW (button pressed)
-				p1_d0_next &= 0xFF000000;
-				p1_d1_next &= 0xFF000000;
-				p1_d2_next &= 0xFF000000;
-				p2_d0_next &= 0xFF000000;
-				p2_d1_next &= 0xFF000000;
-				p2_d2_next &= 0xFF000000;
+				for(uint8_t index = regbit;index < 32;index++)
+				{
+					P1_GPIOA_next[index] = (1 << P1_D0_LOW_A);
+					P1_GPIOC_next[index] = (1 << P1_D1_LOW_C) | (1 << P1_D2_LOW_C);
+					P2_GPIOC_next[index] = (1 << P2_D0_LOW_C) | (1 << P2_D1_LOW_C) | (1 << P2_D2_LOW_C);
+				}
 			}
-			else // overrread is 0/LOW
+			else
 			{
-				// so set logical HIGH (button not pressed)
-				p1_d0_next |= 0x00FFFFFF;
-				p1_d1_next |= 0x00FFFFFF;
-				p1_d2_next |= 0x00FFFFFF;
-				p2_d0_next |= 0x00FFFFFF;
-				p2_d1_next |= 0x00FFFFFF;
-				p2_d2_next |= 0x00FFFFFF;
+				for(uint8_t index = regbit;index < 32;index++)
+				{
+					P1_GPIOA_next[index] = (1 << P1_D0_HIGH_A);
+					P1_GPIOC_next[index] = (1 << P1_D1_HIGH_C) | (1 << P1_D2_HIGH_C);
+					P2_GPIOC_next[index] = (1 << P2_D0_HIGH_C) | (1 << P2_D1_HIGH_C) | (1 << P2_D2_HIGH_C);
+				}
 			}
 		}
-		else if(c == CONSOLE_SNES) // 16 bit data
+		else // no data left in the buffer
 		{
-			p1_d0_next = ((p1_d0_next >> 8) & 0xFF) | ((p1_d0_next << 8) & 0xFF00);
-			p1_d1_next = ((p1_d1_next >> 8) & 0xFF) | ((p1_d1_next << 8) & 0xFF00);
-			p1_d2_next = ((p1_d2_next >> 8) & 0xFF) | ((p1_d2_next << 8) & 0xFF00);
-			p2_d0_next = ((p2_d0_next >> 8) & 0xFF) | ((p2_d0_next << 8) & 0xFF00);
-			p2_d1_next = ((p2_d1_next >> 8) & 0xFF) | ((p2_d1_next << 8) & 0xFF00);
-			p2_d2_next = ((p2_d2_next >> 8) & 0xFF) | ((p2_d2_next << 8) & 0xFF00);
-
-			p1_d0_next <<= 16;
-			p1_d1_next <<= 16;
-			p1_d2_next <<= 16;
-			p2_d0_next <<= 16;
-			p2_d1_next <<= 16;
-			p2_d2_next <<= 16;
-
-			if(TASRunGetOverread(0)) // overread is 1/HIGH
+			// no controller data means all pins get set high for this protocol
+			for(uint8_t index = 0;index < 32;index++)
 			{
-				// so set logical LOW (button pressed)
-				p1_d0_next &= 0xFFFF0000;
-				p1_d1_next &= 0xFFFF0000;
-				p1_d2_next &= 0xFFFF0000;
-				p2_d0_next &= 0xFFFF0000;
-				p2_d1_next &= 0xFFFF0000;
-				p2_d2_next &= 0xFFFF0000;
-			}
-			else // overrread is 0/LOW
-			{
-				// so set logical HIGH (button not pressed)
-				p1_d0_next |= 0x0000FFFF;
-				p1_d1_next |= 0x0000FFFF;
-				p1_d2_next |= 0x0000FFFF;
-				p2_d0_next |= 0x0000FFFF;
-				p2_d1_next |= 0x0000FFFF;
-				p2_d2_next |= 0x0000FFFF;
+				P1_GPIOA_next[index] = (1 << P1_D0_HIGH_A);
+				P1_GPIOC_next[index] = (1 << P1_D1_HIGH_C) | (1 << P1_D2_HIGH_C);
+				P2_GPIOC_next[index] = (1 << P2_D0_HIGH_C) | (1 << P2_D1_HIGH_C) | (1 << P2_D2_HIGH_C);
 			}
 		}
 
@@ -456,63 +284,18 @@ void EXTI1_IRQHandler(void)
 			CDC_Transmit_FS((uint8_t*)"\xB2", 1); // notify buffer underflow
 		}
 
-		CDC_Transmit_FS((uint8_t*)"A", 1); // notify that we latched
+		if(!TASRunReadyToPreBuffer(0))
+		{
+			CDC_Transmit_FS((uint8_t*)"A", 1); // notify that we latched
+		}
 	}
-	else // we latched very recently
+	else // multiple close latches and DPCM fix is enabled
 	{
-		// write the first bit
-		if((p1_d0 >> 31) & 1) // if the button is PRESSED, set the line LOW
-		{
-			GPIOA->BSRR = P1_D0_LOW_A;
-		}
-		else
-		{
-			GPIOA->BSRR = P1_D0_HIGH_A;
-		}
-		uint32_t dataLines = 0;
-		if((p1_d1 >> 31) & 1) // if the button is PRESSED, set the line LOW
-		{
-			dataLines |= P1_D1_LOW_C;
-		}
-		else
-		{
-			dataLines |= P1_D1_HIGH_C;
-		}
-		if((p1_d2 >> 31) & 1) // if the button is PRESSED, set the line LOW
-		{
-			dataLines |= P1_D2_LOW_C;
-		}
-		else
-		{
-			dataLines |= P1_D2_HIGH_C;
-		}
-		if((p2_d0 >> 31) & 1) // if the button is PRESSED, set the line LOW
-		{
-			dataLines |= P2_D0_LOW_C;
-		}
-		else
-		{
-			dataLines |= P2_D0_HIGH_C;
-		}
-		if((p2_d1 >> 31) & 1) // if the button is PRESSED, set the line LOW
-		{
-			dataLines |= P2_D1_LOW_C;
-		}
-		else
-		{
-			dataLines |= P2_D1_HIGH_C;
-		}
-		if((p2_d2 >> 31) & 1) // if the button is PRESSED, set the line LOW
-		{
-			dataLines |= P2_D2_LOW_C;
-		}
-		else
-		{
-			dataLines |= P2_D2_HIGH_C;
-		}
-		GPIOC->BSRR = dataLines;
+		// repeat the same frame of input
+		GPIOC->BSRR = P1_GPIOC_current[0] | P2_GPIOC_current[0];
+		GPIOA->BSRR = P1_GPIOA_current[0];
 
-		p1_current_bit = p2_current_bit = 30; // reset back to beginning of "frame" and do not advance
+		p1_current_bit = p2_current_bit = 1;
 	}
 
   /* USER CODE END EXTI1_IRQn 0 */
@@ -530,36 +313,12 @@ void EXTI2_IRQHandler(void)
   /* USER CODE BEGIN EXTI2_IRQn 0 */
 	// P1_CLOCK
 
-	if(p1_current_bit >= 0) // sanity check... but 32 or more bits should never be read in a single latch!
+	if(p1_current_bit < 32) // sanity check... but 32 or more bits should never be read in a single latch!
 	{
-		if((p1_d0 >> p1_current_bit) & 1) // if the button is PRESSED, set the line LOW
-		{
-			GPIOA->BSRR = P1_D0_LOW_A;
-		}
-		else
-		{
-			GPIOA->BSRR = P1_D0_HIGH_A;
-		}
-		uint32_t dataLines = 0;
-		if((p1_d1 >> p1_current_bit) & 1) // if the button is PRESSED, set the line LOW
-		{
-			dataLines |= P1_D1_LOW_C;
-		}
-		else
-		{
-			dataLines |= P1_D1_HIGH_C;
-		}
-		if((p1_d2 >> p1_current_bit) & 1) // if the button is PRESSED, set the line LOW
-		{
-			dataLines |= P1_D2_LOW_C;
-		}
-		else
-		{
-			dataLines |= P1_D2_HIGH_C;
-		}
-		GPIOC->BSRR = dataLines;
+		GPIOC->BSRR = P1_GPIOC_current[p1_current_bit];
+		GPIOA->BSRR = P1_GPIOA_current[p1_current_bit];
 
-		p1_current_bit--;
+		p1_current_bit++;
 	}
 
   /* USER CODE END EXTI2_IRQn 0 */

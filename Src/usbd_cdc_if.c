@@ -60,7 +60,17 @@
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
+extern volatile uint8_t p1_current_bit;
+extern volatile uint8_t p2_current_bit;
 extern volatile uint8_t recentLatch;
+extern volatile uint8_t toggleNext;
+extern volatile uint8_t dpcmFix;
+extern volatile uint32_t P1_GPIOA_current[32];
+extern volatile uint32_t P1_GPIOA_next[32];
+extern volatile uint32_t P1_GPIOC_current[32];
+extern volatile uint32_t P1_GPIOC_next[32];
+extern volatile uint32_t P2_GPIOC_current[32];
+extern volatile uint32_t P2_GPIOC_next[32];
 /* USER CODE END PV */
 
 /** @addtogroup STM32_USB_OTG_DEVICE_LIBRARY
@@ -348,8 +358,17 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 
 						// important to reset our state
 						recentLatch = 0;
+						toggleNext = 0;
+						p1_current_bit = 0;
+						p2_current_bit = 0;
+						dpcmFix = 0;
 
-						SetRunStarted(0, 0); // mark run as not yet started
+						memset((uint32_t*)&P1_GPIOA_current, 0, 128);
+						memset((uint32_t*)&P1_GPIOA_next, 0, 128);
+						memset((uint32_t*)&P1_GPIOC_current, 0, 128);
+						memset((uint32_t*)&P1_GPIOC_next, 0, 128);
+						memset((uint32_t*)&P2_GPIOC_current, 0, 128);
+						memset((uint32_t*)&P2_GPIOC_next, 0, 128);
 
 						ResetTASRuns();
 						CDC_Transmit_FS((uint8_t*)"\x01R", 2); // good response for reset

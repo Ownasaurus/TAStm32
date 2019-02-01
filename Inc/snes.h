@@ -40,6 +40,4 @@ typedef struct __attribute__((packed))
 
 } SNESControllerData;
 
-void SendControllerDataNES(uint8_t data);
-
 #endif

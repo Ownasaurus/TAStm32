@@ -36,13 +36,13 @@ typedef struct
 	RunData (*current)[MAX_CONTROLLERS][MAX_DATA_LANES]; // points to what the console will read next
 	uint8_t bit; // only used for NES/SNES
 	uint16_t size;
-	uint8_t runStarted;
 	uint8_t dpcmFix;
 	uint8_t overread;
 	volatile uint32_t frameCount;
 	uint32_t transitions_dpcm[MAX_TRANSITIONS];
 } TASRun;
 
+uint8_t TASRunReadyToPreBuffer(uint8_t runNum);
 uint8_t AddTransition(int numRun, uint32_t frameNumber);
 uint8_t GetRunStarted(int numRun);
 void SetRunStarted(int numRun, uint8_t started);

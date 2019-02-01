@@ -48,6 +48,7 @@
 #include "usbd_cdc_if.h"
 #include "n64.h"
 #include "TASRun.h"
+#include "stm32f4xx_it.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -119,6 +120,11 @@ int main(void)
   // all of the interrupts should be disabled before reaching this point
   // they will be re-enabled based on the console and number of controllers being utilized
 
+  HAL_NVIC_DisableIRQ(EXTI0_IRQn);
+  HAL_NVIC_DisableIRQ(EXTI1_IRQn);
+  HAL_NVIC_DisableIRQ(EXTI2_IRQn);
+  HAL_NVIC_DisableIRQ(EXTI9_5_IRQn);
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -128,6 +134,10 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	if(TASRunReadyToPreBuffer(0))
+	{
+	  EXTI1_IRQHandler();
+	}
 
   }
   /* USER CODE END 3 */

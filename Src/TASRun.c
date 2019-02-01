@@ -8,6 +8,14 @@
 
 TASRun tasruns[MAX_NUM_RUNS];
 
+uint8_t TASRunReadyToPreBuffer(uint8_t runNum)
+{
+	if(tasruns[runNum].size > 0 && tasruns[runNum].frameCount == 0)
+		return 1;
+
+	return 0;
+}
+
 RunData (*GetNextFrame(int runNum))[MAX_CONTROLLERS][MAX_DATA_LANES]
 {
 	if(tasruns[runNum].size == 0) // in case of buffer underflow
@@ -96,16 +104,6 @@ void TASRunSetDPCMFix(int numRun, uint8_t dpcm)
 uint8_t TASRunGetDPCMFix(int numRun)
 {
 	return tasruns[numRun].dpcmFix;
-}
-
-uint8_t GetRunStarted(int numRun)
-{
-	return tasruns[numRun].runStarted;
-}
-
-void SetRunStarted(int numRun, uint8_t started)
-{
-	tasruns[numRun].runStarted = started;
 }
 
 void ResetTASRuns()
