@@ -38,14 +38,15 @@ typedef struct
 	uint16_t size;
 	uint8_t dpcmFix;
 	uint8_t overread;
+	uint8_t initialized;
 	volatile uint32_t frameCount;
 	uint32_t transitions_dpcm[MAX_TRANSITIONS];
 } TASRun;
 
-uint8_t TASRunReadyToPreBuffer(uint8_t runNum);
+uint16_t TASRunGetSize(uint8_t runNum);
+uint8_t TASRunIsInitialized(uint8_t runNum);
+void TASRunSetInitialized(uint8_t runNum, uint8_t init);
 uint8_t AddTransition(int numRun, uint32_t frameNumber);
-uint8_t GetRunStarted(int numRun);
-void SetRunStarted(int numRun, uint8_t started);
 void ResetTASRuns();
 void TASRunSetDPCMFix(int numRun, uint8_t dpcm);
 uint8_t TASRunGetDPCMFix(int numRun);

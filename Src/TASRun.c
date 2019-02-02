@@ -8,12 +8,19 @@
 
 TASRun tasruns[MAX_NUM_RUNS];
 
-uint8_t TASRunReadyToPreBuffer(uint8_t runNum)
+uint16_t TASRunGetSize(uint8_t runNum)
 {
-	if(tasruns[runNum].size > 0 && tasruns[runNum].frameCount == 0)
-		return 1;
+	return tasruns[runNum].size;
+}
 
-	return 0;
+uint8_t TASRunIsInitialized(uint8_t runNum)
+{
+	return tasruns[runNum].initialized;
+}
+
+void TASRunSetInitialized(uint8_t runNum, uint8_t init)
+{
+	tasruns[runNum].initialized = init;
 }
 
 RunData (*GetNextFrame(int runNum))[MAX_CONTROLLERS][MAX_DATA_LANES]

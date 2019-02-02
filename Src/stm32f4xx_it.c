@@ -93,6 +93,10 @@ volatile uint8_t p2_current_bit = 0;
 volatile uint8_t recentLatch = 0;
 volatile uint8_t toggleNext = 0;
 volatile uint8_t dpcmFix = 0;
+
+volatile uint8_t p1_clock_filtered = 0;
+volatile uint8_t p2_clock_filtered = 0;
+
 Console c = 0;
 /* USER CODE END PV */
 
@@ -101,6 +105,10 @@ Console c = 0;
 void my_wait_us_asm(int n);
 void ResetAndEnable8msTimer();
 void Disable8msTimer();
+void DisableP1ClockTimer();
+void ResetAndEnableP1ClockTimer();
+void DisableP2ClockTimer();
+void ResetAndEnableP2ClockTimer();
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -111,6 +119,8 @@ void Disable8msTimer();
 /* External variables --------------------------------------------------------*/
 extern PCD_HandleTypeDef hpcd_USB_OTG_FS;
 extern TIM_HandleTypeDef htim3;
+extern TIM_HandleTypeDef htim6;
+extern TIM_HandleTypeDef htim7;
 /* USER CODE BEGIN EV */
 
 /* USER CODE END EV */
@@ -147,10 +157,10 @@ void EXTI0_IRQHandler(void)
   /* USER CODE BEGIN EXTI0_IRQn 0 */
 	// P2_CLOCK
 
-	if(p2_current_bit < 32) // sanity check... but 32 or more bits should never be read in a single latch!
+	if(!p2_clock_filtered && p2_current_bit < 32) // sanity check... but 32 or more bits should never be read in a single latch!
 	{
 		GPIOC->BSRR = P2_GPIOC_current[p2_current_bit];
-
+		ResetAndEnableP2ClockTimer();
 		p2_current_bit++;
 	}
   /* USER CODE END EXTI0_IRQn 0 */
@@ -163,23 +173,27 @@ void EXTI0_IRQHandler(void)
 /**
   * @brief This function handles EXTI line 1 interrupt.
   */
-__attribute__((optimize("unroll-loops")))
 void EXTI1_IRQHandler(void)
 {
   /* USER CODE BEGIN EXTI1_IRQn 0 */
 	// P1_LATCH
+
+	int8_t regbit = 50, databit = -1; // random initial values
 
 	if(recentLatch == 0) // no recent latch
 	{
 		GPIOC->BSRR = P1_GPIOC_next[0] | P2_GPIOC_next[0];
 		GPIOA->BSRR = P1_GPIOA_next[0];
 
-		memcpy((uint32_t*)&P1_GPIOA_current, (uint32_t*)&P1_GPIOA_next, 128);
-		memcpy((uint32_t*)&P1_GPIOC_current, (uint32_t*)&P1_GPIOC_next, 128);
+		memcpy((uint32_t*)&P1_GPIOA_current, (uint32_t*)&P1_GPIOA_next, 64);
+		memcpy((uint32_t*)&P1_GPIOC_current, (uint32_t*)&P1_GPIOC_next, 64);
 
-		memcpy((uint32_t*)&P2_GPIOC_current, (uint32_t*)&P2_GPIOC_next, 128);
+		memcpy((uint32_t*)&P2_GPIOC_current, (uint32_t*)&P2_GPIOC_next, 64);
 
 		p1_current_bit = p2_current_bit = 1; // set the next bit to be read
+
+		ResetAndEnableP1ClockTimer();
+		ResetAndEnableP2ClockTimer();
 
 		// now prepare for the next frame!
 
@@ -209,7 +223,7 @@ void EXTI1_IRQHandler(void)
 
 			c = TASRunGetConsole(0);
 
-			int8_t databit = 0;
+			databit = 0;
 			if(c == CONSOLE_NES)
 			{
 				databit = 7; // number of bits of NES - 1
@@ -228,50 +242,38 @@ void EXTI1_IRQHandler(void)
 			}
 
 
-			int8_t regbit = 0;
+			regbit = 0;
 
 			// fill the regular data
 			while(databit >= 0)
 			{
-				P1_GPIOA_next[regbit] = (((p1_d0_next >> databit) & 1) << P1_D0_HIGH_A);
-				P1_GPIOA_next[regbit] += (((~P1_GPIOA_next[regbit]) & 0x0100) << 16);
-				P1_GPIOC_next[regbit] = (((p1_d1_next >> databit) & 1) << P1_D1_HIGH_C) |
-										(((p1_d2_next >> databit) & 1) << P1_D2_HIGH_C);
-				P1_GPIOC_next[regbit] += (((~P1_GPIOC_next[regbit]) & 0x0018) << 16);
-				P2_GPIOC_next[regbit] = (((p2_d0_next >> databit) & 1) << P2_D0_HIGH_C) |
-										(((p2_d1_next >> databit) & 1) << P2_D1_HIGH_C) |
-										(((p2_d2_next >> databit) & 1) << P2_D2_HIGH_C);
-				P2_GPIOC_next[regbit] += (((~P2_GPIOC_next[regbit]) & 0x0340) << 16);
+				P1_GPIOA_next[regbit] = (((p1_d0_next >> databit) & 1) << P1_D0_LOW_A);
+				P1_GPIOA_next[regbit] |= (((~P1_GPIOA_next[regbit]) & 0x01000000) >> 16);
+				P1_GPIOC_next[regbit] = (((p1_d1_next >> databit) & 1) << P1_D1_LOW_C) |
+										(((p1_d2_next >> databit) & 1) << P1_D2_LOW_C);
+				P1_GPIOC_next[regbit] |= (((~P1_GPIOC_next[regbit]) & 0x00180000) >> 16);
+				P2_GPIOC_next[regbit] = (((p2_d0_next >> databit) & 1) << P2_D0_LOW_C) |
+										(((p2_d1_next >> databit) & 1) << P2_D1_LOW_C) |
+										(((p2_d2_next >> databit) & 1) << P2_D2_LOW_C);
+				P2_GPIOC_next[regbit] |= (((~P2_GPIOC_next[regbit]) & 0x03400000) >> 16);
 
 				regbit++;
 				databit--;
 			}
-
-			// fill the overread
-			if(TASRunGetOverread(0)) // overread is 1/HIGH
-			{
-				// so set logical LOW (button pressed)
-				for(uint8_t index = regbit;index < 32;index++)
-				{
-					P1_GPIOA_next[index] = (1 << P1_D0_LOW_A);
-					P1_GPIOC_next[index] = (1 << P1_D1_LOW_C) | (1 << P1_D2_LOW_C);
-					P2_GPIOC_next[index] = (1 << P2_D0_LOW_C) | (1 << P2_D1_LOW_C) | (1 << P2_D2_LOW_C);
-				}
-			}
-			else
-			{
-				for(uint8_t index = regbit;index < 32;index++)
-				{
-					P1_GPIOA_next[index] = (1 << P1_D0_HIGH_A);
-					P1_GPIOC_next[index] = (1 << P1_D1_HIGH_C) | (1 << P1_D2_HIGH_C);
-					P2_GPIOC_next[index] = (1 << P2_D0_HIGH_C) | (1 << P2_D1_HIGH_C) | (1 << P2_D2_HIGH_C);
-				}
-			}
 		}
 		else // no data left in the buffer
 		{
+			if(c == CONSOLE_NES)
+			{
+				databit = 7; // number of bits of NES - 1
+			}
+			else
+			{
+				databit = 15; // number of bits of SNES - 1
+			}
+
 			// no controller data means all pins get set high for this protocol
-			for(uint8_t index = 0;index < 32;index++)
+			for(uint8_t index = 0;index <= databit;index++)
 			{
 				P1_GPIOA_next[index] = (1 << P1_D0_HIGH_A);
 				P1_GPIOC_next[index] = (1 << P1_D1_HIGH_C) | (1 << P1_D2_HIGH_C);
@@ -284,9 +286,32 @@ void EXTI1_IRQHandler(void)
 			CDC_Transmit_FS((uint8_t*)"\xB2", 1); // notify buffer underflow
 		}
 
-		if(!TASRunReadyToPreBuffer(0))
+		if(TASRunIsInitialized(0))
 		{
 			CDC_Transmit_FS((uint8_t*)"A", 1); // notify that we latched
+		}
+		else
+		{
+			// fill the overread
+			if(TASRunGetOverread(0)) // overread is 1/HIGH
+			{
+				// so set logical LOW (button pressed)
+				for(uint8_t index = regbit;index < 32;index++)
+				{
+					P1_GPIOA_current[index] = (1 << P1_D0_LOW_A);
+					P1_GPIOC_current[index] = (1 << P1_D1_LOW_C) | (1 << P1_D2_LOW_C);
+					P2_GPIOC_current[index] = (1 << P2_D0_LOW_C) | (1 << P2_D1_LOW_C) | (1 << P2_D2_LOW_C);
+				}
+			}
+			else
+			{
+				for(uint8_t index = regbit;index < 32;index++)
+				{
+					P1_GPIOA_current[index] = (1 << P1_D0_HIGH_A);
+					P1_GPIOC_current[index] = (1 << P1_D1_HIGH_C) | (1 << P1_D2_HIGH_C);
+					P2_GPIOC_current[index] = (1 << P2_D0_HIGH_C) | (1 << P2_D1_HIGH_C) | (1 << P2_D2_HIGH_C);
+				}
+			}
 		}
 	}
 	else // multiple close latches and DPCM fix is enabled
@@ -296,6 +321,9 @@ void EXTI1_IRQHandler(void)
 		GPIOA->BSRR = P1_GPIOA_current[0];
 
 		p1_current_bit = p2_current_bit = 1;
+
+		ResetAndEnableP1ClockTimer();
+		ResetAndEnableP2ClockTimer();
 	}
 
   /* USER CODE END EXTI1_IRQn 0 */
@@ -312,12 +340,11 @@ void EXTI2_IRQHandler(void)
 {
   /* USER CODE BEGIN EXTI2_IRQn 0 */
 	// P1_CLOCK
-
-	if(p1_current_bit < 32) // sanity check... but 32 or more bits should never be read in a single latch!
+	if(!p1_clock_filtered && p1_current_bit < 32) // sanity check... but 32 or more bits should never be read in a single latch!
 	{
 		GPIOC->BSRR = P1_GPIOC_current[p1_current_bit];
 		GPIOA->BSRR = P1_GPIOA_current[p1_current_bit];
-
+		ResetAndEnableP1ClockTimer();
 		p1_current_bit++;
 	}
 
@@ -397,7 +424,7 @@ void EXTI9_5_IRQHandler(void)
 void TIM3_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM3_IRQn 0 */
-
+  // This is an 8ms timer
   recentLatch = 0;
   Disable8msTimer(); // to ensure it was a 1-shot
 
@@ -406,6 +433,38 @@ void TIM3_IRQHandler(void)
   /* USER CODE BEGIN TIM3_IRQn 1 */
 
   /* USER CODE END TIM3_IRQn 1 */
+}
+
+/**
+  * @brief This function handles TIM6 global interrupt and DAC1, DAC2 underrun error interrupts.
+  */
+void TIM6_DAC_IRQHandler(void)
+{
+  /* USER CODE BEGIN TIM6_DAC_IRQn 0 */
+  // This is a 5us timer for P1
+  p1_clock_filtered = 0;
+  DisableP1ClockTimer(); // to ensure it was a 1-shot
+  /* USER CODE END TIM6_DAC_IRQn 0 */
+  HAL_TIM_IRQHandler(&htim6);
+  /* USER CODE BEGIN TIM6_DAC_IRQn 1 */
+
+  /* USER CODE END TIM6_DAC_IRQn 1 */
+}
+
+/**
+  * @brief This function handles TIM7 global interrupt.
+  */
+void TIM7_IRQHandler(void)
+{
+  /* USER CODE BEGIN TIM7_IRQn 0 */
+  // This is a 5us timer for P1
+  p2_clock_filtered = 0;
+  DisableP2ClockTimer(); // to ensure it was a 1-shot
+  /* USER CODE END TIM7_IRQn 0 */
+  HAL_TIM_IRQHandler(&htim7);
+  /* USER CODE BEGIN TIM7_IRQn 1 */
+
+  /* USER CODE END TIM7_IRQn 1 */
 }
 
 /**
@@ -437,6 +496,42 @@ void ResetAndEnable8msTimer()
 	TIM3->SR = 0; // reset flags
 
 	HAL_TIM_Base_Start_IT(&htim3);
+}
+
+void DisableP1ClockTimer()
+{
+	TIM6->CNT = 0; // reset count
+	TIM6->SR = 0; // reset flags
+
+	HAL_TIM_Base_Stop_IT(&htim6);
+}
+
+void ResetAndEnableP1ClockTimer()
+{
+	p1_clock_filtered = 1;
+
+	TIM6->CNT = 0; // reset count
+	TIM6->SR = 0; // reset flags
+
+	HAL_TIM_Base_Start_IT(&htim6);
+}
+
+void DisableP2ClockTimer()
+{
+	TIM7->CNT = 0; // reset count
+	TIM7->SR = 0; // reset flags
+
+	HAL_TIM_Base_Stop_IT(&htim7);
+}
+
+void ResetAndEnableP2ClockTimer()
+{
+	p2_clock_filtered = 1;
+
+	TIM7->CNT = 0; // reset count
+	TIM7->SR = 0; // reset flags
+
+	HAL_TIM_Base_Start_IT(&htim7);
 }
 /* USER CODE END 1 */
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

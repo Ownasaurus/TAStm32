@@ -91,17 +91,19 @@
   * @{
   */
 
-/* USER CODE BEGIN PRIVATE_DEFINES */
-#define USBD_VID     0x0B07
+#define USBD_VID     0xB07
 #define USBD_LANGID_STRING     1033
 #define USBD_MANUFACTURER_STRING     "Ownasaurus"
 #define USBD_PID_FS     0x07A5
 #define USBD_PRODUCT_STRING_FS     "TAStm32 Virtual ComPort"
 #define USBD_SERIALNUMBER_STRING_FS     "00000000001A"
-#define USBD_CONFIGURATION_STRING_FS     "CDC Config"
+#define USBD_CONFIGURATION_STRING_FS     "Serial Config"
 #define USBD_INTERFACE_STRING_FS     "Serial Interface"
 
 #define USB_SIZ_BOS_DESC            0x0C
+
+/* USER CODE BEGIN PRIVATE_DEFINES */
+
 /* USER CODE END PRIVATE_DEFINES */
 
 /**
