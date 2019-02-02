@@ -173,14 +173,14 @@ def main():
     global buffer
     global run_id
     global fn
-    
+
     if(os.name == 'nt'):
         psutil.Process().nice(psutil.REALTIME_PRIORITY_CLASS)
     else:
         psutil.Process().nice(20)
-    
+
     gc.disable()
-    
+
     parser = argparse_helper.setup_parser_full()
     
     parser.add_argument('--transition', help='Add a transition', nargs=2, action='append')
