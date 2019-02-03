@@ -65,6 +65,7 @@ extern volatile uint8_t p2_current_bit;
 extern volatile uint8_t recentLatch;
 extern volatile uint8_t toggleNext;
 extern volatile uint8_t dpcmFix;
+extern volatile uint8_t clockFix;
 extern volatile uint32_t P1_GPIOA_current[32];
 extern volatile uint32_t P1_GPIOA_next[32];
 extern volatile uint32_t P1_GPIOC_current[32];
@@ -362,6 +363,7 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 						p1_current_bit = 0;
 						p2_current_bit = 0;
 						dpcmFix = 0;
+						clockFix = 0;
 
 						memset((uint32_t*)&P1_GPIOA_current, 0, 128);
 						memset((uint32_t*)&P1_GPIOA_next, 0, 128);

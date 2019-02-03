@@ -73,6 +73,7 @@ TIM_HandleTypeDef htim7;
 
 /* USER CODE BEGIN PV */
 extern volatile uint8_t toggleNext;
+extern volatile uint8_t clockFix;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -146,6 +147,10 @@ int main(void)
 		if(TASRunGetDPCMFix(0))
 		{
 			toggleNext = 1;
+		}
+		if(TASRunGetClockFix(0))
+		{
+			clockFix = 1;
 		}
 
 		EXTI1_IRQHandler();
@@ -271,7 +276,7 @@ static void MX_TIM6_Init(void)
   htim6.Instance = TIM6;
   htim6.Init.Prescaler = 84-1;
   htim6.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim6.Init.Period = 5-1;
+  htim6.Init.Period = 4-1;
   if (HAL_TIM_Base_Init(&htim6) != HAL_OK)
   {
     Error_Handler();
@@ -308,7 +313,7 @@ static void MX_TIM7_Init(void)
   htim7.Instance = TIM7;
   htim7.Init.Prescaler = 84-1;
   htim7.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim7.Init.Period = 5-1;
+  htim7.Init.Period = 4-1;
   if (HAL_TIM_Base_Init(&htim7) != HAL_OK)
   {
     Error_Handler();

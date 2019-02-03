@@ -93,6 +93,7 @@ volatile uint8_t p2_current_bit = 0;
 volatile uint8_t recentLatch = 0;
 volatile uint8_t toggleNext = 0;
 volatile uint8_t dpcmFix = 0;
+volatile uint8_t clockFix = 0;
 
 volatile uint8_t p1_clock_filtered = 0;
 volatile uint8_t p2_clock_filtered = 0;
@@ -508,7 +509,7 @@ void DisableP1ClockTimer()
 
 void ResetAndEnableP1ClockTimer()
 {
-	if(!TASRunGetClockFix(0))
+	if(!clockFix)
 	{
 		return;
 	}
@@ -531,7 +532,7 @@ void DisableP2ClockTimer()
 
 void ResetAndEnableP2ClockTimer()
 {
-	if(!TASRunGetClockFix(0))
+	if(!clockFix)
 	{
 		return;
 	}
