@@ -220,7 +220,7 @@ def main():
         sys.exit(0)
 
     dev.reset()
-    run_id = dev.setup_run(args.console, args.players, args.dpcm, args.overread, args.clock, args.window)
+    run_id = dev.setup_run(args.console, args.players, args.dpcm, args.overread, args.clock)
     if run_id == None:
         raise RuntimeError('ERROR')
         sys.exit()
