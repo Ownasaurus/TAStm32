@@ -75,7 +75,7 @@ class TAStm32():
                 command = b'T' + prefix + mode + struct.pack('I', frame)
                 self.write(command)
 
-    def setup_run(self, console, players=[1], dpcm=False, overread=False, window=0):
+    def setup_run(self, console, players=[1], dpcm=False, overread=False, clock_filter=False, window=0):
         prefix = self.get_run_prefix()
         if prefix == None:
             raise RuntimeError('No Free Run')
@@ -103,6 +103,8 @@ class TAStm32():
                 sbyte = sbyte ^ 0x80
             if overread:
                 sbyte = sbyte ^ 0x40
+            if clock_filter:
+                sbyte = sbyte ^ 0x20
             # TODO HANDLE WINDOW MODE
         elif console == 'nes':
             cbyte = b'N'
@@ -118,6 +120,8 @@ class TAStm32():
                 sbyte = sbyte ^ 0x80
             if overread:
                 sbyte = sbyte ^ 0x40
+            if clock_filter:
+                sbyte = sbyte ^ 0x20
             # TODO HANDLE WINDOW MODE
         command = b'S' + prefix + cbyte + int_to_byte(pbyte) + int_to_byte(sbyte)
         self.write(command)
@@ -216,7 +220,7 @@ def main():
         sys.exit(0)
 
     dev.reset()
-    run_id = dev.setup_run(args.console, args.players, args.dpcm, args.overread, args.window)
+    run_id = dev.setup_run(args.console, args.players, args.dpcm, args.overread, args.clock, args.window)
     if run_id == None:
         raise RuntimeError('ERROR')
         sys.exit()
