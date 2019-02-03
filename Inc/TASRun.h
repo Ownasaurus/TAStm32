@@ -37,6 +37,7 @@ typedef struct
 	uint8_t bit; // only used for NES/SNES
 	uint16_t size;
 	uint8_t dpcmFix;
+	uint8_t clockFix;
 	uint8_t overread;
 	uint8_t initialized;
 	volatile uint32_t frameCount;
@@ -50,6 +51,8 @@ uint8_t AddTransition(int numRun, uint32_t frameNumber);
 void ResetTASRuns();
 void TASRunSetDPCMFix(int numRun, uint8_t dpcm);
 uint8_t TASRunGetDPCMFix(int numRun);
+void TASRunSetClockFix(int numRun, uint8_t cf);
+uint8_t TASRunGetClockFix(int numRun);
 void TASRunSetOverread(int numRun, uint8_t overread);
 uint8_t TASRunGetOverread(int numRun);
 void TASRunSetNumControllers(int numRun, uint8_t numControllers);

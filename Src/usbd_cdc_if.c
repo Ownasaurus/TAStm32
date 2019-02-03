@@ -510,6 +510,7 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 
 				TASRunSetDPCMFix(0, ((val >> 7) & 1));
 				TASRunSetOverread(0, ((val >> 6) & 1));
+				TASRunSetClockFix(0, ((val >> 5) & 1));
 
 				CDC_Transmit_FS((uint8_t*)"\x01S", 2);
 

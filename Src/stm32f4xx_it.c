@@ -508,6 +508,11 @@ void DisableP1ClockTimer()
 
 void ResetAndEnableP1ClockTimer()
 {
+	if(!TASRunGetClockFix(0))
+	{
+		return;
+	}
+
 	p1_clock_filtered = 1;
 
 	TIM6->CNT = 0; // reset count
@@ -526,6 +531,11 @@ void DisableP2ClockTimer()
 
 void ResetAndEnableP2ClockTimer()
 {
+	if(!TASRunGetClockFix(0))
+	{
+		return;
+	}
+
 	p2_clock_filtered = 1;
 
 	TIM7->CNT = 0; // reset count

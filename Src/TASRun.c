@@ -113,6 +113,16 @@ uint8_t TASRunGetDPCMFix(int numRun)
 	return tasruns[numRun].dpcmFix;
 }
 
+void TASRunSetClockFix(int numRun, uint8_t cf)
+{
+	tasruns[numRun].clockFix = cf;
+}
+
+uint8_t TASRunGetClockFix(int numRun)
+{
+	return tasruns[numRun].clockFix;
+}
+
 void ResetTASRuns()
 {
 	memset(tasruns,0,sizeof(tasruns));
