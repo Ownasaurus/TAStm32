@@ -274,7 +274,7 @@ static void MX_TIM6_Init(void)
 
   /* USER CODE END TIM6_Init 1 */
   htim6.Instance = TIM6;
-  htim6.Init.Prescaler = 84-1;
+  htim6.Init.Prescaler = 21-1;
   htim6.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim6.Init.Period = 4-1;
   if (HAL_TIM_Base_Init(&htim6) != HAL_OK)
@@ -311,7 +311,7 @@ static void MX_TIM7_Init(void)
 
   /* USER CODE END TIM7_Init 1 */
   htim7.Instance = TIM7;
-  htim7.Init.Prescaler = 84-1;
+  htim7.Init.Prescaler = 21-1;
   htim7.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim7.Init.Period = 4-1;
   if (HAL_TIM_Base_Init(&htim7) != HAL_OK)
@@ -445,7 +445,34 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+void ReInitClockTimers(void)
+{
 
+	TIM_MasterConfigTypeDef sMasterConfig = {0};
+	sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+	sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+
+	// re-init tim6
+	if (HAL_TIM_Base_Init(&htim6) != HAL_OK)
+	{
+		Error_Handler();
+	}
+	if (HAL_TIMEx_MasterConfigSynchronization(&htim6, &sMasterConfig) != HAL_OK)
+	{
+		Error_Handler();
+	}
+
+	// re-init tim7
+	if (HAL_TIM_Base_Init(&htim7) != HAL_OK)
+	{
+		Error_Handler();
+	}
+	if (HAL_TIMEx_MasterConfigSynchronization(&htim7, &sMasterConfig) != HAL_OK)
+	{
+		Error_Handler();
+	}
+
+}
 /* USER CODE END 4 */
 
 /**

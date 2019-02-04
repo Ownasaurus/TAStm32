@@ -6,6 +6,9 @@
 
 #define MAX_NUM_RUNS 2
 
+extern TIM_HandleTypeDef htim6;
+extern TIM_HandleTypeDef htim7;
+
 TASRun tasruns[MAX_NUM_RUNS];
 
 uint16_t TASRunGetSize(uint8_t runNum)
@@ -116,11 +119,16 @@ uint8_t TASRunGetDPCMFix(int numRun)
 void TASRunSetClockFix(int numRun, uint8_t cf)
 {
 	tasruns[numRun].clockFix = cf;
+
+	if(cf > 0)
+	{
+		htim6.Init.Period = htim7.Init.Period = cf-1;
+	}
 }
 
 uint8_t TASRunGetClockFix(int numRun)
 {
-	return tasruns[numRun].clockFix;
+	return (tasruns[numRun].clockFix > 0) ? 1 : 0;
 }
 
 void ResetTASRuns()

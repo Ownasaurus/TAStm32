@@ -71,6 +71,9 @@ void TIM3_IRQHandler(void);
 void TIM6_DAC_IRQHandler(void);
 void TIM7_IRQHandler(void);
 void OTG_FS_IRQHandler(void);
+void Disable8msTimer();
+void DisableP1ClockTimer();
+void DisableP2ClockTimer();
 /* USER CODE BEGIN EFP */
 
 /* USER CODE END EFP */

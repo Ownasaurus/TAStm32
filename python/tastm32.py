@@ -104,7 +104,7 @@ class TAStm32():
             if overread:
                 sbyte = sbyte ^ 0x40
             if clock_filter:
-                sbyte = sbyte ^ 0x20
+                sbyte = sbyte + clock_filter
             # TODO HANDLE WINDOW MODE
         elif console == 'nes':
             cbyte = b'N'
@@ -121,7 +121,7 @@ class TAStm32():
             if overread:
                 sbyte = sbyte ^ 0x40
             if clock_filter:
-                sbyte = sbyte ^ 0x20
+                sbyte = sbyte + clock_filter
             # TODO HANDLE WINDOW MODE
         command = b'S' + prefix + cbyte + int_to_byte(pbyte) + int_to_byte(sbyte)
         self.write(command)
@@ -211,6 +211,12 @@ def main():
         dev = TAStm32(serial_helper.select_serial_port())
     else:
         dev = TAStm32(args.serial)
+    
+    if args.clock != None:
+        args.clock = int(args.clock)
+        if args.clock < 0 or args.clock > 63:
+            print('ERROR: The clock value must be in the range [0,63]! Exiting.')
+            sys.exit(0)
 
     try:
         with open(args.movie, 'rb') as f:

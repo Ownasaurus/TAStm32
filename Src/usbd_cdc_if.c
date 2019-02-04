@@ -52,6 +52,7 @@
 
 /* USER CODE BEGIN INCLUDE */
 #include "TASRun.h"
+#include "stm32f4xx_it.h"
 /* USER CODE END INCLUDE */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -357,6 +358,10 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 							HAL_NVIC_ClearPendingIRQ(TIM3_IRQn);
 						}
 
+						Disable8msTimer();
+						DisableP1ClockTimer();
+						DisableP2ClockTimer();
+
 						// important to reset our state
 						recentLatch = 0;
 						toggleNext = 0;
@@ -512,7 +517,10 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 
 				TASRunSetDPCMFix(0, ((val >> 7) & 1));
 				TASRunSetOverread(0, ((val >> 6) & 1));
-				TASRunSetClockFix(0, ((val >> 5) & 1));
+				// acceptable values for clock fix: 0 --> 63
+				// effective range of clock fix timer: 0us --> 15.75 us
+				TASRunSetClockFix(0, val & 0x3F); // get lower 6 bits
+				ReInitClockTimers();
 
 				CDC_Transmit_FS((uint8_t*)"\x01S", 2);
 

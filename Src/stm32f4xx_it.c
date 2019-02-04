@@ -493,9 +493,6 @@ void Disable8msTimer()
 
 void ResetAndEnable8msTimer()
 {
-	TIM3->CNT = 0; // reset count
-	TIM3->SR = 0; // reset flags
-
 	HAL_TIM_Base_Start_IT(&htim3);
 }
 
@@ -516,9 +513,6 @@ void ResetAndEnableP1ClockTimer()
 
 	p1_clock_filtered = 1;
 
-	TIM6->CNT = 0; // reset count
-	TIM6->SR = 0; // reset flags
-
 	HAL_TIM_Base_Start_IT(&htim6);
 }
 
@@ -538,9 +532,6 @@ void ResetAndEnableP2ClockTimer()
 	}
 
 	p2_clock_filtered = 1;
-
-	TIM7->CNT = 0; // reset count
-	TIM7->SR = 0; // reset flags
 
 	HAL_TIM_Base_Start_IT(&htim7);
 }
