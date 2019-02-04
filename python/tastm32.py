@@ -111,7 +111,7 @@ class TAStm32():
             pbyte = 0
             for player in players:
                 p = int(player)
-                if p != 1 or p != 5:
+                if p != 1 and p != 5:
                     raise RuntimeError('Invalid player for NES')
                 else:
                     pbyte = pbyte ^ 2**(8-p)

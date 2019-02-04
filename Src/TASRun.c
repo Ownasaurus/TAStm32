@@ -118,17 +118,20 @@ uint8_t TASRunGetDPCMFix(int numRun)
 
 void TASRunSetClockFix(int numRun, uint8_t cf)
 {
-	tasruns[numRun].clockFix = cf;
-
-	if(cf > 0)
+	if(cf > 1)
 	{
+		tasruns[numRun].clockFix = cf;
 		htim6.Init.Period = htim7.Init.Period = cf-1;
+	}
+	else
+	{
+		tasruns[numRun].clockFix = 0;
 	}
 }
 
 uint8_t TASRunGetClockFix(int numRun)
 {
-	return (tasruns[numRun].clockFix > 0) ? 1 : 0;
+	return (tasruns[numRun].clockFix != 0) ? 1 : 0;
 }
 
 void ResetTASRuns()
