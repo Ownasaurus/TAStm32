@@ -5,17 +5,17 @@ import sys
 def read_header(data):
     return None
 
-def read_input(data, players=[0,1]):
+def read_input(data, players=[1,5]):
     frame_struct = struct.Struct('ss')
     frame_iter = frame_struct.iter_unpack(data)
     input_data = []
     for frame in frame_iter:
         fd = b''
-        player = 0
+        player = 1
         for pd in frame:
             if player in players:
                 fd += pd
-            player += 1
+            player += 4
         input_data.append(fd)
     return input_data
 
@@ -30,7 +30,7 @@ def main():
     try:
         players = sys.arv[2].split(',')
     except:
-        players = [0,1]
+        players = [1,5]
     inputs = read_input(data, players)
     print(inputs[20])
 
