@@ -425,7 +425,7 @@ void EXTI9_5_IRQHandler(void)
 void TIM3_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM3_IRQn 0 */
-  // This is an 8ms timer
+  // This is a latch timer
   recentLatch = 0;
   Disable8msTimer(); // to ensure it was a 1-shot
 
@@ -442,7 +442,7 @@ void TIM3_IRQHandler(void)
 void TIM6_DAC_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM6_DAC_IRQn 0 */
-  // This is a 5us timer for P1
+  // This is a variable clock timer for P1
   p1_clock_filtered = 0;
   DisableP1ClockTimer(); // to ensure it was a 1-shot
   /* USER CODE END TIM6_DAC_IRQn 0 */
@@ -458,7 +458,7 @@ void TIM6_DAC_IRQHandler(void)
 void TIM7_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM7_IRQn 0 */
-  // This is a 5us timer for P1
+  // This is a variable clock timer for P2
   p2_clock_filtered = 0;
   DisableP2ClockTimer(); // to ensure it was a 1-shot
   /* USER CODE END TIM7_IRQn 0 */
@@ -506,7 +506,7 @@ void DisableP1ClockTimer()
 
 void ResetAndEnableP1ClockTimer()
 {
-	if(!clockFix)
+	if(clockFix == 0)
 	{
 		return;
 	}
@@ -526,7 +526,7 @@ void DisableP2ClockTimer()
 
 void ResetAndEnableP2ClockTimer()
 {
-	if(!clockFix)
+	if(clockFix == 0)
 	{
 		return;
 	}
