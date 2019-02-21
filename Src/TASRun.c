@@ -50,14 +50,15 @@ RunData (*GetNextFrame(int runNum))[MAX_CONTROLLERS][MAX_DATA_LANES]
 	return retval;
 }
 
-uint8_t AddTransition(int numRun, uint32_t frameNumber)
+uint8_t AddTransition(int numRun, TransitionType type, uint32_t frameNumber)
 {
 	int x = 0;
 	while(x < MAX_TRANSITIONS)
 	{
-		if(tasruns[numRun].transitions_dpcm[x] == 0) // first blank transition slot found
+		if(tasruns[numRun].transitions_dpcm[x].frameno == 0) // first blank transition slot found
 		{
-			tasruns[numRun].transitions_dpcm[x] = frameNumber;
+			tasruns[numRun].transitions_dpcm[x].frameno = frameNumber;
+			tasruns[numRun].transitions_dpcm[x].type = type;
 			return 1;
 		}
 
@@ -79,15 +80,35 @@ uint8_t TASRunIncrementFrameCount(int numRun)
 	int x = 0;
 	while(x < MAX_TRANSITIONS)
 	{
-		if(tasruns[numRun].transitions_dpcm[x] == 0) // out of transitions to search for
+		if(tasruns[numRun].transitions_dpcm[x].frameno == 0) // out of transitions to search for
 		{
 			break;
 		}
 
-		if(tasruns[numRun].transitions_dpcm[x] == tasruns[numRun].frameCount)
+		if(tasruns[numRun].transitions_dpcm[x].frameno == tasruns[numRun].frameCount)
 		{
-			tasruns[numRun].dpcmFix = 1 - tasruns[numRun].dpcmFix;
-			return 1;
+			switch(tasruns[numRun].transitions_dpcm[x].type)
+			{
+				case TRANSITION_ACE:
+					tasruns[numRun].dpcmFix = 0;
+					return 1;
+				break;
+				case TRANSITION_NORMAL:
+					tasruns[numRun].dpcmFix = 1;
+					return 1;
+				break;
+				case TRANSITION_RESET_SOFT:
+					// for reset:
+					// set reset pin HIGH?
+					// 0.4s = soft reset.
+					// set reset pin LOW
+					return 1;
+				break;
+				case TRANSITION_RESET_HARD:
+					// 2.0s = hard reset.
+					return 1;
+				break;
+			}
 		}
 
 		x++;

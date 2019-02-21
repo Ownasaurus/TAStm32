@@ -25,9 +25,23 @@ typedef union
 	NESControllerData nes_data;
 } RunData;
 
+typedef enum
+{
+	TRANSITION_NORMAL,
+	TRANSITION_ACE,
+	TRANSITION_RESET_SOFT,
+	TRANSITION_RESET_HARD
+} TransitionType;
+
 typedef struct
 {
-	Console console;
+	TransitionType type;
+	uint32_t frameno;
+} Transition;
+
+typedef struct
+{
+	volatile Console console;
 	uint8_t numControllers;
 	uint8_t numDataLanes;
 	RunData runData[MAX_SIZE][MAX_CONTROLLERS][MAX_DATA_LANES];
@@ -41,13 +55,13 @@ typedef struct
 	uint8_t overread;
 	uint8_t initialized;
 	volatile uint32_t frameCount;
-	uint32_t transitions_dpcm[MAX_TRANSITIONS];
+	Transition transitions_dpcm[MAX_TRANSITIONS];
 } TASRun;
 
 uint16_t TASRunGetSize(uint8_t runNum);
 uint8_t TASRunIsInitialized(uint8_t runNum);
 void TASRunSetInitialized(uint8_t runNum, uint8_t init);
-uint8_t AddTransition(int numRun, uint32_t frameNumber);
+uint8_t AddTransition(int numRun, TransitionType type, uint32_t frameNumber);
 void ResetTASRuns();
 void TASRunSetDPCMFix(int numRun, uint8_t dpcm);
 uint8_t TASRunGetDPCMFix(int numRun);

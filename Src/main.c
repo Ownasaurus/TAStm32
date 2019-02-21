@@ -231,9 +231,9 @@ static void MX_TIM3_Init(void)
 
   /* USER CODE END TIM3_Init 1 */
   htim3.Instance = TIM3;
-  htim3.Init.Prescaler = 8400-1;
+  htim3.Init.Prescaler = 840-1;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim3.Init.Period = 80-1;
+  htim3.Init.Period = 800-1;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
   {
@@ -347,17 +347,23 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, P1_DATA_1_Pin|P1_DATA_2_Pin|P2_DATA_0_Pin|P2_DATA_2_Pin 
-                          |P2_DATA_1_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOC, P1_DATA_1_Pin|P1_DATA_2_Pin|P2_DATA_2_Pin|P2_DATA_0_Pin 
+                          |P2_DATA_1_Pin|V2_DATA_1_Pin|V2_DATA_0_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, LD2_Pin|SNES_RESET_Pin|V2_CLOCK_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, LD2_Pin|SNES_RESET_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, V2_LATCH_Pin|V2_DATA_1_Pin|V2_DATA_0_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(V2_CLOCK_GPIO_Port, V2_CLOCK_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, V1_CLOCK_Pin|V1_LATCH_Pin|V1_DATA_1_Pin|V1_DATA_0_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(V2_LATCH_GPIO_Port, V2_LATCH_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOB, V1_CLOCK_Pin|V1_DATA_1_Pin|V1_DATA_0_Pin, GPIO_PIN_SET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(V1_LATCH_GPIO_Port, V1_LATCH_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : B1_Pin */
   GPIO_InitStruct.Pin = B1_Pin;
@@ -377,9 +383,9 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : P1_DATA_1_Pin P1_DATA_2_Pin P2_DATA_0_Pin P2_DATA_2_Pin 
+  /*Configure GPIO pins : P1_DATA_1_Pin P1_DATA_2_Pin P2_DATA_2_Pin P2_DATA_0_Pin 
                            P2_DATA_1_Pin V2_LATCH_Pin V2_DATA_1_Pin V2_DATA_0_Pin */
-  GPIO_InitStruct.Pin = P1_DATA_1_Pin|P1_DATA_2_Pin|P2_DATA_0_Pin|P2_DATA_2_Pin 
+  GPIO_InitStruct.Pin = P1_DATA_1_Pin|P1_DATA_2_Pin|P2_DATA_2_Pin|P2_DATA_0_Pin 
                           |P2_DATA_1_Pin|V2_LATCH_Pin|V2_DATA_1_Pin|V2_DATA_0_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
