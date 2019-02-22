@@ -18,6 +18,108 @@ def bitswap(b):
     b = (b&0xAA) >> 1 | (b&0x55) << 1
     return b
 
+def calc_pcm():
+    inputs = f.read(56)
+    packed_pcm = inputs
+    data = []
+
+    for i in range(0, len(packed_pcm), 8):
+        val = (packed_pcm[i+1] << 8) + (packed_pcm[i])
+        val = val ^ 0xA804
+
+        d1 =  (((val>>6))&1)
+        d1 += (((val>>4)&1)<<1)
+        d1 += (((val>>2)&1)<<2)
+        d1 += (((val)&1)<<3)
+
+        d2 = ((val>>7)&1)
+        d2 += (((val>>5)&1)<<1)
+        d2 += (((val>>3)&1)<<2)
+        d2 += (((val>>1)&1)<<3)
+
+        d3 = (((val>>14))&1)
+        d3 += ((((val>>12))&1)<<1)
+        d3 += (((val>>10)&1)<<2)
+        d3 += ((((val>>8))&1)<<3)
+
+        d4 = (((val>>15))&1)
+        d4 += ((((val>>13))&1)<<1)
+        d4 += ((((val>>11))&1)<<2)
+        d4 += (((val>>9)&1)<<3)
+
+        val = (packed_pcm[i+3] << 8) + (packed_pcm[i+2])
+        val = val ^ 0xA804
+        #val = val ^ 0xAC00
+
+        d5 =  (((val>>6))&1)
+        d5 += (((val>>4)&1)<<1)
+        d5 += (((val>>2)&1)<<2)
+        d5 += (((val)&1)<<3)
+
+        d6 = ((val>>7)&1)
+        d6 += (((val>>5)&1)<<1)
+        d6 += (((val>>3)&1)<<2)
+        d6 += (((val>>1)&1)<<3)
+
+        d7 = (((val>>14))&1)
+        d7 += ((((val>>12))&1)<<1)
+        d7 += (((val>>10)&1)<<2)
+        d7 += ((((val>>8))&1)<<3)
+
+        d8 = (((val>>15))&1)
+        d8 += ((((val>>13))&1)<<1)
+        d8 += ((((val>>11))&1)<<2)
+        d8 += (((val>>9)&1)<<3)
+
+        val = (packed_pcm[i+5] << 8) + (packed_pcm[i+4])
+        val = val ^ 0xA804
+
+        d11 =  (((val>>6))&1)
+        d11 += (((val>>4)&1)<<1)
+        d11 += (((val>>2)&1)<<2)
+        d11 += (((val)&1)<<3)
+
+        d21 = ((val>>7)&1)
+        d21 += (((val>>5)&1)<<1)
+        d21 += (((val>>3)&1)<<2)
+        d21 += (((val>>1)&1)<<3)
+
+        d31 = (((val>>14))&1)
+        d31 += ((((val>>12))&1)<<1)
+        d31 += (((val>>10)&1)<<2)
+        d31 += ((((val>>8))&1)<<3)
+
+        d41 = (((val>>15))&1)
+        d41 += ((((val>>13))&1)<<1)
+        d41 += ((((val>>11))&1)<<2)
+        d41 += (((val>>9)&1)<<3)
+
+        val = (packed_pcm[i+7] << 8) + (packed_pcm[i+6])
+        val = val ^ 0xA804
+        #val = val ^ 0xAC00
+
+        d51 =  (((val>>6))&1)
+        d51 += (((val>>4)&1)<<1)
+        d51 += (((val>>2)&1)<<2)
+        d51 += (((val)&1)<<3)
+
+        d61 = ((val>>7)&1)
+        d61 += (((val>>5)&1)<<1)
+        d61 += (((val>>3)&1)<<2)
+        d61 += (((val>>1)&1)<<3)
+
+        d71 = (((val>>14))&1)
+        d71 += ((((val>>12))&1)<<1)
+        d71 += (((val>>10)&1)<<2)
+        d71 += ((((val>>8))&1)<<3)
+
+        d81 = (((val>>15))&1)
+        d81 += ((((val>>13))&1)<<1)
+        d81 += ((((val>>11))&1)<<2)
+        d81 += (((val>>9)&1)<<3)
+
+        return data + [65, bitswap(d1) + (bitswap(d5)>>4), bitswap(d11) + (bitswap(d51)>>4), bitswap(d2) + (bitswap(d6)>>4), bitswap(d21) + (bitswap(d61)>>4), bitswap(d3) + (bitswap(d7)>>4), bitswap(d31) + (bitswap(d71)>>4), bitswap(d4) + (bitswap(d8)>>4), bitswap(d41) + (bitswap(d81)>>4)]
+
 parser = argparse_helper.audio_parser()
 args = parser.parse_args()
 
@@ -73,115 +175,31 @@ tmp = None
 
 print("--- Starting read loop")
 first = 1024
+
+# reset to make sure there is no leftover data
+ser.write(b'R')
+time.sleep(0.1)
+cmd = ser.read(2)
+
+# set up the SNES correctly
+ser.write(b'SAS\xCC\x00')
+time.sleep(0.1)
+cmd = ser.read(2)
+
+for x in range(146):
+    data = calc_pcm()
+    ser.write(bytes(data))
+
 while True:
-    cmd = ser.read(1)
-    if cmd == b'A':
-        print(cmd)
-    ser.read(6)
-    if cmd == b'A' or first > 0:
-        first -= 7
-        inputs = f.read(56)
-        packed_pcm = inputs
-        data = []
-
-        for i in range(0, len(packed_pcm), 8):
-            val = (packed_pcm[i+1] << 8) + (packed_pcm[i])
-            val = val ^ 0xA804
-
-            d1 =  (((val>>6))&1)
-            d1 += (((val>>4)&1)<<1)
-            d1 += (((val>>2)&1)<<2)
-            d1 += (((val)&1)<<3)
-
-            d2 = ((val>>7)&1)
-            d2 += (((val>>5)&1)<<1)
-            d2 += (((val>>3)&1)<<2)
-            d2 += (((val>>1)&1)<<3)
-
-            d3 = (((val>>14))&1)
-            d3 += ((((val>>12))&1)<<1)
-            d3 += (((val>>10)&1)<<2)
-            d3 += ((((val>>8))&1)<<3)
-
-            d4 = (((val>>15))&1)
-            d4 += ((((val>>13))&1)<<1)
-            d4 += ((((val>>11))&1)<<2)
-            d4 += (((val>>9)&1)<<3)
-
-            val = (packed_pcm[i+3] << 8) + (packed_pcm[i+2])
-            val = val ^ 0xA804
-            #val = val ^ 0xAC00
-
-            d5 =  (((val>>6))&1)
-            d5 += (((val>>4)&1)<<1)
-            d5 += (((val>>2)&1)<<2)
-            d5 += (((val)&1)<<3)
-
-            d6 = ((val>>7)&1)
-            d6 += (((val>>5)&1)<<1)
-            d6 += (((val>>3)&1)<<2)
-            d6 += (((val>>1)&1)<<3)
-
-            d7 = (((val>>14))&1)
-            d7 += ((((val>>12))&1)<<1)
-            d7 += (((val>>10)&1)<<2)
-            d7 += ((((val>>8))&1)<<3)
-
-            d8 = (((val>>15))&1)
-            d8 += ((((val>>13))&1)<<1)
-            d8 += ((((val>>11))&1)<<2)
-            d8 += (((val>>9)&1)<<3)
-
-            val = (packed_pcm[i+5] << 8) + (packed_pcm[i+4])
-            val = val ^ 0xA804
-
-            d11 =  (((val>>6))&1)
-            d11 += (((val>>4)&1)<<1)
-            d11 += (((val>>2)&1)<<2)
-            d11 += (((val)&1)<<3)
-
-            d21 = ((val>>7)&1)
-            d21 += (((val>>5)&1)<<1)
-            d21 += (((val>>3)&1)<<2)
-            d21 += (((val>>1)&1)<<3)
-
-            d31 = (((val>>14))&1)
-            d31 += ((((val>>12))&1)<<1)
-            d31 += (((val>>10)&1)<<2)
-            d31 += ((((val>>8))&1)<<3)
-
-            d41 = (((val>>15))&1)
-            d41 += ((((val>>13))&1)<<1)
-            d41 += ((((val>>11))&1)<<2)
-            d41 += (((val>>9)&1)<<3)
-
-            val = (packed_pcm[i+7] << 8) + (packed_pcm[i+6])
-            val = val ^ 0xA804
-            #val = val ^ 0xAC00
-
-            d51 =  (((val>>6))&1)
-            d51 += (((val>>4)&1)<<1)
-            d51 += (((val>>2)&1)<<2)
-            d51 += (((val)&1)<<3)
-
-            d61 = ((val>>7)&1)
-            d61 += (((val>>5)&1)<<1)
-            d61 += (((val>>3)&1)<<2)
-            d61 += (((val>>1)&1)<<3)
-
-            d71 = (((val>>14))&1)
-            d71 += ((((val>>12))&1)<<1)
-            d71 += (((val>>10)&1)<<2)
-            d71 += ((((val>>8))&1)<<3)
-
-            d81 = (((val>>15))&1)
-            d81 += ((((val>>13))&1)<<1)
-            d81 += ((((val>>11))&1)<<2)
-            d81 += (((val>>9)&1)<<3)
-            
-            
-            data = data + [65, bitswap(d1) + (bitswap(d5)>>4), bitswap(d11) + (bitswap(d51)>>4), bitswap(d2) + (bitswap(d6)>>4), bitswap(d21) + (bitswap(d61)>>4), bitswap(d3) + (bitswap(d7)>>4), bitswap(d31) + (bitswap(d71)>>4), bitswap(d4) + (bitswap(d8)>>4), bitswap(d41) + (bitswap(d81)>>4)]
-        
+    c = ser.read(1)
+    for char in c:
+        if char == b'A':
+            cmd = cmd + b'A'
+        else:
+            print(char)
+    if cmd[0:7] == b'A'*7:
+        cmd = cmd[7:]
+        data = calc_pcm()
         ser.write(bytes(data))
         latches = latches + 7
         if latches % 1200 == 0:
