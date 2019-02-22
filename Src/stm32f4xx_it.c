@@ -56,12 +56,15 @@ const uint8_t P1_D1_HIGH_C = 3;
 const uint8_t P1_D1_LOW_C = 19;
 const uint8_t P1_D2_HIGH_C = 4;
 const uint8_t P1_D2_LOW_C = 20;
-const uint8_t P2_D0_HIGH_C = 6;
-const uint8_t P2_D0_LOW_C = 22;
-const uint8_t P2_D1_HIGH_C = 9;
-const uint8_t P2_D1_LOW_C = 25;
-const uint8_t P2_D2_HIGH_C = 8;
-const uint8_t P2_D2_LOW_C = 24;
+const uint8_t P2_D0_HIGH_C = 7;
+const uint8_t P2_D0_LOW_C = 23;
+const uint8_t P2_D1_HIGH_C = 8;
+const uint8_t P2_D1_LOW_C = 24;
+const uint8_t P2_D2_HIGH_C = 6;
+const uint8_t P2_D2_LOW_C = 22;
+const uint8_t SNES_RESET_HIGH_A = 9;
+const uint8_t SNES_RESET_LOW_A = 25;
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -157,9 +160,9 @@ void EXTI0_IRQHandler(void)
 {
   /* USER CODE BEGIN EXTI0_IRQn 0 */
 	// P2_CLOCK
-
 	if(!p2_clock_filtered && p2_current_bit < 32) // sanity check... but 32 or more bits should never be read in a single latch!
 	{
+		my_wait_us_asm(2); // necessary to prevent switching too fast in DPCM fix mode
 		GPIOC->BSRR = P2_GPIOC_current[p2_current_bit];
 		ResetAndEnableP2ClockTimer();
 		p2_current_bit++;
@@ -178,7 +181,6 @@ void EXTI1_IRQHandler(void)
 {
   /* USER CODE BEGIN EXTI1_IRQn 0 */
 	// P1_LATCH
-
 	int8_t regbit = 50, databit = -1; // random initial values
 
 	if(recentLatch == 0) // no recent latch
@@ -186,20 +188,26 @@ void EXTI1_IRQHandler(void)
 		GPIOC->BSRR = P1_GPIOC_next[0] | P2_GPIOC_next[0];
 		GPIOA->BSRR = P1_GPIOA_next[0];
 
+		// copy the 2nd bit too
+		__disable_irq();
+		P1_GPIOA_current[1] = P1_GPIOA_next[1];
+		P1_GPIOC_current[1] = P1_GPIOC_next[1];
+		P2_GPIOC_current[1] = P2_GPIOC_next[1];
+		p1_current_bit = p2_current_bit = 1; // set the next bit to be read
+		__enable_irq();
+
+
 		memcpy((uint32_t*)&P1_GPIOA_current, (uint32_t*)&P1_GPIOA_next, 64);
 		memcpy((uint32_t*)&P1_GPIOC_current, (uint32_t*)&P1_GPIOC_next, 64);
-
 		memcpy((uint32_t*)&P2_GPIOC_current, (uint32_t*)&P2_GPIOC_next, 64);
-
-		p1_current_bit = p2_current_bit = 1; // set the next bit to be read
-
-		ResetAndEnableP1ClockTimer();
-		ResetAndEnableP2ClockTimer();
+		//ResetAndEnableP1ClockTimer();
+		//ResetAndEnableP2ClockTimer();
 
 		// now prepare for the next frame!
 
 		if(toggleNext)
 		{
+			//TODO UPDATE THIS TOGGLE TO SUPPORT OTHER FUNCTIONS
 			dpcmFix = 1 - dpcmFix;
 		}
 
@@ -250,13 +258,15 @@ void EXTI1_IRQHandler(void)
 			{
 				P1_GPIOA_next[regbit] = (((p1_d0_next >> databit) & 1) << P1_D0_LOW_A);
 				P1_GPIOA_next[regbit] |= (((~P1_GPIOA_next[regbit]) & 0x01000000) >> 16);
+
 				P1_GPIOC_next[regbit] = (((p1_d1_next >> databit) & 1) << P1_D1_LOW_C) |
 										(((p1_d2_next >> databit) & 1) << P1_D2_LOW_C);
 				P1_GPIOC_next[regbit] |= (((~P1_GPIOC_next[regbit]) & 0x00180000) >> 16);
+
 				P2_GPIOC_next[regbit] = (((p2_d0_next >> databit) & 1) << P2_D0_LOW_C) |
 										(((p2_d1_next >> databit) & 1) << P2_D1_LOW_C) |
 										(((p2_d2_next >> databit) & 1) << P2_D2_LOW_C);
-				P2_GPIOC_next[regbit] |= (((~P2_GPIOC_next[regbit]) & 0x03400000) >> 16);
+				P2_GPIOC_next[regbit] |= (((~P2_GPIOC_next[regbit]) & 0x01C00000) >> 16);
 
 				regbit++;
 				databit--;
@@ -293,38 +303,43 @@ void EXTI1_IRQHandler(void)
 		}
 		else
 		{
+			if(c == CONSOLE_NES)
+				regbit = 8;
+			else
+				regbit = 16;
+
 			// fill the overread
 			if(TASRunGetOverread(0)) // overread is 1/HIGH
 			{
 				// so set logical LOW (button pressed)
 				for(uint8_t index = regbit;index < 32;index++)
 				{
-					P1_GPIOA_current[index] = (1 << P1_D0_LOW_A);
-					P1_GPIOC_current[index] = (1 << P1_D1_LOW_C) | (1 << P1_D2_LOW_C);
-					P2_GPIOC_current[index] = (1 << P2_D0_LOW_C) | (1 << P2_D1_LOW_C) | (1 << P2_D2_LOW_C);
+					P1_GPIOA_current[index] = P1_GPIOA_next[index] = (1 << P1_D0_LOW_A);
+					P1_GPIOC_current[index] = P1_GPIOC_next[index] = (1 << P1_D1_LOW_C) | (1 << P1_D2_LOW_C);
+					P2_GPIOC_current[index] = P2_GPIOC_next[index] = (1 << P2_D0_LOW_C) | (1 << P2_D1_LOW_C) | (1 << P2_D2_LOW_C);
 				}
 			}
 			else
 			{
 				for(uint8_t index = regbit;index < 32;index++)
 				{
-					P1_GPIOA_current[index] = (1 << P1_D0_HIGH_A);
-					P1_GPIOC_current[index] = (1 << P1_D1_HIGH_C) | (1 << P1_D2_HIGH_C);
-					P2_GPIOC_current[index] = (1 << P2_D0_HIGH_C) | (1 << P2_D1_HIGH_C) | (1 << P2_D2_HIGH_C);
+					P1_GPIOA_current[index] = P1_GPIOA_next[index] = (1 << P1_D0_HIGH_A);
+					P1_GPIOC_current[index] = P1_GPIOC_next[index] = (1 << P1_D1_HIGH_C) | (1 << P1_D2_HIGH_C);
+					P2_GPIOC_current[index] = P2_GPIOC_next[index] = (1 << P2_D0_HIGH_C) | (1 << P2_D1_HIGH_C) | (1 << P2_D2_HIGH_C);
 				}
 			}
 		}
 	}
 	else // multiple close latches and DPCM fix is enabled
 	{
+		__disable_irq();
 		// repeat the same frame of input
 		GPIOC->BSRR = P1_GPIOC_current[0] | P2_GPIOC_current[0];
 		GPIOA->BSRR = P1_GPIOA_current[0];
-
 		p1_current_bit = p2_current_bit = 1;
-
-		ResetAndEnableP1ClockTimer();
-		ResetAndEnableP2ClockTimer();
+		__enable_irq();
+		//ResetAndEnableP1ClockTimer();
+		//ResetAndEnableP2ClockTimer();
 	}
 
   /* USER CODE END EXTI1_IRQn 0 */
@@ -343,6 +358,7 @@ void EXTI2_IRQHandler(void)
 	// P1_CLOCK
 	if(!p1_clock_filtered && p1_current_bit < 32) // sanity check... but 32 or more bits should never be read in a single latch!
 	{
+		my_wait_us_asm(2); // necessary to prevent switching too fast in DPCM fix mode
 		GPIOC->BSRR = P1_GPIOC_current[p1_current_bit];
 		GPIOA->BSRR = P1_GPIOA_current[p1_current_bit];
 		ResetAndEnableP1ClockTimer();
@@ -412,8 +428,8 @@ void EXTI9_5_IRQHandler(void)
 	}
 
   /* USER CODE END EXTI9_5_IRQn 0 */
-  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_7);
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_8);
+  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_9);
   /* USER CODE BEGIN EXTI9_5_IRQn 1 */
 
   /* USER CODE END EXTI9_5_IRQn 1 */
@@ -425,7 +441,7 @@ void EXTI9_5_IRQHandler(void)
 void TIM3_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM3_IRQn 0 */
-  // This is an 8ms timer
+  // This is a latch timer
   recentLatch = 0;
   Disable8msTimer(); // to ensure it was a 1-shot
 
@@ -442,7 +458,7 @@ void TIM3_IRQHandler(void)
 void TIM6_DAC_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM6_DAC_IRQn 0 */
-  // This is a 5us timer for P1
+  // This is a variable clock timer for P1
   p1_clock_filtered = 0;
   DisableP1ClockTimer(); // to ensure it was a 1-shot
   /* USER CODE END TIM6_DAC_IRQn 0 */
@@ -458,12 +474,14 @@ void TIM6_DAC_IRQHandler(void)
 void TIM7_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM7_IRQn 0 */
-  // This is a 5us timer for P1
+  // This is a variable clock timer for P2
+	GPIOA->BSRR = (1 >> 9);
   p2_clock_filtered = 0;
   DisableP2ClockTimer(); // to ensure it was a 1-shot
   /* USER CODE END TIM7_IRQn 0 */
   HAL_TIM_IRQHandler(&htim7);
   /* USER CODE BEGIN TIM7_IRQn 1 */
+  	GPIOA->BSRR = (1 >> 25);
 
   /* USER CODE END TIM7_IRQn 1 */
 }
@@ -506,7 +524,7 @@ void DisableP1ClockTimer()
 
 void ResetAndEnableP1ClockTimer()
 {
-	if(!clockFix)
+	if(clockFix == 0)
 	{
 		return;
 	}
@@ -526,7 +544,7 @@ void DisableP2ClockTimer()
 
 void ResetAndEnableP2ClockTimer()
 {
-	if(!clockFix)
+	if(clockFix == 0)
 	{
 		return;
 	}

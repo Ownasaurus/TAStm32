@@ -357,6 +357,14 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 						{
 							HAL_NVIC_ClearPendingIRQ(TIM3_IRQn);
 						}
+						while (HAL_NVIC_GetPendingIRQ(TIM6_DAC_IRQn))
+						{
+							HAL_NVIC_ClearPendingIRQ(TIM6_DAC_IRQn);
+						}
+						while (HAL_NVIC_GetPendingIRQ(TIM7_IRQn))
+						{
+							HAL_NVIC_ClearPendingIRQ(TIM7_IRQn);
+						}
 
 						Disable8msTimer();
 						DisableP1ClockTimer();
@@ -400,8 +408,8 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 					case 'S': // Setup a run
 						ss = SERIAL_SETUP;
 						break;
-					case 'T': // Change DPCM mode
-						ss = SERIAL_DPCM;
+					case 'T': // Transition
+						ss = SERIAL_TRANSITION;
 						break;
 					default: // Error: prefix not understood
 						CDC_Transmit_FS((uint8_t*)"\xFF", 1);
@@ -541,8 +549,8 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 				ss = SERIAL_COMPLETE;
 				sr = RUN_NONE;
 				break;
-			case SERIAL_DPCM:
-				// process 2nd character in command
+			case SERIAL_TRANSITION:
+				// process 2nd character in command for run letter
 				val = Buf[byteNum];
 				if(val == 'A')
 				{
@@ -554,9 +562,8 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 					break;
 				}
 
-
 				byteNum++; // advance to 3rd character in command
-				// ignore the 3rd character, which is implicit
+				val = Buf[byteNum];
 
 				byteNum++; // advance to 4th character in command
 
@@ -564,10 +571,41 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 				uint32_t tempVal;
 				memcpy(&tempVal, &Buf[byteNum], 4);
 
-				if(!AddTransition(0, tempVal)) // adding transition failed
+				if(val == 'A') // transition to ACE
 				{
-					CDC_Transmit_FS((uint8_t*)"\xFB", 1);
-					break;
+					if(!AddTransition(0, TRANSITION_ACE, tempVal)) // try adding transition
+					{
+						// adding transition failed
+						CDC_Transmit_FS((uint8_t*)"\xFB", 1);
+						break;
+					}
+				}
+				else if(val == 'N')
+				{
+					if(!AddTransition(0, TRANSITION_NORMAL, tempVal)) // try adding transition
+					{
+						// adding transition failed
+						CDC_Transmit_FS((uint8_t*)"\xFB", 1);
+						break;
+					}
+				}
+				else if(val == 'R')
+				{
+					if(!AddTransition(0, TRANSITION_RESET_SOFT, tempVal)) // try adding transition
+					{
+						// adding transition failed
+						CDC_Transmit_FS((uint8_t*)"\xFB", 1);
+						break;
+					}
+				}
+				else if(val == 'H')
+				{
+					if(!AddTransition(0, TRANSITION_RESET_HARD, tempVal)) // try adding transition
+					{
+						// adding transition failed
+						CDC_Transmit_FS((uint8_t*)"\xFB", 1);
+						break;
+					}
 				}
 
 				ss = SERIAL_COMPLETE;
