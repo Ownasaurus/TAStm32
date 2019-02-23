@@ -64,7 +64,7 @@ while True:
     c = ser.read(100) # read up to 100 bytes, though we shouldn't ever get that close
     
     if c.count(b'\xB0'): # this should not ever occur based on the protocol
-        print("overflow!", ct)
+        print("overflow!")
         continue
     if c.count(b'\x0F'): # we want 28 latches
         for twice in range(4): # send 4 sets of 7 latches
