@@ -5,7 +5,7 @@
 #include "n64.h"
 #include "snes.h"
 
-#define MAX_SIZE 1024
+#define MAX_SIZE 2048
 #define MAX_CONTROLLERS 2
 #define MAX_DATA_LANES 3
 #define MAX_TRANSITIONS 5
@@ -44,16 +44,15 @@ typedef struct
 	volatile Console console;
 	uint8_t numControllers;
 	uint8_t numDataLanes;
-	RunData runData[MAX_SIZE][MAX_CONTROLLERS][MAX_DATA_LANES];
-	RunData (*buf)[MAX_CONTROLLERS][MAX_DATA_LANES]; // points to the next place the received serial data will be stored
-	RunData (*end)[MAX_CONTROLLERS][MAX_DATA_LANES]; // points to the end of the array for bounds checking
-	RunData (*current)[MAX_CONTROLLERS][MAX_DATA_LANES]; // points to what the console will read next
-	uint8_t bit; // only used for NES/SNES
-	uint16_t size;
-	uint8_t dpcmFix;
-	uint8_t clockFix;
-	uint8_t overread;
-	uint8_t initialized;
+	volatile RunData runData[MAX_SIZE][MAX_CONTROLLERS][MAX_DATA_LANES];
+	volatile RunData (*buf)[MAX_CONTROLLERS][MAX_DATA_LANES]; // points to the next place the received serial data will be stored
+	volatile RunData (*end)[MAX_CONTROLLERS][MAX_DATA_LANES]; // points to the end of the array for bounds checking
+	volatile RunData (*current)[MAX_CONTROLLERS][MAX_DATA_LANES]; // points to what the console will read next
+	volatile uint16_t size;
+	volatile uint8_t dpcmFix;
+	volatile uint8_t clockFix;
+	volatile uint8_t overread;
+	volatile uint8_t initialized;
 	volatile uint32_t frameCount;
 	Transition transitions_dpcm[MAX_TRANSITIONS];
 } TASRun;

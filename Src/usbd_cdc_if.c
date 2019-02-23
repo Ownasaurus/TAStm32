@@ -140,6 +140,8 @@ uint8_t UserTxBufferFS[APP_TX_DATA_SIZE];
 
 /* USER CODE BEGIN PRIVATE_VARIABLES */
 
+volatile uint8_t request_pending = 0;
+
 /* USER CODE END PRIVATE_VARIABLES */
 
 /**
@@ -393,7 +395,10 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 						sr = RUN_A;
 						ss = SERIAL_CONTROLLER_DATA;
 						break;
-					/*case 'B': // Run #2 controller data
+					case 0x0F: // 7 frame data burst is complete
+						request_pending = 0;
+						break;
+						/*case 'B': // Run #2 controller data
 						sr = RUN_B;
 						ss = SERIAL_CONTROLLER_DATA;
 						break;
@@ -422,6 +427,37 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 				{
 					CDC_Transmit_FS((uint8_t*)"\xB0", 1);
 				}
+
+				if(!TASRunIsInitialized(0) && TASRunGetSize(0) > 0) // this should only run once per run to set up the 1st frame of data
+				{
+					if(TASRunGetDPCMFix(0))
+					{
+						toggleNext = 1;
+					}
+					if(TASRunGetClockFix(0))
+					{
+						clockFix = 1;
+					}
+
+					EXTI1_IRQHandler();
+
+					TASRunSetInitialized(0, 1);
+
+					// enable interrupts as needed
+					Console c = TASRunGetConsole(0);
+
+					if(c == CONSOLE_NES || c == CONSOLE_SNES)
+					{
+						HAL_NVIC_EnableIRQ(EXTI0_IRQn);
+						HAL_NVIC_EnableIRQ(EXTI1_IRQn);
+						HAL_NVIC_EnableIRQ(EXTI2_IRQn);
+					}
+					else if(c == CONSOLE_N64)
+					{
+						HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
+					}
+				}
+
 				ss = SERIAL_COMPLETE;
 				sr = RUN_NONE;
 				break;
@@ -444,6 +480,8 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 						ss = SERIAL_NUM_CONTROLLERS;
 						break;
 					default: // Error: console type not understood
+						ss = SERIAL_COMPLETE;
+						sr = RUN_NONE;
 						CDC_Transmit_FS((uint8_t*)"\xFC", 1);
 						break;
 				}
@@ -468,6 +506,8 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 						ss = SERIAL_CONSOLE;
 						break;*/
 					default: // Error: run number not understood
+						ss = SERIAL_COMPLETE;
+						sr = RUN_NONE;
 						CDC_Transmit_FS((uint8_t*)"\xFE", 1);
 						break;
 				}
@@ -515,7 +555,10 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 				}
 				else
 				{
+					ss = SERIAL_COMPLETE;
+					sr = RUN_NONE;
 					CDC_Transmit_FS((uint8_t*)"\xFD", 1);
+					break;
 				}
 
 				ss = SERIAL_SETTINGS;
@@ -532,20 +575,6 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 
 				CDC_Transmit_FS((uint8_t*)"\x01S", 2);
 
-				// enable interrupts as needed
-				Console c = TASRunGetConsole(0);
-
-				if(c == CONSOLE_NES || c == CONSOLE_SNES)
-				{
-					HAL_NVIC_EnableIRQ(EXTI0_IRQn);
-					HAL_NVIC_EnableIRQ(EXTI1_IRQn);
-					HAL_NVIC_EnableIRQ(EXTI2_IRQn);
-				}
-				else if(c == CONSOLE_N64)
-				{
-					HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
-				}
-
 				ss = SERIAL_COMPLETE;
 				sr = RUN_NONE;
 				break;
@@ -558,6 +587,8 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 				}
 				else
 				{
+					ss = SERIAL_COMPLETE;
+					sr = RUN_NONE;
 					CDC_Transmit_FS((uint8_t*)"\xFE", 1);
 					break;
 				}
@@ -576,6 +607,8 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 					if(!AddTransition(0, TRANSITION_ACE, tempVal)) // try adding transition
 					{
 						// adding transition failed
+						ss = SERIAL_COMPLETE;
+						sr = RUN_NONE;
 						CDC_Transmit_FS((uint8_t*)"\xFB", 1);
 						break;
 					}
@@ -585,6 +618,8 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 					if(!AddTransition(0, TRANSITION_NORMAL, tempVal)) // try adding transition
 					{
 						// adding transition failed
+						ss = SERIAL_COMPLETE;
+						sr = RUN_NONE;
 						CDC_Transmit_FS((uint8_t*)"\xFB", 1);
 						break;
 					}
@@ -594,6 +629,8 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 					if(!AddTransition(0, TRANSITION_RESET_SOFT, tempVal)) // try adding transition
 					{
 						// adding transition failed
+						ss = SERIAL_COMPLETE;
+						sr = RUN_NONE;
 						CDC_Transmit_FS((uint8_t*)"\xFB", 1);
 						break;
 					}
@@ -603,6 +640,8 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 					if(!AddTransition(0, TRANSITION_RESET_HARD, tempVal)) // try adding transition
 					{
 						// adding transition failed
+						ss = SERIAL_COMPLETE;
+						sr = RUN_NONE;
 						CDC_Transmit_FS((uint8_t*)"\xFB", 1);
 						break;
 					}

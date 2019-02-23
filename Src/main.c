@@ -74,6 +74,7 @@ TIM_HandleTypeDef htim7;
 /* USER CODE BEGIN PV */
 extern volatile uint8_t toggleNext;
 extern volatile uint8_t clockFix;
+extern volatile uint8_t request_pending;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -142,22 +143,6 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	if(!TASRunIsInitialized(0) && TASRunGetSize(0) > 0) // this should only run once per run to set up the 1st frame of data
-	{
-		if(TASRunGetDPCMFix(0))
-		{
-			toggleNext = 1;
-		}
-		if(TASRunGetClockFix(0))
-		{
-			clockFix = 1;
-		}
-
-		EXTI1_IRQHandler();
-
-		TASRunSetInitialized(0, 1);
-	}
-
   }
   /* USER CODE END 3 */
 }

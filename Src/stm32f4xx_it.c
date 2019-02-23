@@ -126,7 +126,7 @@ extern TIM_HandleTypeDef htim3;
 extern TIM_HandleTypeDef htim6;
 extern TIM_HandleTypeDef htim7;
 /* USER CODE BEGIN EV */
-
+extern volatile uint8_t request_pending;
 /* USER CODE END EV */
 
 /******************************************************************************/
@@ -162,7 +162,10 @@ void EXTI0_IRQHandler(void)
 	// P2_CLOCK
 	if(!p2_clock_filtered && p2_current_bit < 32) // sanity check... but 32 or more bits should never be read in a single latch!
 	{
-		my_wait_us_asm(2); // necessary to prevent switching too fast in DPCM fix mode
+		if(dpcmFix)
+		{
+			my_wait_us_asm(2); // necessary to prevent switching too fast in DPCM fix mode
+		}
 		GPIOC->BSRR = P2_GPIOC_current[p2_current_bit];
 		ResetAndEnableP2ClockTimer();
 		p2_current_bit++;
@@ -292,14 +295,24 @@ void EXTI1_IRQHandler(void)
 			}
 		}
 
-		if(!dataptr) // notify buffer underflow
+		/*if(!dataptr) // notify buffer underflow
 		{
 			CDC_Transmit_FS((uint8_t*)"\xB2", 1); // notify buffer underflow
-		}
+		}*/
 
 		if(TASRunIsInitialized(0))
 		{
-			CDC_Transmit_FS((uint8_t*)"A", 1); // notify that we latched
+			if(!request_pending && TASRunGetSize(0) <= (MAX_SIZE-14)) // not full enough
+			{
+				if(CDC_Transmit_FS((uint8_t*)"\x0F", 1) == USBD_OK) // notify that we latched and want more
+				{
+					request_pending = 1;
+				}
+			}
+			else
+			{
+				CDC_Transmit_FS((uint8_t*)"A", 1); // notify that we latched
+			}
 		}
 		else
 		{
@@ -358,7 +371,10 @@ void EXTI2_IRQHandler(void)
 	// P1_CLOCK
 	if(!p1_clock_filtered && p1_current_bit < 32) // sanity check... but 32 or more bits should never be read in a single latch!
 	{
-		my_wait_us_asm(2); // necessary to prevent switching too fast in DPCM fix mode
+		if(dpcmFix)
+		{
+			my_wait_us_asm(2); // necessary to prevent switching too fast in DPCM fix mode
+		}
 		GPIOC->BSRR = P1_GPIOC_current[p1_current_bit];
 		GPIOA->BSRR = P1_GPIOA_current[p1_current_bit];
 		ResetAndEnableP1ClockTimer();
