@@ -55,19 +55,19 @@ time.sleep(0.1)
 cmd = ser.read(2)
 print(bytes(cmd))
 
-ser.ser.reset_input_buffer()
+ser.ser.reset_input_buffer() # clear anything that might be sitting on the serial line at the moment
 
 # seed it with an arbitrary first frame of data to get the run to be initialized
 ser.write(bytes([65,1,1,1,1,1,1,1,1]))
     
 while True:
-    c = ser.read(100)
+    c = ser.read(100) # read up to 100 bytes, though we shouldn't ever get that close
     
-    if c.count(b'\xB0'):
+    if c.count(b'\xB0'): # this should not ever occur based on the protocol
         print("overflow!", ct)
         continue
-    if c.count(b'\x0F'):
-        for twice in range(2):
+    if c.count(b'\x0F'): # we want 28 latches
+        for twice in range(4): # send 4 sets of 7 latches
             inputs = f.read(56) # this will result in a packet size of 63. we're trying to keep it below 64
             packed_pcm = inputs
             data = []
@@ -168,4 +168,4 @@ while True:
                 data = data + [65, bitswap(d1) + (bitswap(d5)>>4), bitswap(d11) + (bitswap(d51)>>4), bitswap(d2) + (bitswap(d6)>>4), bitswap(d21) + (bitswap(d61)>>4), bitswap(d3) + (bitswap(d7)>>4), bitswap(d31) + (bitswap(d71)>>4), bitswap(d4) + (bitswap(d8)>>4), bitswap(d41) + (bitswap(d81)>>4)]
             
             ser.write(bytes(data))
-        ser.write(b'\x0F')
+        ser.write(b'\x0F') # tell the hardware that we have completed our bulk transfer
