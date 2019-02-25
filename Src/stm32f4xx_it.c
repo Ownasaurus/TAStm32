@@ -127,6 +127,7 @@ extern TIM_HandleTypeDef htim6;
 extern TIM_HandleTypeDef htim7;
 /* USER CODE BEGIN EV */
 extern volatile uint8_t request_pending;
+extern volatile uint8_t bulk_mode;
 /* USER CODE END EV */
 
 /******************************************************************************/
@@ -295,18 +296,16 @@ void EXTI1_IRQHandler(void)
 			}
 		}
 
-		/*if(!dataptr) // notify buffer underflow
-		{
-			CDC_Transmit_FS((uint8_t*)"\xB2", 1); // notify buffer underflow
-		}*/
-
 		if(TASRunIsInitialized(0))
 		{
-			if(!request_pending && TASRunGetSize(0) <= (MAX_SIZE-14)) // not full enough
+			if(bulk_mode)
 			{
-				if(CDC_Transmit_FS((uint8_t*)"\x0F", 1) == USBD_OK) // notify that we latched and want more
+				if(!request_pending && TASRunGetSize(0) <= (MAX_SIZE-28)) // not full enough
 				{
-					request_pending = 1;
+					if(CDC_Transmit_FS((uint8_t*)"\x0F", 1) == USBD_OK) // notify that we latched and want more
+					{
+						request_pending = 1;
+					}
 				}
 			}
 			else

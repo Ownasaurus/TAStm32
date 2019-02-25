@@ -141,6 +141,7 @@ uint8_t UserTxBufferFS[APP_TX_DATA_SIZE];
 /* USER CODE BEGIN PRIVATE_VARIABLES */
 
 volatile uint8_t request_pending = 0;
+volatile uint8_t bulk_mode = 0;
 
 /* USER CODE END PRIVATE_VARIABLES */
 
@@ -379,6 +380,8 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 						p2_current_bit = 0;
 						dpcmFix = 0;
 						clockFix = 0;
+						request_pending = 0;
+						bulk_mode = 0;
 
 						memset((uint32_t*)&P1_GPIOA_current, 0, 128);
 						memset((uint32_t*)&P1_GPIOA_next, 0, 128);
@@ -395,21 +398,15 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 						sr = RUN_A;
 						ss = SERIAL_CONTROLLER_DATA;
 						break;
-					case 0x0F: // 7 frame data burst is complete
+					case 0x0F: // 28 frame data burst is complete
 						request_pending = 0;
 						break;
-						/*case 'B': // Run #2 controller data
-						sr = RUN_B;
-						ss = SERIAL_CONTROLLER_DATA;
+					case 0x1F: // enter bulk transfer mode
+						bulk_mode = 1;
 						break;
-					case 'C': // Run #3 controller data
-						sr = RUN_C;
-						ss = SERIAL_CONTROLLER_DATA;
+					case 0x2F: // exit bulk transfer mode
+						bulk_mode = 0;
 						break;
-					case 'D': // Run #4 controller data
-						sr = RUN_D;
-						ss = SERIAL_CONTROLLER_DATA;
-						break;*/
 					case 'S': // Setup a run
 						ss = SERIAL_SETUP;
 						break;
@@ -493,18 +490,6 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 						sr = RUN_A;
 						ss = SERIAL_CONSOLE;
 						break;
-					/*case 'B': // setup Run #2
-						sr = RUN_B;
-						ss = SERIAL_CONSOLE;
-						break;
-					case 'C': // setup Run #3
-						sr = RUN_C;
-						ss = SERIAL_CONSOLE;
-						break;
-					case 'D': // setup Run #4
-						sr = RUN_D;
-						ss = SERIAL_CONSOLE;
-						break;*/
 					default: // Error: run number not understood
 						ss = SERIAL_COMPLETE;
 						sr = RUN_NONE;

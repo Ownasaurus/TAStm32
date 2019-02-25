@@ -55,6 +55,9 @@ time.sleep(0.1)
 cmd = ser.read(2)
 print(bytes(cmd))
 
+ser.write(b'\x1F')
+time.sleep(0.1)
+
 ser.ser.reset_input_buffer() # clear anything that might be sitting on the serial line at the moment
 
 # seed it with an arbitrary first frame of data to get the run to be initialized
