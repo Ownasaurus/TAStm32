@@ -98,15 +98,10 @@ uint8_t TASRunIncrementFrameCount(int numRun)
 					return 1;
 				break;
 				case TRANSITION_RESET_SOFT:
-					// for reset:
-					// set reset pin HIGH?
-					// 0.4s = soft reset.
-					// set reset pin LOW
-					return 1;
+					return 2;
 				break;
 				case TRANSITION_RESET_HARD:
-					// 2.0s = hard reset.
-					return 1;
+					return 3;
 				break;
 			}
 		}

@@ -73,6 +73,8 @@ extern volatile uint32_t P1_GPIOC_current[32];
 extern volatile uint32_t P1_GPIOC_next[32];
 extern volatile uint32_t P2_GPIOC_current[32];
 extern volatile uint32_t P2_GPIOC_next[32];
+extern const uint8_t SNES_RESET_HIGH_A;
+extern const uint8_t SNES_RESET_LOW_A;
 /* USER CODE END PV */
 
 /** @addtogroup STM32_USB_OTG_DEVICE_LIBRARY
@@ -398,14 +400,38 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 						sr = RUN_A;
 						ss = SERIAL_CONTROLLER_DATA;
 						break;
-					case 0x0F: // 28 frame data burst is complete
+					case 'a': // 28 frame data burst is complete
 						request_pending = 0;
 						break;
-					case 0x1F: // enter bulk transfer mode
-						bulk_mode = 1;
-						break;
-					case 0x2F: // exit bulk transfer mode
-						bulk_mode = 0;
+					case 'Q':
+						byteNum++; // advance to 2nd character in command
+						val = Buf[byteNum];
+
+						if(val != 'A')
+						{
+							CDC_Transmit_FS((uint8_t*)"\xFE", 1); // run not supported
+							sr = RUN_NONE;
+							ss = SERIAL_COMPLETE;
+							break;
+						}
+
+						byteNum++; // advance to 3nd character in command
+						val = Buf[byteNum];
+
+						if(val == '1') // enter bulk transfer mode
+						{
+							bulk_mode = 1;
+						}
+						else if(val == '0') // exit bulk transfer mode
+						{
+							bulk_mode = 0;
+						}
+						else // should not reach this
+						{
+							CDC_Transmit_FS((uint8_t*)"\xFA", 1); // Error during bulk transfer toggle
+							sr = RUN_NONE;
+							ss = SERIAL_COMPLETE;
+						}
 						break;
 					case 'S': // Setup a run
 						ss = SERIAL_SETUP;
@@ -413,10 +439,40 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 					case 'T': // Transition
 						ss = SERIAL_TRANSITION;
 						break;
+					case 'P': // Transition
+						ss = SERIAL_POWER;
+						break;
 					default: // Error: prefix not understood
 						CDC_Transmit_FS((uint8_t*)"\xFF", 1);
 						break;
 				}
+				break;
+			case SERIAL_POWER:
+				switch(Buf[byteNum])
+				{
+					case '0': // power off
+						GPIOA->BSRR = (1 << SNES_RESET_LOW_A);
+						break;
+					case '1': // power on
+						GPIOA->BSRR = (1 << SNES_RESET_HIGH_A);
+						break;
+					case 'S': // soft reset
+						GPIOA->BSRR = (1 << SNES_RESET_LOW_A);
+						HAL_Delay(200);
+						GPIOA->BSRR = (1 << SNES_RESET_HIGH_A);
+						HAL_Delay(200);
+						break;
+					case 'H': // hard reset
+						GPIOA->BSRR = (1 << SNES_RESET_LOW_A);
+						HAL_Delay(1000);
+						GPIOA->BSRR = (1 << SNES_RESET_HIGH_A);
+						HAL_Delay(1000);
+						break;
+					default:
+						ss = SERIAL_COMPLETE;
+						break;
+				}
+				ss = SERIAL_COMPLETE;
 				break;
 			case SERIAL_CONTROLLER_DATA:
 				ExtractDataAndAdvance(frame, sr, Buf, &byteNum);
@@ -609,7 +665,7 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 						break;
 					}
 				}
-				else if(val == 'R')
+				else if(val == 'S')
 				{
 					if(!AddTransition(0, TRANSITION_RESET_SOFT, tempVal)) // try adding transition
 					{

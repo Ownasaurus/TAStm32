@@ -209,10 +209,23 @@ void EXTI1_IRQHandler(void)
 
 		// now prepare for the next frame!
 
-		if(toggleNext)
+		if(toggleNext == 1)
 		{
-			//TODO UPDATE THIS TOGGLE TO SUPPORT OTHER FUNCTIONS
 			dpcmFix = 1 - dpcmFix;
+		}
+		else if(toggleNext == 2)
+		{
+			GPIOA->BSRR = (1 << SNES_RESET_LOW_A);
+			HAL_Delay(200);
+			GPIOA->BSRR = (1 << SNES_RESET_HIGH_A);
+			HAL_Delay(200);
+		}
+		else if(toggleNext == 3)
+		{
+			GPIOA->BSRR = (1 << SNES_RESET_LOW_A);
+			HAL_Delay(1000);
+			GPIOA->BSRR = (1 << SNES_RESET_HIGH_A);
+			HAL_Delay(1000);
 		}
 
 		if(dpcmFix)
@@ -302,7 +315,7 @@ void EXTI1_IRQHandler(void)
 			{
 				if(!request_pending && TASRunGetSize(0) <= (MAX_SIZE-28)) // not full enough
 				{
-					if(CDC_Transmit_FS((uint8_t*)"\x0F", 1) == USBD_OK) // notify that we latched and want more
+					if(CDC_Transmit_FS((uint8_t*)"a", 1) == USBD_OK) // notify that we latched and want more
 					{
 						request_pending = 1;
 					}
