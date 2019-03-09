@@ -16,6 +16,9 @@ DEBUG = False
 
 int_buffer = 2048 # internal buffer size on replay device
 
+latches_per_bulk_command = 28
+packets = 4
+
 int_to_byte_struct = struct.Struct('B')
 def int_to_byte(interger):
     return int_to_byte_struct.pack(interger)
@@ -28,6 +31,25 @@ class TAStm32():
             print ('ERROR: the specified interface (' + ser + ') is in use')
             sys.exit(0)
         self.activeRuns = {b'A': False, b'B': False, b'C': False, b'D': False}
+
+    def get_run_prefix(self):
+        if self.activeRuns[b'A']:
+            if self.activeRuns[b'B']:
+                if self.activeRuns[b'C']:
+                    if self.activeRuns[b'D']:
+                        return None
+                    else:
+                        self.activeRuns[b'D'] = True
+                        return b'D'
+                else:
+                    self.activeRuns[b'C'] = True
+                    return b'C'
+            else:
+                self.activeRuns[b'B'] = True
+                return b'B'
+        else:
+            self.activeRuns[b'A'] = True
+            return b'A'
 
     def write(self, data):
         count = self.ser.write(data)
@@ -50,32 +72,41 @@ class TAStm32():
         else:
             raise RuntimeError('Error during reset')
 
-    def get_run_prefix(self):
-        if self.activeRuns[b'A']:
-            if self.activeRuns[b'B']:
-                if self.activeRuns[b'C']:
-                    if self.activeRuns[b'D']:
-                        return None
-                    else:
-                        self.activeRuns[b'D'] = True
-                        return b'D'
-                else:
-                    self.activeRuns[b'C'] = True
-                    return b'C'
-            else:
-                self.activeRuns[b'B'] = True
-                return b'B'
-        else:
-            self.activeRuns[b'A'] = True
-            return b'A'
+    def power_on(self):
+        self.write(b'P1')
+
+    def power_off(self):
+        self.write(b'P0')
+
+    def power_soft_reset(self):
+        self.write(b'PS')
+
+    def power_hard_reset(self):
+        self.write(b'PH')
+
+    def set_bulk_data_mode(self, prefix, mode):
+        command = b''.join([b'Q', prefix, mode])
+        self.write(command)
 
     def send_transition(self, prefix, frame, mode):
         if self.activeRuns[prefix]:
-            if mode == b'N' or mode == b'A':
-                command = b'T' + prefix + mode + struct.pack('I', frame)
+            command = ''
+            if mode == b'N':
+                # Set Normal Mode
+                command = b''.join([b'T', prefix, mode, struct.pack('I', frame)])
+            elif mode == b'A':
+                # Set ACE Mode
+                command = b''.join([b'T', prefix, mode, struct.pack('I', frame)])
+            elif mode == b'S':
+                # Set Soft Reset
+                command = b''.join([b'T', prefix, mode, struct.pack('I', frame)])
+            elif mode == b'H'
+                # Set Hard Reset
+                command = b''.join([b'T', prefix, mode, struct.pack('I', frame)])
+            if command != '':
                 self.write(command)
 
-    def setup_run(self, console, players=[1], dpcm=False, overread=False, clock_filter=False, window=0):
+    def setup_run(self, console, players=[1], dpcm=False, overread=False, clock_filter=0):
         prefix = self.get_run_prefix()
         if prefix == None:
             raise RuntimeError('No Free Run')
@@ -105,7 +136,6 @@ class TAStm32():
                 sbyte = sbyte ^ 0x40
             if clock_filter:
                 sbyte = sbyte + clock_filter
-            # TODO HANDLE WINDOW MODE
         elif console == 'nes':
             cbyte = b'N'
             pbyte = 0
@@ -122,7 +152,6 @@ class TAStm32():
                 sbyte = sbyte ^ 0x40
             if clock_filter:
                 sbyte = sbyte + clock_filter
-            # TODO HANDLE WINDOW MODE
         command = b'S' + prefix + cbyte + int_to_byte(pbyte) + int_to_byte(sbyte)
         self.write(command)
         time.sleep(0.1)
@@ -151,6 +180,7 @@ class TAStm32():
                     if numBytes > int_buffer:
                         print ("WARNING: High latch rate detected: " + str(numBytes))
                 latches = c.count(run_id)
+                bulk = c.count(run_id.lower())
                 missed = c.count(b'\xB0')
                 if missed != 0:
                     fn -= missed
@@ -165,6 +195,21 @@ class TAStm32():
                         pass
                     fn += 1
                     frame += 1
+                for cmd in range(bulk):
+                    for packet in range(packets)
+                        command = []
+                        for latch in range(latches_per_bulk_command//packets):
+                            try:
+                                command.append(run_id + buffer[fn])
+                                fn += 1
+                                frame += 1
+                                if fn % 100 == 0:
+                                    print('Sending Latch: {}'.format(fn))
+                            except IndexError:
+                                pass
+                        data = b''.join(command)
+                        self.write(data)
+                    self.write(run_id.lower())
                 if frame > frame_max:
                     break
             except serial.SerialException:
@@ -188,18 +233,20 @@ def main():
     gc.disable()
 
     parser = argparse_helper.setup_parser_full()
-    
-    parser.add_argument('--transition', help='Add a transition', nargs=2, action='append')
-    
+
     args = parser.parse_args()
 
     if args.transition != None:
         for transition in args.transition:
             transition[0] = int(transition[0])
-            if transition[1] == 'N':
-                transition[1] = b'N'
-            elif transition[1] == 'A':
+            if transition[1] == 'A':
                 transition[1] = b'A'
+            elif transition[1] == 'N':
+                transition[1] = b'N'
+            elif transition[1] == 'S':
+                transition[1] = b'S'
+            elif transition[1] == 'H':
+                transition[1] = b'H'
 
     DEBUG = args.debug
 

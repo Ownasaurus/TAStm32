@@ -19,6 +19,7 @@ def setup_parser_full():
     parser.add_argument('--dpcm', help='Enable dpcm fix', action='store_true')
     parser.add_argument('--clock', help='Enable clock filter. Value must be between 0 and 63. This number gets multiplied by 0.25us')
     parser.add_argument('--overread', help='Set overread value', action='store_true')
+    parser.add_argument('--transition', help='Add a transition', nargs=2, action='append')
     # parser.add_argument('--window', help='Set window mode', type=float, default=0)
     parser.add_argument('movie', help='Path to the movie file to play')
     return parser
