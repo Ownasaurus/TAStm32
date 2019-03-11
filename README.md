@@ -8,6 +8,8 @@ Please see the "Wiki" section for the technical details of the serial communicat
 This project aims to create an easy-to-use, multi-system TAS replay device to be used on actual consoles. The name of this project comes from the fact that it is powered by a STM32F4 microcontroller.
 
 ### Special Thanks
+#### TheMas3212 - The main contributor to this project. Aided with all things python, designing the serial communication protocol, helping with PCB design, and debugging throughout the whole process
+
 DwangoAC - warmly accepting me into the TASBot community
 
 micro500 - spent a lot of time teaching me how console replay devices work at a low level
@@ -15,8 +17,6 @@ micro500 - spent a lot of time teaching me how console replay devices work at a 
 true - for teaching me hardware concepts, helping me choose the perfect MCU for the job, and explaining a lot of low-level things to me
 
 Ilari - for being an extraordinary wealth of knowledge on most topics
-
-TheMas3212 - for all things python and designing the serial communication protocol
 
 Serisium - helped with debugging and PCB design
 
