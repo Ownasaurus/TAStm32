@@ -75,7 +75,7 @@
 								<option id="com.atollic.truestudio.ld.misc.linkerflags.1948405714" name="Other options" superClass="com.atollic.truestudio.ld.misc.linkerflags" useByScannerDiscovery="false" value="" valueType="string"/>
 								<option id="com.atollic.truestudio.common_options.target.fpu.829683864" name="Floating point" superClass="com.atollic.truestudio.common_options.target.fpu" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.fpu.hard" valueType="enumerated"/>
 								<option id="com.atollic.truestudio.common_options.target.fpucore.1297069055" name="FPU" superClass="com.atollic.truestudio.common_options.target.fpucore" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.fpucore.fpv4-sp-d16" valueType="enumerated"/>
-								<option id="com.atollic.truestudio.ld.misc.genmapfile.58894054" superClass="com.atollic.truestudio.ld.misc.genmapfile"/>
+								<option id="com.atollic.truestudio.ld.misc.genmapfile.58894054" name="Create map file" superClass="com.atollic.truestudio.ld.misc.genmapfile" useByScannerDiscovery="false"/>
 								<inputType id="com.atollic.truestudio.ld.input.1372975870" name="Input" superClass="com.atollic.truestudio.ld.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
@@ -103,7 +103,7 @@
 								<option id="com.atollic.truestudio.ldcc.general.scriptfile.561304432" name="Linker script" superClass="com.atollic.truestudio.ldcc.general.scriptfile" value="../STM32F446RE_FLASH.ld" valueType="string"/>
 								<option id="com.atollic.truestudio.common_options.target.fpu.829683864" name="Floating point" superClass="com.atollic.truestudio.common_options.target.fpu" value="com.atollic.truestudio.common_options.target.fpu.hard" valueType="enumerated"/>
 								<option id="com.atollic.truestudio.common_options.target.fpucore.1297069055" name="FPU" superClass="com.atollic.truestudio.common_options.target.fpucore" value="com.atollic.truestudio.common_options.target.fpucore.fpv4-sp-d16" valueType="enumerated"/>
-								<option id="com.atollic.truestudio.ldcc.misc.genmapfile.657677704" superClass="com.atollic.truestudio.ldcc.misc.genmapfile"/>
+								<option id="com.atollic.truestudio.ldcc.misc.genmapfile.657677704" name="Create map file" superClass="com.atollic.truestudio.ldcc.misc.genmapfile"/>
 							</tool>
 							<tool command="arm-atollic-reports.jar" commandLinePattern="${COMMAND} ${FLAGS} ${INPUTS}" errorParsers="" id="com.atollic.truestudio.exe.debug.toolchain.secoutput.839033486" name="Other" superClass="com.atollic.truestudio.exe.debug.toolchain.secoutput"/>
 							<tool id="com.atollic.truestudio.ar.base.2129831996" name="Archiver" superClass="com.atollic.truestudio.ar.base"/>
@@ -184,7 +184,7 @@
 								<option id="com.atollic.truestudio.gcc.optimization.prep_garbage.586275206" name="Prepare dead code removal " superClass="com.atollic.truestudio.gcc.optimization.prep_garbage" useByScannerDiscovery="false" value="true" valueType="boolean"/>
 								<option id="com.atollic.truestudio.gcc.optimization.prep_data.1044766448" name="Prepare dead data removal" superClass="com.atollic.truestudio.gcc.optimization.prep_data" useByScannerDiscovery="false" value="true" valueType="boolean"/>
 								<option id="com.atollic.truestudio.gcc.misc.otherflags.895097519" name="Other options" superClass="com.atollic.truestudio.gcc.misc.otherflags" useByScannerDiscovery="false" value="" valueType="string"/>
-								<option id="com.atollic.truestudio.exe.release.toolchain.gcc.optimization.level.1763412676" name="Optimization Level" superClass="com.atollic.truestudio.exe.release.toolchain.gcc.optimization.level" useByScannerDiscovery="false" value="com.atollic.truestudio.gcc.optimization.level.0fast" valueType="enumerated"/>
+								<option id="com.atollic.truestudio.exe.release.toolchain.gcc.optimization.level.1763412676" name="Optimization Level" superClass="com.atollic.truestudio.exe.release.toolchain.gcc.optimization.level" useByScannerDiscovery="false" value="com.atollic.truestudio.gcc.optimization.level.0s" valueType="enumerated"/>
 								<option id="com.atollic.truestudio.common_options.target.fpu.829683864" name="Floating point" superClass="com.atollic.truestudio.common_options.target.fpu" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.fpu.hard" valueType="enumerated"/>
 								<option id="com.atollic.truestudio.common_options.target.fpucore.1297069055" name="FPU" superClass="com.atollic.truestudio.common_options.target.fpucore" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.fpucore.fpv4-sp-d16" valueType="enumerated"/>
 								<option id="com.atollic.truestudio.common_options.target.interwork.1173495076" name="Mix ARM/Thumb" superClass="com.atollic.truestudio.common_options.target.interwork" useByScannerDiscovery="false"/>

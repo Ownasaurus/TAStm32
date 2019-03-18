@@ -131,7 +131,7 @@ int main(void)
 
   HAL_NVIC_DisableIRQ(EXTI0_IRQn);
   HAL_NVIC_DisableIRQ(EXTI1_IRQn);
-  HAL_NVIC_DisableIRQ(EXTI2_IRQn);
+  HAL_NVIC_DisableIRQ(EXTI4_IRQn);
   HAL_NVIC_DisableIRQ(EXTI9_5_IRQn);
 
   /* USER CODE END 2 */
@@ -332,14 +332,14 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, P1_DATA_1_Pin|P1_DATA_2_Pin|P2_DATA_2_Pin|P2_DATA_0_Pin 
-                          |P2_DATA_1_Pin|V2_DATA_1_Pin|V2_DATA_0_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOC, P1_DATA_1_Pin|P2_DATA_1_Pin|P2_DATA_0_Pin|P1_DATA_0_Pin 
+                          |V2_DATA_1_Pin|V2_DATA_0_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, LD2_Pin|SNES_RESET_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(V2_CLOCK_GPIO_Port, V2_CLOCK_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOA, SNES_RESET_Pin|V2_CLOCK_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(V2_LATCH_GPIO_Port, V2_LATCH_Pin, GPIO_PIN_RESET);
@@ -350,37 +350,37 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(V1_LATCH_GPIO_Port, V1_LATCH_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin : B1_Pin */
-  GPIO_InitStruct.Pin = B1_Pin;
+  /*Configure GPIO pins : B1_Pin P1_DATA_2_Pin */
+  GPIO_InitStruct.Pin = B1_Pin|P1_DATA_2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PC14 PC15 PC5 */
-  GPIO_InitStruct.Pin = GPIO_PIN_14|GPIO_PIN_15|GPIO_PIN_5;
+  /*Configure GPIO pins : PC14 PC15 PC1 PC3 */
+  GPIO_InitStruct.Pin = GPIO_PIN_14|GPIO_PIN_15|GPIO_PIN_1|GPIO_PIN_3;
   GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : P2_CLOCK_Pin P1_LATCH_Pin P1_CLOCK_Pin P2_LATCH_Pin */
-  GPIO_InitStruct.Pin = P2_CLOCK_Pin|P1_LATCH_Pin|P1_CLOCK_Pin|P2_LATCH_Pin;
+  /*Configure GPIO pins : P1_CLOCK_Pin P2_CLOCK_Pin */
+  GPIO_InitStruct.Pin = P1_CLOCK_Pin|P2_CLOCK_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : P1_DATA_1_Pin P1_DATA_2_Pin P2_DATA_2_Pin P2_DATA_0_Pin 
-                           P2_DATA_1_Pin V2_LATCH_Pin V2_DATA_1_Pin V2_DATA_0_Pin */
-  GPIO_InitStruct.Pin = P1_DATA_1_Pin|P1_DATA_2_Pin|P2_DATA_2_Pin|P2_DATA_0_Pin 
-                          |P2_DATA_1_Pin|V2_LATCH_Pin|V2_DATA_1_Pin|V2_DATA_0_Pin;
+  /*Configure GPIO pins : P1_DATA_1_Pin P2_DATA_1_Pin P2_DATA_0_Pin P1_DATA_0_Pin 
+                           V2_LATCH_Pin V2_DATA_1_Pin V2_DATA_0_Pin */
+  GPIO_InitStruct.Pin = P1_DATA_1_Pin|P2_DATA_1_Pin|P2_DATA_0_Pin|P1_DATA_0_Pin 
+                          |V2_LATCH_Pin|V2_DATA_1_Pin|V2_DATA_0_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PA0 PA1 PA4 PA6 
-                           PA7 PA10 */
+                           PA7 PA8 PA10 */
   GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_4|GPIO_PIN_6 
-                          |GPIO_PIN_7|GPIO_PIN_10;
+                          |GPIO_PIN_7|GPIO_PIN_8|GPIO_PIN_10;
   GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
@@ -400,21 +400,27 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PB0 PB1 PB2 PB10 
-                           PB12 PB13 PB14 PB15 
-                           PB8 PB9 */
-  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_10 
-                          |GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15 
-                          |GPIO_PIN_8|GPIO_PIN_9;
+  /*Configure GPIO pins : PB0 PB2 PB10 PB12 
+                           PB13 PB14 PB15 PB8 
+                           PB9 */
+  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_2|GPIO_PIN_10|GPIO_PIN_12 
+                          |GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15|GPIO_PIN_8 
+                          |GPIO_PIN_9;
   GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : P1_DATA_0_Pin */
-  GPIO_InitStruct.Pin = P1_DATA_0_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+  /*Configure GPIO pin : P1_LATCH_Pin */
+  GPIO_InitStruct.Pin = P1_LATCH_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(P1_DATA_0_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(P1_LATCH_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : P2_LATCH_Pin */
+  GPIO_InitStruct.Pin = P2_LATCH_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(P2_LATCH_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : SNES_RESET_Pin V2_CLOCK_Pin */
   GPIO_InitStruct.Pin = SNES_RESET_Pin|V2_CLOCK_Pin;
@@ -443,10 +449,10 @@ static void MX_GPIO_Init(void)
   HAL_NVIC_SetPriority(EXTI1_IRQn, 1, 0);
   HAL_NVIC_EnableIRQ(EXTI1_IRQn);
 
-  HAL_NVIC_SetPriority(EXTI2_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(EXTI2_IRQn);
+  HAL_NVIC_SetPriority(EXTI4_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI4_IRQn);
 
-  HAL_NVIC_SetPriority(EXTI9_5_IRQn, 1, 0);
+  HAL_NVIC_SetPriority(EXTI9_5_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
 
 }

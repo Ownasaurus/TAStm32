@@ -100,7 +100,7 @@ class TAStm32():
             elif mode == b'S':
                 # Set Soft Reset
                 command = b''.join([b'T', prefix, mode, struct.pack('I', frame)])
-            elif mode == b'H'
+            elif mode == b'H':
                 # Set Hard Reset
                 command = b''.join([b'T', prefix, mode, struct.pack('I', frame)])
             if command != '':
@@ -196,7 +196,7 @@ class TAStm32():
                     fn += 1
                     frame += 1
                 for cmd in range(bulk):
-                    for packet in range(packets)
+                    for packet in range(packets):
                         command = []
                         for latch in range(latches_per_bulk_command//packets):
                             try:

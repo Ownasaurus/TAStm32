@@ -251,16 +251,16 @@ uint8_t AddFrame(int runIndex, RunData (frame)[MAX_CONTROLLERS][MAX_DATA_LANES])
 	return 1;
 }
 
-void SetP1Data0InputMode()
+void SetN64InputMode()
 {
-	// port A8 to input mode
-	GPIOA->MODER &= ~(1 << 17);
-	GPIOA->MODER &= ~(1 << 16);
+	// port C4 to input mode
+	GPIOC->MODER &= ~(1 << 9);
+	GPIOC->MODER &= ~(1 << 8);
 }
 
-void SetP1Data0OutputMode()
+void SetN64OutputMode()
 {
-	// port A8 to output mode
-	GPIOA->MODER &= ~(1 << 17);
-	GPIOA->MODER |= (1 << 16);
+	// port C4 to output mode
+	GPIOC->MODER &= ~(1 << 9);
+	GPIOC->MODER |= (1 << 8);
 }

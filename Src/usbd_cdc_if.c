@@ -67,8 +67,6 @@ extern volatile uint8_t recentLatch;
 extern volatile uint8_t toggleNext;
 extern volatile uint8_t dpcmFix;
 extern volatile uint8_t clockFix;
-extern volatile uint32_t P1_GPIOA_current[32];
-extern volatile uint32_t P1_GPIOA_next[32];
 extern volatile uint32_t P1_GPIOC_current[32];
 extern volatile uint32_t P1_GPIOC_next[32];
 extern volatile uint32_t P2_GPIOC_current[32];
@@ -333,13 +331,13 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 						// disable interrupts on latch/clock/data for now
 						HAL_NVIC_DisableIRQ(EXTI0_IRQn);
 						HAL_NVIC_DisableIRQ(EXTI1_IRQn);
-						HAL_NVIC_DisableIRQ(EXTI2_IRQn);
+						HAL_NVIC_DisableIRQ(EXTI4_IRQn);
 						HAL_NVIC_DisableIRQ(EXTI9_5_IRQn);
 
 						// clear all interrupts
 						while (HAL_NVIC_GetPendingIRQ(EXTI0_IRQn))
 						{
-							__HAL_GPIO_EXTI_CLEAR_IT(P2_CLOCK_Pin);
+							__HAL_GPIO_EXTI_CLEAR_IT(P1_CLOCK_Pin);
 							HAL_NVIC_ClearPendingIRQ(EXTI0_IRQn);
 						}
 						while (HAL_NVIC_GetPendingIRQ(EXTI1_IRQn))
@@ -347,15 +345,14 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 							__HAL_GPIO_EXTI_CLEAR_IT(P1_LATCH_Pin);
 							HAL_NVIC_ClearPendingIRQ(EXTI1_IRQn);
 						}
-						while (HAL_NVIC_GetPendingIRQ(EXTI2_IRQn))
+						while (HAL_NVIC_GetPendingIRQ(EXTI4_IRQn))
 						{
-							__HAL_GPIO_EXTI_CLEAR_IT(P1_CLOCK_Pin);
-							HAL_NVIC_ClearPendingIRQ(EXTI2_IRQn);
+							__HAL_GPIO_EXTI_CLEAR_IT(P1_DATA_2_Pin);
+							HAL_NVIC_ClearPendingIRQ(EXTI4_IRQn);
 						}
 						while (HAL_NVIC_GetPendingIRQ(EXTI9_5_IRQn))
 						{
-							__HAL_GPIO_EXTI_CLEAR_IT(P1_DATA_0_Pin);
-							__HAL_GPIO_EXTI_CLEAR_IT(P2_LATCH_Pin);
+							__HAL_GPIO_EXTI_CLEAR_IT(P2_CLOCK_Pin);
 							HAL_NVIC_ClearPendingIRQ(EXTI9_5_IRQn);
 						}
 						while (HAL_NVIC_GetPendingIRQ(TIM3_IRQn))
@@ -385,8 +382,6 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 						request_pending = 0;
 						bulk_mode = 0;
 
-						memset((uint32_t*)&P1_GPIOA_current, 0, 128);
-						memset((uint32_t*)&P1_GPIOA_next, 0, 128);
 						memset((uint32_t*)&P1_GPIOC_current, 0, 128);
 						memset((uint32_t*)&P1_GPIOC_next, 0, 128);
 						memset((uint32_t*)&P2_GPIOC_current, 0, 128);
@@ -503,11 +498,11 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 					{
 						HAL_NVIC_EnableIRQ(EXTI0_IRQn);
 						HAL_NVIC_EnableIRQ(EXTI1_IRQn);
-						HAL_NVIC_EnableIRQ(EXTI2_IRQn);
+						HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
 					}
 					else if(c == CONSOLE_N64)
 					{
-						HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
+						HAL_NVIC_EnableIRQ(EXTI4_IRQn);
 					}
 				}
 
@@ -519,17 +514,17 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 				{
 					case 'M': // setup N64
 						TASRunSetConsole(sr, CONSOLE_N64);
-						SetP1Data0InputMode();
+						SetN64InputMode();
 						ss = SERIAL_NUM_CONTROLLERS;
 						break;
 					case 'S': // setup SNES
 						TASRunSetConsole(sr, CONSOLE_SNES);
-						SetP1Data0OutputMode();
+						SetN64OutputMode();
 						ss = SERIAL_NUM_CONTROLLERS;
 						break;
 					case 'N': // setup NES
 						TASRunSetConsole(sr, CONSOLE_NES);
-						SetP1Data0OutputMode();
+						SetN64OutputMode();
 						ss = SERIAL_NUM_CONTROLLERS;
 						break;
 					default: // Error: console type not understood
