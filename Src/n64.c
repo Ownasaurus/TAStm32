@@ -5,6 +5,7 @@
 
 void my_wait_us_asm(int n);
 
+// N64 data pin is p1_d2, which is PC4
 #define N64_READ (GPIOC->IDR & 0x0010)
 
 uint32_t readCommand()

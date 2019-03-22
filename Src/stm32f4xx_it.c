@@ -50,8 +50,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-const uint8_t P1_D0_HIGH_C = 9;
-const uint8_t P1_D0_LOW_C = 25;
+const uint8_t P1_D0_HIGH_C = 3;
+const uint8_t P1_D0_LOW_C = 19;
 const uint8_t P1_D1_HIGH_C = 2;
 const uint8_t P1_D1_LOW_C = 18;
 const uint8_t P1_D2_HIGH_C = 4;
@@ -60,6 +60,8 @@ const uint8_t P2_D0_HIGH_C = 8;
 const uint8_t P2_D0_LOW_C = 24;
 const uint8_t P2_D1_HIGH_C = 7;
 const uint8_t P2_D1_LOW_C = 23;
+const uint8_t P2_D2_HIGH_C = 9;
+const uint8_t P2_D2_LOW_C = 25;
 const uint8_t SNES_RESET_HIGH_A = 9;
 const uint8_t SNES_RESET_LOW_A = 25;
 
@@ -164,10 +166,12 @@ void EXTI0_IRQHandler(void)
 			my_wait_us_asm(2); // necessary to prevent switching too fast in DPCM fix mode
 		}
 
-		GPIOC->BSRR = (P1_GPIOC_current[p1_current_bit] & 0x02000200); // set d0
+		GPIOC->BSRR = (P1_GPIOC_current[p1_current_bit] & 0x00080008); // set d0
 		GPIOC->BSRR = (P1_GPIOC_current[p1_current_bit] & 0x00040004); // set d1
 
-		//GPIOC->BSRR = (P1_GPIOC_current[p1_current_bit] & 0x02040204); // set d0 and d1
+		//TODO: Determine why this causes an interrupt to go to line 1 for some reason!!!!!
+		//GPIOC->BSRR = (P1_GPIOC_current[p1_current_bit] & 0x000C000C); // set d0 and d1 at the same time
+
 
 		ResetAndEnableP1ClockTimer();
 		p1_current_bit++;
@@ -185,7 +189,6 @@ void EXTI0_IRQHandler(void)
 void EXTI1_IRQHandler(void)
 {
   /* USER CODE BEGIN EXTI1_IRQn 0 */
-	GPIOA->BSRR = (1 << SNES_RESET_HIGH_A);
 
 	// P1_LATCH
 	int8_t regbit = 50, databit = -1; // random initial values
@@ -228,15 +231,8 @@ void EXTI1_IRQHandler(void)
 		if(dpcmFix)
 		{
 			recentLatch = 1; // repeat input on latch
-			htim3.Init.Period = 500-1;
 			ResetAndEnable8msTimer(); // start timer and proceed as normal
 		}
-		/*else
-		{
-			recentLatch = 2; // regular latch filter
-			htim3.Init.Period = 43-1;
-			ResetAndEnable8msTimer(); // start timer and proceed as normal
-		}*/
 
 		toggleNext = TASRunIncrementFrameCount(0);
 
@@ -280,11 +276,12 @@ void EXTI1_IRQHandler(void)
 				P1_GPIOC_next[regbit] = (((p1_d0_next >> databit) & 1) << P1_D0_LOW_C) |
 										(((p1_d1_next >> databit) & 1) << P1_D1_LOW_C) |
 										(((p1_d2_next >> databit) & 1) << P1_D2_LOW_C);
-				P1_GPIOC_next[regbit] |= (((~P1_GPIOC_next[regbit]) & 0x02140000) >> 16);
+				P1_GPIOC_next[regbit] |= (((~P1_GPIOC_next[regbit]) & 0x001C0000) >> 16);
 
 				P2_GPIOC_next[regbit] = (((p2_d0_next >> databit) & 1) << P2_D0_LOW_C) |
-										(((p2_d1_next >> databit) & 1) << P2_D1_LOW_C);
-				P2_GPIOC_next[regbit] |= (((~P2_GPIOC_next[regbit]) & 0x01800000) >> 16);
+										(((p2_d1_next >> databit) & 1) << P2_D1_LOW_C) |
+										(((p2_d2_next >> databit) & 1) << P2_D2_LOW_C);
+				P2_GPIOC_next[regbit] |= (((~P2_GPIOC_next[regbit]) & 0x03800000) >> 16);
 
 				regbit++;
 				databit--;
@@ -305,7 +302,7 @@ void EXTI1_IRQHandler(void)
 			for(uint8_t index = 0;index <= databit;index++)
 			{
 				P1_GPIOC_next[index] = (1 << P1_D0_HIGH_C) | (1 << P1_D1_HIGH_C) | (1 << P1_D2_HIGH_C);
-				P2_GPIOC_next[index] = (1 << P2_D0_HIGH_C) | (1 << P2_D1_HIGH_C);
+				P2_GPIOC_next[index] = (1 << P2_D0_HIGH_C) | (1 << P2_D1_HIGH_C) | (1 << P2_D2_HIGH_C);
 			}
 		}
 
@@ -340,7 +337,7 @@ void EXTI1_IRQHandler(void)
 				for(uint8_t index = regbit;index < 32;index++)
 				{
 					P1_GPIOC_current[index] = P1_GPIOC_next[index] = (1 << P1_D0_LOW_C) | (1 << P1_D1_LOW_C) | (1 << P1_D2_LOW_C);
-					P2_GPIOC_current[index] = P2_GPIOC_next[index] = (1 << P2_D0_LOW_C) | (1 << P2_D1_LOW_C);
+					P2_GPIOC_current[index] = P2_GPIOC_next[index] = (1 << P2_D0_LOW_C) | (1 << P2_D1_LOW_C) | (1 << P2_D2_LOW_C);
 				}
 			}
 			else
@@ -348,7 +345,7 @@ void EXTI1_IRQHandler(void)
 				for(uint8_t index = regbit;index < 32;index++)
 				{
 					P1_GPIOC_current[index] = P1_GPIOC_next[index] = (1 << P1_D0_HIGH_C) | (1 << P1_D1_HIGH_C) | (1 << P1_D2_HIGH_C);
-					P2_GPIOC_current[index] = P2_GPIOC_next[index] = (1 << P2_D0_HIGH_C) | (1 << P2_D1_HIGH_C);
+					P2_GPIOC_current[index] = P2_GPIOC_next[index] = (1 << P2_D0_HIGH_C) | (1 << P2_D1_HIGH_C) | (1 << P2_D2_HIGH_C);
 				}
 			}
 		}
@@ -362,7 +359,6 @@ void EXTI1_IRQHandler(void)
 		__enable_irq();
 	}
 
-  GPIOA->BSRR = (1 << SNES_RESET_LOW_A);
   /* USER CODE END EXTI1_IRQn 0 */
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_1);
   /* USER CODE BEGIN EXTI1_IRQn 1 */
