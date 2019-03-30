@@ -1,51 +1,23 @@
+/* USER CODE BEGIN Header */
 /**
   ******************************************************************************
   * @file           : usbd_cdc_if.c
   * @version        : v1.0_Cube
   * @brief          : Usb device for Virtual Com Port.
   ******************************************************************************
-  * This notice applies to any and all portions of this file
-  * that are not between comment pairs USER CODE BEGIN and
-  * USER CODE END. Other portions of this file, whether 
-  * inserted by the user or by software development tools
-  * are owned by their respective copyright owners.
+  * @attention
   *
-  * Copyright (c) 2019 STMicroelectronics International N.V. 
-  * All rights reserved.
+  * <h2><center>&copy; Copyright (c) 2019 STMicroelectronics.
+  * All rights reserved.</center></h2>
   *
-  * Redistribution and use in source and binary forms, with or without 
-  * modification, are permitted, provided that the following conditions are met:
-  *
-  * 1. Redistribution of source code must retain the above copyright notice, 
-  *    this list of conditions and the following disclaimer.
-  * 2. Redistributions in binary form must reproduce the above copyright notice,
-  *    this list of conditions and the following disclaimer in the documentation
-  *    and/or other materials provided with the distribution.
-  * 3. Neither the name of STMicroelectronics nor the names of other 
-  *    contributors to this software may be used to endorse or promote products 
-  *    derived from this software without specific written permission.
-  * 4. This software, including modifications and/or derivative works of this 
-  *    software, must execute solely and exclusively on microcontroller or
-  *    microprocessor devices manufactured by or for STMicroelectronics.
-  * 5. Redistribution and use of this software other than as permitted under 
-  *    this license is void and will automatically terminate your rights under 
-  *    this license. 
-  *
-  * THIS SOFTWARE IS PROVIDED BY STMICROELECTRONICS AND CONTRIBUTORS "AS IS" 
-  * AND ANY EXPRESS, IMPLIED OR STATUTORY WARRANTIES, INCLUDING, BUT NOT 
-  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
-  * PARTICULAR PURPOSE AND NON-INFRINGEMENT OF THIRD PARTY INTELLECTUAL PROPERTY
-  * RIGHTS ARE DISCLAIMED TO THE FULLEST EXTENT PERMITTED BY LAW. IN NO EVENT 
-  * SHALL STMICROELECTRONICS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, 
-  * OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF 
-  * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING 
-  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
-  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+  * This software component is licensed by ST under Ultimate Liberty license
+  * SLA0044, the "License"; You may not use this file except in compliance with
+  * the License. You may obtain a copy of the License at:
+  *                             www.st.com/SLA0044
   *
   ******************************************************************************
   */
+/* USER CODE END Header */
 
 /* Includes ------------------------------------------------------------------*/
 #include "usbd_cdc_if.h"
@@ -67,8 +39,6 @@ extern volatile uint8_t recentLatch;
 extern volatile uint8_t toggleNext;
 extern volatile uint8_t dpcmFix;
 extern volatile uint8_t clockFix;
-extern volatile uint32_t P1_GPIOA_current[32];
-extern volatile uint32_t P1_GPIOA_next[32];
 extern volatile uint32_t P1_GPIOC_current[32];
 extern volatile uint32_t P1_GPIOC_next[32];
 extern volatile uint32_t P2_GPIOC_current[32];
@@ -333,13 +303,13 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 						// disable interrupts on latch/clock/data for now
 						HAL_NVIC_DisableIRQ(EXTI0_IRQn);
 						HAL_NVIC_DisableIRQ(EXTI1_IRQn);
-						HAL_NVIC_DisableIRQ(EXTI2_IRQn);
+						HAL_NVIC_DisableIRQ(EXTI4_IRQn);
 						HAL_NVIC_DisableIRQ(EXTI9_5_IRQn);
 
 						// clear all interrupts
 						while (HAL_NVIC_GetPendingIRQ(EXTI0_IRQn))
 						{
-							__HAL_GPIO_EXTI_CLEAR_IT(P2_CLOCK_Pin);
+							__HAL_GPIO_EXTI_CLEAR_IT(P1_CLOCK_Pin);
 							HAL_NVIC_ClearPendingIRQ(EXTI0_IRQn);
 						}
 						while (HAL_NVIC_GetPendingIRQ(EXTI1_IRQn))
@@ -347,15 +317,14 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 							__HAL_GPIO_EXTI_CLEAR_IT(P1_LATCH_Pin);
 							HAL_NVIC_ClearPendingIRQ(EXTI1_IRQn);
 						}
-						while (HAL_NVIC_GetPendingIRQ(EXTI2_IRQn))
+						while (HAL_NVIC_GetPendingIRQ(EXTI4_IRQn))
 						{
-							__HAL_GPIO_EXTI_CLEAR_IT(P1_CLOCK_Pin);
-							HAL_NVIC_ClearPendingIRQ(EXTI2_IRQn);
+							__HAL_GPIO_EXTI_CLEAR_IT(P1_DATA_2_Pin);
+							HAL_NVIC_ClearPendingIRQ(EXTI4_IRQn);
 						}
 						while (HAL_NVIC_GetPendingIRQ(EXTI9_5_IRQn))
 						{
-							__HAL_GPIO_EXTI_CLEAR_IT(P1_DATA_0_Pin);
-							__HAL_GPIO_EXTI_CLEAR_IT(P2_LATCH_Pin);
+							__HAL_GPIO_EXTI_CLEAR_IT(P2_CLOCK_Pin);
 							HAL_NVIC_ClearPendingIRQ(EXTI9_5_IRQn);
 						}
 						while (HAL_NVIC_GetPendingIRQ(TIM3_IRQn))
@@ -385,8 +354,6 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 						request_pending = 0;
 						bulk_mode = 0;
 
-						memset((uint32_t*)&P1_GPIOA_current, 0, 128);
-						memset((uint32_t*)&P1_GPIOA_next, 0, 128);
 						memset((uint32_t*)&P1_GPIOC_current, 0, 128);
 						memset((uint32_t*)&P1_GPIOC_next, 0, 128);
 						memset((uint32_t*)&P2_GPIOC_current, 0, 128);
@@ -503,11 +470,11 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 					{
 						HAL_NVIC_EnableIRQ(EXTI0_IRQn);
 						HAL_NVIC_EnableIRQ(EXTI1_IRQn);
-						HAL_NVIC_EnableIRQ(EXTI2_IRQn);
+						HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
 					}
 					else if(c == CONSOLE_N64)
 					{
-						HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
+						HAL_NVIC_EnableIRQ(EXTI4_IRQn);
 					}
 				}
 
@@ -519,17 +486,17 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 				{
 					case 'M': // setup N64
 						TASRunSetConsole(sr, CONSOLE_N64);
-						SetP1Data0InputMode();
+						SetN64InputMode();
 						ss = SERIAL_NUM_CONTROLLERS;
 						break;
 					case 'S': // setup SNES
 						TASRunSetConsole(sr, CONSOLE_SNES);
-						SetP1Data0OutputMode();
+						SetN64OutputMode();
 						ss = SERIAL_NUM_CONTROLLERS;
 						break;
 					case 'N': // setup NES
 						TASRunSetConsole(sr, CONSOLE_NES);
-						SetP1Data0OutputMode();
+						SetN64OutputMode();
 						ss = SERIAL_NUM_CONTROLLERS;
 						break;
 					default: // Error: console type not understood

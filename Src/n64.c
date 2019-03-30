@@ -5,6 +5,9 @@
 
 void my_wait_us_asm(int n);
 
+// N64 data pin is p1_d2, which is PC4
+#define N64_READ (GPIOC->IDR & 0x0010)
+
 uint32_t readCommand()
 {
 	uint8_t retVal;
@@ -12,7 +15,7 @@ uint32_t readCommand()
 	// we are already at the first falling edge
 	// get middle of first pulse, 2us later
 	my_wait_us_asm(2);
-	uint32_t command = (GPIOA->IDR & 0x0100) ? 1U : 0U, bits_read = 1;
+	uint32_t command = N64_READ ? 1U : 0U, bits_read = 1;
 
     while(1) // read at least 9 bits (1 byte + stop bit)
     {
@@ -48,7 +51,7 @@ uint8_t GetMiddleOfPulse()
     // wait for line to go high
     while(1)
     {
-        if(GPIOA->IDR & 0x0100) break;
+        if(N64_READ) break;
 
         ct++;
         if(ct == 200) // failsafe limit TBD
@@ -60,7 +63,7 @@ uint8_t GetMiddleOfPulse()
     // wait for line to go low
     while(1)
     {
-        if(!(GPIOA->IDR & 0x0100)) break;
+        if(!N64_READ) break;
 
         ct++;
 		if(ct == 200) // failsafe limit TBD
@@ -72,14 +75,14 @@ uint8_t GetMiddleOfPulse()
     // wait 2 microseconds to be in the middle of the pulse, and read. high --> 1.  low --> 0.
     my_wait_us_asm(2);
 
-    return (GPIOA->IDR & 0x0100) ? 1U : 0U;
+    return N64_READ ? 1U : 0U;
 }
 
 void SendStop()
 {
-	GPIOA->BSRR = (1 << 24);
+	GPIOC->BSRR = (1 << 20);
 	my_wait_us_asm(1);
-	GPIOA->BSRR = (1 << 8);
+	GPIOC->BSRR = (1 << 4);
 }
 
 void SendIdentityN64()
@@ -93,17 +96,17 @@ void SendIdentityN64()
 
 void write_1()
 {
-	GPIOA->BSRR = (1 << 24);
+	GPIOC->BSRR = (1 << 20);
 	my_wait_us_asm(1);
-	GPIOA->BSRR = (1 << 8);
+	GPIOC->BSRR = (1 << 4);
     my_wait_us_asm(3);
 }
 
 void write_0()
 {
-	GPIOA->BSRR = (1 << 24);
+	GPIOC->BSRR = (1 << 20);
 	my_wait_us_asm(3);
-	GPIOA->BSRR = (1 << 8);
+	GPIOC->BSRR = (1 << 4);
     my_wait_us_asm(1);
 }
 
