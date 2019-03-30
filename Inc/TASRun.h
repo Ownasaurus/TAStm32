@@ -79,7 +79,7 @@ uint8_t AddFrame(int runIndex, RunData (frame)[MAX_CONTROLLERS][MAX_DATA_LANES])
 Console TASRunGetConsole(int numRun);
 void ExtractDataAndAdvance(RunData (rd)[MAX_CONTROLLERS][MAX_DATA_LANES], int index, uint8_t* Buf, int *byteNum);
 RunData (*GetNextFrame(int runNum))[MAX_CONTROLLERS][MAX_DATA_LANES];
-void SetP1Data0InputMode();
-void SetP1Data0OutputMode();
+void SetN64InputMode();
+void SetN64OutputMode();
 
 #endif
