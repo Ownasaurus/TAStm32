@@ -65,6 +65,24 @@ const uint8_t P2_D2_LOW_C = 25;
 const uint8_t SNES_RESET_HIGH_A = 9;
 const uint8_t SNES_RESET_LOW_A = 25;
 
+const uint8_t V1_D0_HIGH_B = 7;
+const uint8_t V1_D0_LOW_B = 23;
+const uint8_t V1_D1_HIGH_B = 6;
+const uint8_t V1_D1_LOW_B = 22;
+const uint8_t V1_LATCH_HIGH_B = 5;
+const uint8_t V1_LATCH_LOW_B = 21;
+const uint8_t V1_CLOCK_HIGH_B = 4;
+const uint8_t V1_CLOCK_LOW_B = 20;
+
+const uint8_t V2_D0_HIGH_C = 12;
+const uint8_t V2_D0_LOW_C = 28;
+const uint8_t V2_D1_HIGH_C = 11;
+const uint8_t V2_D1_LOW_C = 27;
+const uint8_t V2_LATCH_HIGH_C = 10;
+const uint8_t V2_LATCH_LOW_C = 26;
+const uint8_t V2_CLOCK_HIGH_A = 15;
+const uint8_t V2_CLOCK_LOW_A = 31;
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -87,6 +105,12 @@ volatile uint32_t P1_GPIOC_next[32];
 
 volatile uint32_t P2_GPIOC_current[32];
 volatile uint32_t P2_GPIOC_next[32];
+
+volatile uint32_t V1_GPIOB_current[32];
+volatile uint32_t V1_GPIOB_next[32];
+
+volatile uint32_t V2_GPIOC_current[32];
+volatile uint32_t V2_GPIOC_next[32];
 
 volatile uint8_t p1_current_bit = 0;
 volatile uint8_t p2_current_bit = 0;
@@ -161,6 +185,9 @@ void EXTI0_IRQHandler(void)
 	// P1_CLOCK
 	if(!p1_clock_filtered && p1_current_bit < 32) // sanity check... but 32 or more bits should never be read in a single latch!
 	{
+		// ensure sure v1 latch and clock are unset
+		GPIOB->BSRR = (1 << V1_CLOCK_LOW_B) + (1 << V1_LATCH_LOW_B);
+
 		if(dpcmFix)
 		{
 			my_wait_us_asm(2); // necessary to prevent switching too fast in DPCM fix mode
@@ -168,10 +195,12 @@ void EXTI0_IRQHandler(void)
 
 		GPIOC->BSRR = (P1_GPIOC_current[p1_current_bit] & 0x00080008); // set d0
 		GPIOC->BSRR = (P1_GPIOC_current[p1_current_bit] & 0x00040004); // set d1
-
 		//TODO: Determine why setting these at the same time causes an interrupt to go to line 1 for some reason!!!!!
 		//GPIOC->BSRR = (P1_GPIOC_current[p1_current_bit] & 0x000C000C); // set d0 and d1 at the same time
 
+		// set the v1 data and clock it
+		GPIOB->BSRR = V1_GPIOB_current[p1_current_bit];
+		GPIOB->BSRR = (1 << V1_CLOCK_HIGH_B);
 
 		ResetAndEnableP1ClockTimer();
 		p1_current_bit++;
@@ -195,17 +224,23 @@ void EXTI1_IRQHandler(void)
 
 	if(recentLatch == 0) // no recent latch
 	{
-		GPIOC->BSRR = P1_GPIOC_next[0] | P2_GPIOC_next[0];
+		// quickly set next frame of data and vis board latches
+		GPIOC->BSRR = P1_GPIOC_next[0] | P2_GPIOC_next[0] | V2_GPIOC_next[0] | V2_LATCH_HIGH_C;
+		GPIOB->BSRR = V1_GPIOB_next[0] | V1_LATCH_HIGH_B;
 
 		// copy the 2nd bit too
 		__disable_irq();
 		P1_GPIOC_current[1] = P1_GPIOC_next[1];
 		P2_GPIOC_current[1] = P2_GPIOC_next[1];
+		V1_GPIOB_current[1] = V1_GPIOB_next[1];
+		V2_GPIOC_current[1] = V2_GPIOC_next[1];
 		p1_current_bit = p2_current_bit = 1; // set the next bit to be read
 		__enable_irq();
 
 		memcpy((uint32_t*)&P1_GPIOC_current, (uint32_t*)&P1_GPIOC_next, 64);
 		memcpy((uint32_t*)&P2_GPIOC_current, (uint32_t*)&P2_GPIOC_next, 64);
+		memcpy((uint32_t*)&V1_GPIOB_current, (uint32_t*)&V1_GPIOB_next, 64);
+		memcpy((uint32_t*)&V2_GPIOC_current, (uint32_t*)&V2_GPIOC_next, 64);
 
 		// now prepare for the next frame!
 
@@ -283,6 +318,14 @@ void EXTI1_IRQHandler(void)
 										(((p2_d2_next >> databit) & 1) << P2_D2_LOW_C);
 				P2_GPIOC_next[regbit] |= (((~P2_GPIOC_next[regbit]) & 0x03800000) >> 16);
 
+				V1_GPIOB_next[regbit] = (((p1_d0_next >> databit) & 1) << V1_D0_LOW_B) |
+										(((p1_d1_next >> databit) & 1) << V1_D1_LOW_B);
+				V1_GPIOB_next[regbit] |= (((~V1_GPIOB_next[regbit]) & 0x00C00000) >> 16);
+
+				V2_GPIOC_next[regbit] = (((p2_d0_next >> databit) & 1) << V2_D0_LOW_C) |
+										(((p2_d1_next >> databit) & 1) << V2_D1_LOW_C);
+				V2_GPIOC_next[regbit] |= (((~V2_GPIOC_next[regbit]) & 0x18000000) >> 16);
+
 				regbit++;
 				databit--;
 			}
@@ -303,6 +346,9 @@ void EXTI1_IRQHandler(void)
 			{
 				P1_GPIOC_next[index] = (1 << P1_D0_HIGH_C) | (1 << P1_D1_HIGH_C) | (1 << P1_D2_HIGH_C);
 				P2_GPIOC_next[index] = (1 << P2_D0_HIGH_C) | (1 << P2_D1_HIGH_C) | (1 << P2_D2_HIGH_C);
+
+				V1_GPIOB_next[index] = (1 << V1_D0_HIGH_B) | (1 << V1_D1_HIGH_B);
+				V2_GPIOC_next[index] = (1 << V2_D0_HIGH_C) | (1 << V2_D1_HIGH_C);
 			}
 		}
 
@@ -338,6 +384,9 @@ void EXTI1_IRQHandler(void)
 				{
 					P1_GPIOC_current[index] = P1_GPIOC_next[index] = (1 << P1_D0_LOW_C) | (1 << P1_D1_LOW_C) | (1 << P1_D2_LOW_C);
 					P2_GPIOC_current[index] = P2_GPIOC_next[index] = (1 << P2_D0_LOW_C) | (1 << P2_D1_LOW_C) | (1 << P2_D2_LOW_C);
+
+					V1_GPIOB_current[index] = V1_GPIOB_next[index] = (1 << V1_D0_LOW_B) | (1 << V1_D1_LOW_B);
+					V2_GPIOC_current[index] = V2_GPIOC_next[index] = (1 << V2_D0_LOW_C) | (1 << V2_D1_LOW_C);
 				}
 			}
 			else
@@ -346,6 +395,9 @@ void EXTI1_IRQHandler(void)
 				{
 					P1_GPIOC_current[index] = P1_GPIOC_next[index] = (1 << P1_D0_HIGH_C) | (1 << P1_D1_HIGH_C) | (1 << P1_D2_HIGH_C);
 					P2_GPIOC_current[index] = P2_GPIOC_next[index] = (1 << P2_D0_HIGH_C) | (1 << P2_D1_HIGH_C) | (1 << P2_D2_HIGH_C);
+
+					V1_GPIOB_current[index] = V1_GPIOB_next[index] = (1 << V1_D0_HIGH_B) | (1 << V1_D1_HIGH_B);
+					V2_GPIOC_current[index] = V2_GPIOC_next[index] = (1 << V2_D0_HIGH_C) | (1 << V2_D1_HIGH_C);
 				}
 			}
 		}
@@ -355,6 +407,7 @@ void EXTI1_IRQHandler(void)
 		__disable_irq();
 		// repeat the same frame of input
 		GPIOC->BSRR = P1_GPIOC_current[0] | P2_GPIOC_current[0];
+		// shouldn't need to do anything with the vis boards in this case
 		p1_current_bit = p2_current_bit = 1;
 		__enable_irq();
 	}
@@ -437,11 +490,21 @@ void EXTI9_5_IRQHandler(void)
 	// P2_CLOCK
 	if(!p2_clock_filtered && p2_current_bit < 32) // sanity check... but 32 or more bits should never be read in a single latch!
 	{
+		// ensure sure v2 latch and clock are unset
+		GPIOC->BSRR = (1 << V1_LATCH_LOW_B);
+		GPIOA->BSRR = (1 << V2_CLOCK_LOW_A);
+
 		if(dpcmFix)
 		{
 			my_wait_us_asm(2); // necessary to prevent switching too fast in DPCM fix mode
 		}
+
 		GPIOC->BSRR = P2_GPIOC_current[p2_current_bit];
+
+		// set the v2 data and clock it
+		GPIOC->BSRR = V2_GPIOC_current[p2_current_bit];
+		GPIOA->BSRR = (1 << V2_CLOCK_HIGH_A);
+
 		ResetAndEnableP2ClockTimer();
 		p2_current_bit++;
 	}
