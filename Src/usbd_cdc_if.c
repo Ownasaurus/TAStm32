@@ -359,6 +359,9 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 						memset((uint32_t*)&P2_GPIOC_current, 0, 128);
 						memset((uint32_t*)&P2_GPIOC_next, 0, 128);
 
+						// reset all data lines to prevent NES from freezing on poweron
+						HAL_GPIO_WritePin(GPIOC, P1_DATA_1_Pin|P1_DATA_0_Pin|P2_DATA_1_Pin|P2_DATA_0_Pin, GPIO_PIN_RESET);
+
 						ResetTASRuns();
 						CDC_Transmit_FS((uint8_t*)"\x01R", 2); // good response for reset
 						ss = SERIAL_COMPLETE;
