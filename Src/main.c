@@ -134,6 +134,9 @@ int main(void)
   HAL_NVIC_DisableIRQ(EXTI4_IRQn);
   HAL_NVIC_DisableIRQ(EXTI9_5_IRQn);
 
+  // reset data lines to prevent NES from freezing on poweron
+  HAL_GPIO_WritePin(GPIOC, P1_DATA_1_Pin|P1_DATA_0_Pin|P2_DATA_1_Pin|P2_DATA_0_Pin, GPIO_PIN_RESET);
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
