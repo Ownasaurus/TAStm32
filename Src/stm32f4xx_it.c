@@ -203,7 +203,23 @@ void EXTI0_IRQHandler(void)
 		GPIOB->BSRR = (1 << V1_CLOCK_HIGH_B);
 
 		// latch when vis board is ready
-		if((c == CONSOLE_NES && p1_current_bit == 7) || (c == CONSOLE_SNES && p1_current_bit == 15))
+		if(c == CONSOLE_NES && p1_current_bit == 7)
+		{
+			// quickly clock out 8 0s to the vis board
+			GPIOB->BSRR = (1 << V1_D0_LOW_B) | (1 << V1_D1_LOW_B); // set v1 data lines low
+
+			// 8 clock pulses at least 10ns in width
+			for(int x = 0;x < 8;x++)
+			{
+				// wait 4 cycles which should be well over the minimum required 10ns but still relatively quick
+				asm("ADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0");
+				GPIOB->BSRR = (1 << V1_CLOCK_LOW_B);
+				asm("ADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0");
+				GPIOB->BSRR = (1 << V1_CLOCK_HIGH_B);
+			}
+			GPIOB->BSRR = (1 << V1_LATCH_HIGH_B);
+		}
+		else if(c == CONSOLE_SNES && p1_current_bit == 15)
 		{
 			GPIOB->BSRR = (1 << V1_LATCH_HIGH_B);
 		}
@@ -512,7 +528,23 @@ void EXTI9_5_IRQHandler(void)
 		GPIOA->BSRR = (1 << V2_CLOCK_HIGH_A);
 
 		// latch when vis board is ready
-		if((c == CONSOLE_NES && p2_current_bit == 7) || (c == CONSOLE_SNES && p2_current_bit == 15))
+		if(c == CONSOLE_NES && p2_current_bit == 7)
+		{
+			// quickly clock out 8 0s to the vis board
+			GPIOC->BSRR = (1 << V2_D0_LOW_C) | (1 << V2_D1_LOW_C); // set v2 data lines low
+
+			// 8 clock pulses at least 10ns in width
+			for(int x = 0;x < 8;x++)
+			{
+				// wait 4 cycles which should be well over the minimum required 10ns but still relatively quick
+				asm("ADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0");
+				GPIOA->BSRR = (1 << V2_CLOCK_LOW_A);
+				asm("ADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0");
+				GPIOA->BSRR = (1 << V2_CLOCK_HIGH_A);
+			}
+			GPIOC->BSRR = (1 << V2_LATCH_HIGH_C);
+		}
+		else if(c == CONSOLE_SNES && p2_current_bit == 15)
 		{
 			GPIOC->BSRR = (1 << V2_LATCH_HIGH_C);
 		}
