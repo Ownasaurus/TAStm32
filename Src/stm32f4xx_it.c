@@ -185,7 +185,7 @@ void EXTI0_IRQHandler(void)
 	// P1_CLOCK
 	if(!p1_clock_filtered && p1_current_bit < 32) // sanity check... but 32 or more bits should never be read in a single latch!
 	{
-		// ensure sure v1 clock is unset
+		// ensure sure v1 clock is set
 		GPIOB->BSRR = (1 << V1_CLOCK_LOW_B);
 
 		if(dpcmFix)
@@ -199,11 +199,11 @@ void EXTI0_IRQHandler(void)
 		//GPIOC->BSRR = (P1_GPIOC_current[p1_current_bit] & 0x000C000C); // set d0 and d1 at the same time
 
 		// set the v1 data and clock it
-		GPIOB->BSRR = V1_GPIOB_current[p1_current_bit];
 		GPIOB->BSRR = (1 << V1_CLOCK_HIGH_B);
+		asm("ADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0");
 
 		// latch when vis board is ready
-		if(c == CONSOLE_NES && p1_current_bit == 7)
+		if(c == CONSOLE_NES && p1_current_bit == 8)
 		{
 			// quickly clock out 8 0s to the vis board
 			GPIOB->BSRR = (1 << V1_D0_LOW_B) | (1 << V1_D1_LOW_B); // set v1 data lines low
@@ -217,11 +217,25 @@ void EXTI0_IRQHandler(void)
 				asm("ADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0");
 				GPIOB->BSRR = (1 << V1_CLOCK_HIGH_B);
 			}
+			asm("ADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0");
 			GPIOB->BSRR = (1 << V1_LATCH_HIGH_B);
+			// create at least a 20ns pulse (this should be about 40ns)
+			asm("ADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0");
+			asm("ADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0");
+			GPIOB->BSRR = (1 << V1_LATCH_LOW_B);
 		}
-		else if(c == CONSOLE_SNES && p1_current_bit == 15)
+		else if(c == CONSOLE_SNES && p1_current_bit == 16)
 		{
+			asm("ADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0");
 			GPIOB->BSRR = (1 << V1_LATCH_HIGH_B);
+			// create at least a 20ns pulse (this should be about 40ns)
+			asm("ADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0");
+			asm("ADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0");
+			GPIOB->BSRR = (1 << V1_LATCH_LOW_B);
+		}
+		else
+		{
+			GPIOB->BSRR = V1_GPIOB_current[p1_current_bit];
 		}
 
 		ResetAndEnableP1ClockTimer();
@@ -247,8 +261,10 @@ void EXTI1_IRQHandler(void)
 	if(recentLatch == 0) // no recent latch
 	{
 		// quickly set next frame of data and lower vis board latches
-		GPIOC->BSRR = P1_GPIOC_next[0] | P2_GPIOC_next[0] | V2_GPIOC_next[0] | (1 << V2_LATCH_LOW_C);
-		GPIOB->BSRR = V1_GPIOB_next[0] | (1 << V1_LATCH_LOW_B);
+		//GPIOC->BSRR = P1_GPIOC_next[0] | P2_GPIOC_next[0] | V2_GPIOC_next[0];
+		GPIOC->BSRR = (P1_GPIOC_next[0] & 0x00080008) | P2_GPIOC_next[0] | V2_GPIOC_next[0];
+		GPIOC->BSRR = (P1_GPIOC_next[0] & 0x00040004);
+		GPIOB->BSRR = V1_GPIOB_next[0];
 
 		// copy the 2nd bit too
 		__disable_irq();
@@ -428,8 +444,10 @@ void EXTI1_IRQHandler(void)
 	{
 		__disable_irq();
 		// repeat the same frame of input and lower vis board latches
-		GPIOC->BSRR = P1_GPIOC_current[0] | P2_GPIOC_current[0] | V2_GPIOC_current[0] | (1 << V2_LATCH_LOW_C);
-		GPIOB->BSRR = V1_GPIOB_current[0] | (1 << V1_LATCH_LOW_B);
+		//GPIOC->BSRR = P1_GPIOC_current[0] | P2_GPIOC_current[0] | V2_GPIOC_current[0];
+		GPIOC->BSRR = (P1_GPIOC_current[0] & 0x00080008) | P2_GPIOC_current[0] | V2_GPIOC_current[0];
+		GPIOC->BSRR = (P1_GPIOC_current[0] & 0x00040004);
+		GPIOB->BSRR = V1_GPIOB_current[0];
 
 		p1_current_bit = p2_current_bit = 1;
 		__enable_irq();
@@ -524,8 +542,8 @@ void EXTI9_5_IRQHandler(void)
 		GPIOC->BSRR = P2_GPIOC_current[p2_current_bit];
 
 		// set the v2 data and clock it
-		GPIOC->BSRR = V2_GPIOC_current[p2_current_bit];
 		GPIOA->BSRR = (1 << V2_CLOCK_HIGH_A);
+		asm("ADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0");
 
 		// latch when vis board is ready
 		if(c == CONSOLE_NES && p2_current_bit == 7)
@@ -542,11 +560,25 @@ void EXTI9_5_IRQHandler(void)
 				asm("ADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0");
 				GPIOA->BSRR = (1 << V2_CLOCK_HIGH_A);
 			}
+			asm("ADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0");
 			GPIOC->BSRR = (1 << V2_LATCH_HIGH_C);
+			// create at least a 20ns pulse (this should be about 40ns)
+			asm("ADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0");
+			asm("ADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0");
+			GPIOC->BSRR = (1 << V2_LATCH_LOW_C);
 		}
 		else if(c == CONSOLE_SNES && p2_current_bit == 15)
 		{
+			asm("ADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0");
 			GPIOC->BSRR = (1 << V2_LATCH_HIGH_C);
+			// create at least a 20ns pulse (this should be about 40ns)
+			asm("ADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0");
+			asm("ADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0");
+			GPIOC->BSRR = (1 << V2_LATCH_LOW_C);
+		}
+		else
+		{
+			GPIOC->BSRR = V2_GPIOC_current[p2_current_bit];
 		}
 
 		ResetAndEnableP2ClockTimer();
