@@ -87,7 +87,7 @@ const uint8_t V2_CLOCK_LOW_A = 31;
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-
+#define WAIT_4_CYCLES asm("ADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0")
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -106,11 +106,11 @@ volatile uint32_t P1_GPIOC_next[32];
 volatile uint32_t P2_GPIOC_current[32];
 volatile uint32_t P2_GPIOC_next[32];
 
-volatile uint32_t V1_GPIOB_current[32];
-volatile uint32_t V1_GPIOB_next[32];
+volatile uint32_t V1_GPIOB_current[16];
+volatile uint32_t V1_GPIOB_next[16];
 
-volatile uint32_t V2_GPIOC_current[32];
-volatile uint32_t V2_GPIOC_next[32];
+volatile uint32_t V2_GPIOC_current[16];
+volatile uint32_t V2_GPIOC_next[16];
 
 volatile uint8_t p1_current_bit = 0;
 volatile uint8_t p2_current_bit = 0;
@@ -185,9 +185,6 @@ void EXTI0_IRQHandler(void)
 	// P1_CLOCK
 	if(!p1_clock_filtered && p1_current_bit < 32) // sanity check... but 32 or more bits should never be read in a single latch!
 	{
-		// ensure sure v1 clock is set
-		GPIOB->BSRR = (1 << V1_CLOCK_LOW_B);
-
 		if(dpcmFix)
 		{
 			my_wait_us_asm(2); // necessary to prevent switching too fast in DPCM fix mode
@@ -197,46 +194,6 @@ void EXTI0_IRQHandler(void)
 		GPIOC->BSRR = (P1_GPIOC_current[p1_current_bit] & 0x00040004); // set d1
 		//TODO: Determine why setting these at the same time causes an interrupt to go to line 1 for some reason!!!!!
 		//GPIOC->BSRR = (P1_GPIOC_current[p1_current_bit] & 0x000C000C); // set d0 and d1 at the same time
-
-		// set the v1 data and clock it
-		GPIOB->BSRR = (1 << V1_CLOCK_HIGH_B);
-		asm("ADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0");
-
-		// latch when vis board is ready
-		if(c == CONSOLE_NES && p1_current_bit == 8)
-		{
-			// quickly clock out 8 0s to the vis board
-			GPIOB->BSRR = (1 << V1_D0_LOW_B) | (1 << V1_D1_LOW_B); // set v1 data lines low
-
-			// 8 clock pulses at least 10ns in width
-			for(int x = 0;x < 8;x++)
-			{
-				// wait 4 cycles which should be well over the minimum required 10ns but still relatively quick
-				asm("ADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0");
-				GPIOB->BSRR = (1 << V1_CLOCK_LOW_B);
-				asm("ADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0");
-				GPIOB->BSRR = (1 << V1_CLOCK_HIGH_B);
-			}
-			asm("ADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0");
-			GPIOB->BSRR = (1 << V1_LATCH_HIGH_B);
-			// create at least a 20ns pulse (this should be about 40ns)
-			asm("ADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0");
-			asm("ADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0");
-			GPIOB->BSRR = (1 << V1_LATCH_LOW_B);
-		}
-		else if(c == CONSOLE_SNES && p1_current_bit == 16)
-		{
-			asm("ADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0");
-			GPIOB->BSRR = (1 << V1_LATCH_HIGH_B);
-			// create at least a 20ns pulse (this should be about 40ns)
-			asm("ADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0");
-			asm("ADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0");
-			GPIOB->BSRR = (1 << V1_LATCH_LOW_B);
-		}
-		else
-		{
-			GPIOB->BSRR = V1_GPIOB_current[p1_current_bit];
-		}
 
 		ResetAndEnableP1ClockTimer();
 		p1_current_bit++;
@@ -422,9 +379,6 @@ void EXTI1_IRQHandler(void)
 				{
 					P1_GPIOC_current[index] = P1_GPIOC_next[index] = (1 << P1_D0_LOW_C) | (1 << P1_D1_LOW_C) | (1 << P1_D2_LOW_C);
 					P2_GPIOC_current[index] = P2_GPIOC_next[index] = (1 << P2_D0_LOW_C) | (1 << P2_D1_LOW_C) | (1 << P2_D2_LOW_C);
-
-					V1_GPIOB_current[index] = V1_GPIOB_next[index] = (1 << V1_D0_HIGH_B) | (1 << V1_D1_HIGH_B);
-					V2_GPIOC_current[index] = V2_GPIOC_next[index] = (1 << V2_D0_HIGH_C) | (1 << V2_D1_HIGH_C);
 				}
 			}
 			else
@@ -433,12 +387,78 @@ void EXTI1_IRQHandler(void)
 				{
 					P1_GPIOC_current[index] = P1_GPIOC_next[index] = (1 << P1_D0_HIGH_C) | (1 << P1_D1_HIGH_C) | (1 << P1_D2_HIGH_C);
 					P2_GPIOC_current[index] = P2_GPIOC_next[index] = (1 << P2_D0_HIGH_C) | (1 << P2_D1_HIGH_C) | (1 << P2_D2_HIGH_C);
-
-					V1_GPIOB_current[index] = V1_GPIOB_next[index] = (1 << V1_D0_LOW_B) | (1 << V1_D1_LOW_B);
-					V2_GPIOC_current[index] = V2_GPIOC_next[index] = (1 << V2_D0_LOW_C) | (1 << V2_D1_LOW_C);
 				}
 			}
 		}
+
+		// vis board code = 16 clock pulses followed by a latch pulse
+
+		// first 8 clock pulses at least 10ns in width
+		for(int x = 0;x < 8;x++)
+		{
+			//set vis data
+			GPIOB->BSRR = V1_GPIOB_current[x];
+			GPIOC->BSRR = V2_GPIOC_current[x];
+
+			// give time to it to register
+			WAIT_4_CYCLES;
+
+			GPIOB->BSRR = (1 << V1_CLOCK_HIGH_B);
+			GPIOA->BSRR = (1 << V2_CLOCK_HIGH_A);
+			// wait 4 cycles which should be well over the minimum required 10ns but still relatively quick
+			WAIT_4_CYCLES;
+			GPIOB->BSRR = (1 << V1_CLOCK_LOW_B);
+			GPIOA->BSRR = (1 << V2_CLOCK_LOW_A);
+			WAIT_4_CYCLES;
+		}
+
+		if(c == CONSOLE_NES)
+		{
+			// set rest of the vis data to 0s
+			GPIOB->BSRR = (1 << V1_D0_LOW_B) | (1 << V1_D1_LOW_B);
+			GPIOC->BSRR = (1 << V2_D0_LOW_C) | (1 << V2_D1_LOW_C);
+
+			WAIT_4_CYCLES;
+
+			for(int x = 0;x < 8;x++)
+			{
+				GPIOB->BSRR = (1 << V1_CLOCK_HIGH_B);
+				GPIOA->BSRR = (1 << V2_CLOCK_HIGH_A);
+				// wait 4 cycles which should be well over the minimum required 10ns but still relatively quick
+				WAIT_4_CYCLES;
+				GPIOB->BSRR = (1 << V1_CLOCK_LOW_B);
+				GPIOA->BSRR = (1 << V2_CLOCK_LOW_A);
+				WAIT_4_CYCLES;
+			}
+		}
+		else if(c == CONSOLE_SNES)
+		{
+			// do the other 8 bits
+			for(int x = 8;x < 15;x++)
+			{
+				//set vis data
+				GPIOB->BSRR = V1_GPIOB_current[x];
+				GPIOC->BSRR = V2_GPIOC_current[x];
+
+				// give time to it to register
+				WAIT_4_CYCLES;
+
+				GPIOB->BSRR = (1 << V1_CLOCK_HIGH_B);
+				GPIOA->BSRR = (1 << V2_CLOCK_HIGH_A);
+				// wait 4 cycles which should be well over the minimum required 10ns but still relatively quick
+				WAIT_4_CYCLES;
+				GPIOB->BSRR = (1 << V1_CLOCK_LOW_B);
+				GPIOA->BSRR = (1 << V2_CLOCK_LOW_A);
+				WAIT_4_CYCLES;
+			}
+		}
+		WAIT_4_CYCLES;
+
+		// create at least a 20ns latch pulse (this should be about 40ns)
+		GPIOB->BSRR = (1 << V1_LATCH_HIGH_B);
+		WAIT_4_CYCLES;
+		WAIT_4_CYCLES;
+		GPIOB->BSRR = (1 << V1_LATCH_LOW_B);
 	}
 	else if(recentLatch == 1) // multiple close latches and DPCM fix is enabled
 	{
@@ -531,55 +551,12 @@ void EXTI9_5_IRQHandler(void)
 	// P2_CLOCK
 	if(!p2_clock_filtered && p2_current_bit < 32) // sanity check... but 32 or more bits should never be read in a single latch!
 	{
-		// ensure sure v2 latch and clock are unset
-		GPIOA->BSRR = (1 << V2_CLOCK_LOW_A);
-
 		if(dpcmFix)
 		{
 			my_wait_us_asm(2); // necessary to prevent switching too fast in DPCM fix mode
 		}
 
 		GPIOC->BSRR = P2_GPIOC_current[p2_current_bit];
-
-		// set the v2 data and clock it
-		GPIOA->BSRR = (1 << V2_CLOCK_HIGH_A);
-		asm("ADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0");
-
-		// latch when vis board is ready
-		if(c == CONSOLE_NES && p2_current_bit == 7)
-		{
-			// quickly clock out 8 0s to the vis board
-			GPIOC->BSRR = (1 << V2_D0_LOW_C) | (1 << V2_D1_LOW_C); // set v2 data lines low
-
-			// 8 clock pulses at least 10ns in width
-			for(int x = 0;x < 8;x++)
-			{
-				// wait 4 cycles which should be well over the minimum required 10ns but still relatively quick
-				asm("ADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0");
-				GPIOA->BSRR = (1 << V2_CLOCK_LOW_A);
-				asm("ADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0");
-				GPIOA->BSRR = (1 << V2_CLOCK_HIGH_A);
-			}
-			asm("ADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0");
-			GPIOC->BSRR = (1 << V2_LATCH_HIGH_C);
-			// create at least a 20ns pulse (this should be about 40ns)
-			asm("ADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0");
-			asm("ADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0");
-			GPIOC->BSRR = (1 << V2_LATCH_LOW_C);
-		}
-		else if(c == CONSOLE_SNES && p2_current_bit == 15)
-		{
-			asm("ADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0");
-			GPIOC->BSRR = (1 << V2_LATCH_HIGH_C);
-			// create at least a 20ns pulse (this should be about 40ns)
-			asm("ADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0");
-			asm("ADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0");
-			GPIOC->BSRR = (1 << V2_LATCH_LOW_C);
-		}
-		else
-		{
-			GPIOC->BSRR = V2_GPIOC_current[p2_current_bit];
-		}
 
 		ResetAndEnableP2ClockTimer();
 		p2_current_bit++;

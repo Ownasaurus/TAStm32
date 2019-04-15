@@ -43,6 +43,10 @@ extern volatile uint32_t P1_GPIOC_current[32];
 extern volatile uint32_t P1_GPIOC_next[32];
 extern volatile uint32_t P2_GPIOC_current[32];
 extern volatile uint32_t P2_GPIOC_next[32];
+extern volatile uint32_t V1_GPIOB_current[16];
+extern volatile uint32_t V1_GPIOB_next[16];
+extern volatile uint32_t V2_GPIOC_current[16];
+extern volatile uint32_t V2_GPIOC_next[16];
 extern const uint8_t SNES_RESET_HIGH_A;
 extern const uint8_t SNES_RESET_LOW_A;
 /* USER CODE END PV */
@@ -358,6 +362,11 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 						memset((uint32_t*)&P1_GPIOC_next, 0, 128);
 						memset((uint32_t*)&P2_GPIOC_current, 0, 128);
 						memset((uint32_t*)&P2_GPIOC_next, 0, 128);
+
+						memset((uint32_t*)&V1_GPIOB_current, 0, 64);
+						memset((uint32_t*)&V1_GPIOB_next, 0, 64);
+						memset((uint32_t*)&V2_GPIOC_current, 0, 64);
+						memset((uint32_t*)&V2_GPIOC_next, 0, 64);
 
 						ResetTASRuns();
 						CDC_Transmit_FS((uint8_t*)"\x01R", 2); // good response for reset
