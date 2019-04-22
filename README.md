@@ -8,23 +8,21 @@ Please see the "Wiki" section for the technical details of the serial communicat
 This project aims to create an easy-to-use, multi-system TAS replay device to be used on actual consoles. The name of this project comes from the fact that it is powered by a STM32F4 microcontroller.
 
 ### Special Thanks
-#### TheMas3212 - The main contributor to this project. Aided with all things python, designing the serial communication protocol, helping with PCB design, and debugging throughout the whole process
+#### TheMas3212 - The main contributor to this project. Aided with all things python, designing the serial communication protocol, helping with PCB design, and debugging throughout the whole process.
+#### CraftedCart - Designed the awesome-looking 3D case
+#### total (@tewtal) - Helped with NES/SNES protocol and debugging. Provided his code as a reference
 
-DwangoAC - warmly accepting me into the TASBot community
+DwangoAC (@dwangoac) - warmly accepting me into the TASBot community
 
-micro500 - spent a lot of time teaching me how console replay devices work at a low level
+micro500 (@micro500) - spent a lot of time teaching me how console replay devices work at a low level
 
 true - for teaching me hardware concepts, helping me choose the perfect MCU for the job, and explaining a lot of low-level things to me
 
 Ilari - for being an extraordinary wealth of knowledge on most topics
 
-Serisium - helped with debugging and PCB design
+Serisium (@serisium) - helped with debugging and PCB design
 
-total (@tewtal) - helped with NES/SNES protocol and debugging
-
-rcombs - helped with optimizing the N64 protocol
-
-Jeff - taught me how to do 3D case design with Fusion 360
+rcombs (@rcombs)- helped with optimizing the N64 protocol
 
 #### If I accidentally forgot to credit you, please let me know so I can fix it!
 

@@ -65,11 +65,29 @@ const uint8_t P2_D2_LOW_C = 25;
 const uint8_t SNES_RESET_HIGH_A = 9;
 const uint8_t SNES_RESET_LOW_A = 25;
 
+const uint8_t V1_D0_HIGH_B = 7;
+const uint8_t V1_D0_LOW_B = 23;
+const uint8_t V1_D1_HIGH_B = 6;
+const uint8_t V1_D1_LOW_B = 22;
+const uint8_t V1_LATCH_HIGH_B = 5;
+const uint8_t V1_LATCH_LOW_B = 21;
+const uint8_t V1_CLOCK_HIGH_B = 4;
+const uint8_t V1_CLOCK_LOW_B = 20;
+
+const uint8_t V2_D0_HIGH_C = 12;
+const uint8_t V2_D0_LOW_C = 28;
+const uint8_t V2_D1_HIGH_C = 11;
+const uint8_t V2_D1_LOW_C = 27;
+const uint8_t V2_LATCH_HIGH_C = 10;
+const uint8_t V2_LATCH_LOW_C = 26;
+const uint8_t V2_CLOCK_HIGH_A = 15;
+const uint8_t V2_CLOCK_LOW_A = 31;
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-
+#define WAIT_4_CYCLES asm("ADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0")
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -87,6 +105,12 @@ volatile uint32_t P1_GPIOC_next[32];
 
 volatile uint32_t P2_GPIOC_current[32];
 volatile uint32_t P2_GPIOC_next[32];
+
+volatile uint32_t V1_GPIOB_current[16];
+volatile uint32_t V1_GPIOB_next[16];
+
+volatile uint32_t V2_GPIOC_current[16];
+volatile uint32_t V2_GPIOC_next[16];
 
 volatile uint8_t p1_current_bit = 0;
 volatile uint8_t p2_current_bit = 0;
@@ -168,10 +192,8 @@ void EXTI0_IRQHandler(void)
 
 		GPIOC->BSRR = (P1_GPIOC_current[p1_current_bit] & 0x00080008); // set d0
 		GPIOC->BSRR = (P1_GPIOC_current[p1_current_bit] & 0x00040004); // set d1
-
 		//TODO: Determine why setting these at the same time causes an interrupt to go to line 1 for some reason!!!!!
 		//GPIOC->BSRR = (P1_GPIOC_current[p1_current_bit] & 0x000C000C); // set d0 and d1 at the same time
-
 
 		ResetAndEnableP1ClockTimer();
 		p1_current_bit++;
@@ -195,17 +217,25 @@ void EXTI1_IRQHandler(void)
 
 	if(recentLatch == 0) // no recent latch
 	{
-		GPIOC->BSRR = P1_GPIOC_next[0] | P2_GPIOC_next[0];
+		// quickly set next frame of data and lower vis board latches
+		//GPIOC->BSRR = P1_GPIOC_next[0] | P2_GPIOC_next[0] | V2_GPIOC_next[0];
+		GPIOC->BSRR = (P1_GPIOC_next[0] & 0x00080008) | P2_GPIOC_next[0] | V2_GPIOC_next[0];
+		GPIOC->BSRR = (P1_GPIOC_next[0] & 0x00040004);
+		GPIOB->BSRR = V1_GPIOB_next[0];
 
 		// copy the 2nd bit too
 		__disable_irq();
 		P1_GPIOC_current[1] = P1_GPIOC_next[1];
 		P2_GPIOC_current[1] = P2_GPIOC_next[1];
+		V1_GPIOB_current[1] = V1_GPIOB_next[1];
+		V2_GPIOC_current[1] = V2_GPIOC_next[1];
 		p1_current_bit = p2_current_bit = 1; // set the next bit to be read
 		__enable_irq();
 
 		memcpy((uint32_t*)&P1_GPIOC_current, (uint32_t*)&P1_GPIOC_next, 64);
 		memcpy((uint32_t*)&P2_GPIOC_current, (uint32_t*)&P2_GPIOC_next, 64);
+		memcpy((uint32_t*)&V1_GPIOB_current, (uint32_t*)&V1_GPIOB_next, 64);
+		memcpy((uint32_t*)&V2_GPIOC_current, (uint32_t*)&V2_GPIOC_next, 64);
 
 		// now prepare for the next frame!
 
@@ -283,6 +313,14 @@ void EXTI1_IRQHandler(void)
 										(((p2_d2_next >> databit) & 1) << P2_D2_LOW_C);
 				P2_GPIOC_next[regbit] |= (((~P2_GPIOC_next[regbit]) & 0x03800000) >> 16);
 
+				V1_GPIOB_next[regbit] = (((p1_d0_next >> databit) & 1) << V1_D0_HIGH_B) |
+										(((p1_d1_next >> databit) & 1) << V1_D1_HIGH_B);
+				V1_GPIOB_next[regbit] |= (((~V1_GPIOB_next[regbit]) & 0x00C0) << 16);
+
+				V2_GPIOC_next[regbit] = (((p2_d0_next >> databit) & 1) << V2_D0_HIGH_C) |
+										(((p2_d1_next >> databit) & 1) << V2_D1_HIGH_C);
+				V2_GPIOC_next[regbit] |= (((~V2_GPIOC_next[regbit]) & 0x1800) << 16);
+
 				regbit++;
 				databit--;
 			}
@@ -303,6 +341,9 @@ void EXTI1_IRQHandler(void)
 			{
 				P1_GPIOC_next[index] = (1 << P1_D0_HIGH_C) | (1 << P1_D1_HIGH_C) | (1 << P1_D2_HIGH_C);
 				P2_GPIOC_next[index] = (1 << P2_D0_HIGH_C) | (1 << P2_D1_HIGH_C) | (1 << P2_D2_HIGH_C);
+
+				V1_GPIOB_next[index] = (1 << V1_D0_LOW_B) | (1 << V1_D1_LOW_B);
+				V2_GPIOC_next[index] = (1 << V2_D0_LOW_C) | (1 << V2_D1_LOW_C);
 			}
 		}
 
@@ -349,12 +390,85 @@ void EXTI1_IRQHandler(void)
 				}
 			}
 		}
+
+		// vis board code = 16 clock pulses followed by a latch pulse
+
+		// first 8 clock pulses at least 10ns in width
+		for(int x = 0;x < 8;x++)
+		{
+			//set vis data
+			GPIOB->BSRR = V1_GPIOB_current[x];
+			GPIOC->BSRR = V2_GPIOC_current[x];
+
+			// give time to it to register
+			WAIT_4_CYCLES;
+
+			GPIOB->BSRR = (1 << V1_CLOCK_HIGH_B);
+			GPIOA->BSRR = (1 << V2_CLOCK_HIGH_A);
+			// wait 4 cycles which should be well over the minimum required 10ns but still relatively quick
+			WAIT_4_CYCLES;
+			GPIOB->BSRR = (1 << V1_CLOCK_LOW_B);
+			GPIOA->BSRR = (1 << V2_CLOCK_LOW_A);
+			WAIT_4_CYCLES;
+		}
+
+		if(c == CONSOLE_NES)
+		{
+			// set rest of the vis data to 0s
+			GPIOB->BSRR = (1 << V1_D0_LOW_B) | (1 << V1_D1_LOW_B);
+			GPIOC->BSRR = (1 << V2_D0_LOW_C) | (1 << V2_D1_LOW_C);
+
+			WAIT_4_CYCLES;
+
+			for(int x = 0;x < 8;x++)
+			{
+				GPIOB->BSRR = (1 << V1_CLOCK_HIGH_B);
+				GPIOA->BSRR = (1 << V2_CLOCK_HIGH_A);
+				// wait 4 cycles which should be well over the minimum required 10ns but still relatively quick
+				WAIT_4_CYCLES;
+				GPIOB->BSRR = (1 << V1_CLOCK_LOW_B);
+				GPIOA->BSRR = (1 << V2_CLOCK_LOW_A);
+				WAIT_4_CYCLES;
+			}
+		}
+		else if(c == CONSOLE_SNES)
+		{
+			// do the other 8 bits
+			for(int x = 8;x < 15;x++)
+			{
+				//set vis data
+				GPIOB->BSRR = V1_GPIOB_current[x];
+				GPIOC->BSRR = V2_GPIOC_current[x];
+
+				// give time to it to register
+				WAIT_4_CYCLES;
+
+				GPIOB->BSRR = (1 << V1_CLOCK_HIGH_B);
+				GPIOA->BSRR = (1 << V2_CLOCK_HIGH_A);
+				// wait 4 cycles which should be well over the minimum required 10ns but still relatively quick
+				WAIT_4_CYCLES;
+				GPIOB->BSRR = (1 << V1_CLOCK_LOW_B);
+				GPIOA->BSRR = (1 << V2_CLOCK_LOW_A);
+				WAIT_4_CYCLES;
+			}
+		}
+		WAIT_4_CYCLES;
+
+		// create at least a 20ns latch pulse (this should be about 40ns)
+		GPIOB->BSRR = (1 << V1_LATCH_HIGH_B);
+		WAIT_4_CYCLES;
+		WAIT_4_CYCLES;
+		GPIOB->BSRR = (1 << V1_LATCH_LOW_B);
 	}
 	else if(recentLatch == 1) // multiple close latches and DPCM fix is enabled
 	{
 		__disable_irq();
-		// repeat the same frame of input
-		GPIOC->BSRR = P1_GPIOC_current[0] | P2_GPIOC_current[0];
+		// repeat the same frame of input and lower vis board latches
+		//GPIOC->BSRR = P1_GPIOC_current[0] | P2_GPIOC_current[0] | V2_GPIOC_current[0];
+		GPIOC->BSRR = (P1_GPIOC_current[0] & 0x00080008) | P2_GPIOC_current[0] | V2_GPIOC_current[0];
+		GPIOC->BSRR = (P1_GPIOC_current[0] & 0x00040004);
+		GPIOB->BSRR = V1_GPIOB_current[0];
+
 		p1_current_bit = p2_current_bit = 1;
 		__enable_irq();
 	}
@@ -441,7 +555,9 @@ void EXTI9_5_IRQHandler(void)
 		{
 			my_wait_us_asm(2); // necessary to prevent switching too fast in DPCM fix mode
 		}
+
 		GPIOC->BSRR = P2_GPIOC_current[p2_current_bit];
+
 		ResetAndEnableP2ClockTimer();
 		p2_current_bit++;
 	}
