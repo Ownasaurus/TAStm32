@@ -456,9 +456,11 @@ void EXTI1_IRQHandler(void)
 
 		// create at least a 20ns latch pulse (this should be about 40ns)
 		GPIOB->BSRR = (1 << V1_LATCH_HIGH_B);
+		GPIOC->BSRR = (1 << V2_LATCH_HIGH_C);
 		WAIT_4_CYCLES;
 		WAIT_4_CYCLES;
 		GPIOB->BSRR = (1 << V1_LATCH_LOW_B);
+		GPIOC->BSRR = (1 << V2_LATCH_LOW_C);
 	}
 	else if(recentLatch == 1) // multiple close latches and DPCM fix is enabled
 	{
