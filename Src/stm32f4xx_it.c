@@ -135,6 +135,7 @@ void DisableP1ClockTimer();
 void ResetAndEnableP1ClockTimer();
 void DisableP2ClockTimer();
 void ResetAndEnableP2ClockTimer();
+void UpdateVisBoards();
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -392,84 +393,15 @@ void EXTI1_IRQHandler(void)
 		}
 
 		// vis board code = 16 clock pulses followed by a latch pulse
-
-		// first 8 clock pulses at least 10ns in width
-		for(int x = 0;x < 8;x++)
-		{
-			//set vis data
-			GPIOB->BSRR = V1_GPIOB_current[x];
-			GPIOC->BSRR = V2_GPIOC_current[x];
-
-			// give time to it to register
-			WAIT_4_CYCLES;
-
-			GPIOB->BSRR = (1 << V1_CLOCK_HIGH_B);
-			GPIOA->BSRR = (1 << V2_CLOCK_HIGH_A);
-			// wait 4 cycles which should be well over the minimum required 10ns but still relatively quick
-			WAIT_4_CYCLES;
-			GPIOB->BSRR = (1 << V1_CLOCK_LOW_B);
-			GPIOA->BSRR = (1 << V2_CLOCK_LOW_A);
-			WAIT_4_CYCLES;
-		}
-
-		if(c == CONSOLE_NES)
-		{
-			// set rest of the vis data to 0s
-			GPIOB->BSRR = (1 << V1_D0_LOW_B) | (1 << V1_D1_LOW_B);
-			GPIOC->BSRR = (1 << V2_D0_LOW_C) | (1 << V2_D1_LOW_C);
-
-			WAIT_4_CYCLES;
-
-			for(int x = 0;x < 8;x++)
-			{
-				GPIOB->BSRR = (1 << V1_CLOCK_HIGH_B);
-				GPIOA->BSRR = (1 << V2_CLOCK_HIGH_A);
-				// wait 4 cycles which should be well over the minimum required 10ns but still relatively quick
-				WAIT_4_CYCLES;
-				GPIOB->BSRR = (1 << V1_CLOCK_LOW_B);
-				GPIOA->BSRR = (1 << V2_CLOCK_LOW_A);
-				WAIT_4_CYCLES;
-			}
-		}
-		else if(c == CONSOLE_SNES)
-		{
-			// do the other 8 bits
-			for(int x = 8;x < 15;x++)
-			{
-				//set vis data
-				GPIOB->BSRR = V1_GPIOB_current[x];
-				GPIOC->BSRR = V2_GPIOC_current[x];
-
-				// give time to it to register
-				WAIT_4_CYCLES;
-
-				GPIOB->BSRR = (1 << V1_CLOCK_HIGH_B);
-				GPIOA->BSRR = (1 << V2_CLOCK_HIGH_A);
-				// wait 4 cycles which should be well over the minimum required 10ns but still relatively quick
-				WAIT_4_CYCLES;
-				GPIOB->BSRR = (1 << V1_CLOCK_LOW_B);
-				GPIOA->BSRR = (1 << V2_CLOCK_LOW_A);
-				WAIT_4_CYCLES;
-			}
-		}
-		WAIT_4_CYCLES;
-
-		// create at least a 20ns latch pulse (this should be about 40ns)
-		GPIOB->BSRR = (1 << V1_LATCH_HIGH_B);
-		GPIOC->BSRR = (1 << V2_LATCH_HIGH_C);
-		WAIT_4_CYCLES;
-		WAIT_4_CYCLES;
-		GPIOB->BSRR = (1 << V1_LATCH_LOW_B);
-		GPIOC->BSRR = (1 << V2_LATCH_LOW_C);
+		UpdateVisBoards();
 	}
 	else if(recentLatch == 1) // multiple close latches and DPCM fix is enabled
 	{
 		__disable_irq();
-		// repeat the same frame of input and lower vis board latches
+		// repeat the same frame of input
 		//GPIOC->BSRR = P1_GPIOC_current[0] | P2_GPIOC_current[0] | V2_GPIOC_current[0];
-		GPIOC->BSRR = (P1_GPIOC_current[0] & 0x00080008) | P2_GPIOC_current[0] | V2_GPIOC_current[0];
+		GPIOC->BSRR = (P1_GPIOC_current[0] & 0x00080008) | P2_GPIOC_current[0];
 		GPIOC->BSRR = (P1_GPIOC_current[0] & 0x00040004);
-		GPIOB->BSRR = V1_GPIOB_current[0];
 
 		p1_current_bit = p2_current_bit = 1;
 		__enable_irq();
@@ -685,6 +617,78 @@ void ResetAndEnableP2ClockTimer()
 	p2_clock_filtered = 1;
 
 	HAL_TIM_Base_Start_IT(&htim7);
+}
+
+__attribute__((optimize("O0"))) inline void UpdateVisBoards()
+{
+	// first 8 clock pulses at least 10ns in width
+	for(int x = 0;x < 8;x++)
+	{
+		//set vis data
+		GPIOB->BSRR = V1_GPIOB_current[x];
+		GPIOC->BSRR = V2_GPIOC_current[x];
+
+		// give time to it to register
+		WAIT_4_CYCLES;
+
+		GPIOB->BSRR = (1 << V1_CLOCK_HIGH_B);
+		GPIOA->BSRR = (1 << V2_CLOCK_HIGH_A);
+		// wait 4 cycles which should be well over the minimum required 10ns but still relatively quick
+		WAIT_4_CYCLES;
+		GPIOB->BSRR = (1 << V1_CLOCK_LOW_B);
+		GPIOA->BSRR = (1 << V2_CLOCK_LOW_A);
+		WAIT_4_CYCLES;
+	}
+
+	if(c == CONSOLE_NES)
+	{
+		// set rest of the vis data to 0s
+		GPIOB->BSRR = (1 << V1_D0_LOW_B) | (1 << V1_D1_LOW_B);
+		GPIOC->BSRR = (1 << V2_D0_LOW_C) | (1 << V2_D1_LOW_C);
+
+		WAIT_4_CYCLES;
+
+		for(int x = 0;x < 8;x++)
+		{
+			GPIOB->BSRR = (1 << V1_CLOCK_HIGH_B);
+			GPIOA->BSRR = (1 << V2_CLOCK_HIGH_A);
+			// wait 4 cycles which should be well over the minimum required 10ns but still relatively quick
+			WAIT_4_CYCLES;
+			GPIOB->BSRR = (1 << V1_CLOCK_LOW_B);
+			GPIOA->BSRR = (1 << V2_CLOCK_LOW_A);
+			WAIT_4_CYCLES;
+		}
+	}
+	else if(c == CONSOLE_SNES)
+	{
+		// do the other 8 bits
+		for(int x = 8;x < 15;x++)
+		{
+			//set vis data
+			GPIOB->BSRR = V1_GPIOB_current[x];
+			GPIOC->BSRR = V2_GPIOC_current[x];
+
+			// give time to it to register
+			WAIT_4_CYCLES;
+
+			GPIOB->BSRR = (1 << V1_CLOCK_HIGH_B);
+			GPIOA->BSRR = (1 << V2_CLOCK_HIGH_A);
+			// wait 4 cycles which should be well over the minimum required 10ns but still relatively quick
+			WAIT_4_CYCLES;
+			GPIOB->BSRR = (1 << V1_CLOCK_LOW_B);
+			GPIOA->BSRR = (1 << V2_CLOCK_LOW_A);
+			WAIT_4_CYCLES;
+		}
+	}
+	WAIT_4_CYCLES;
+
+	// create at least a 20ns latch pulse (this should be about 40ns)
+	GPIOB->BSRR = (1 << V1_LATCH_HIGH_B);
+	GPIOC->BSRR = (1 << V2_LATCH_HIGH_C);
+	WAIT_4_CYCLES;
+	WAIT_4_CYCLES;
+	GPIOB->BSRR = (1 << V1_LATCH_LOW_B);
+	GPIOC->BSRR = (1 << V2_LATCH_LOW_C);
 }
 /* USER CODE END 1 */
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
