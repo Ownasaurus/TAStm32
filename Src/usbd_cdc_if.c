@@ -495,17 +495,17 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 				{
 					case 'M': // setup N64
 						TASRunSetConsole(sr, CONSOLE_N64);
-						SetN64InputMode();
+						SetN64Mode();
 						ss = SERIAL_NUM_CONTROLLERS;
 						break;
 					case 'S': // setup SNES
 						TASRunSetConsole(sr, CONSOLE_SNES);
-						SetN64OutputMode();
+						SetSNESMode();
 						ss = SERIAL_NUM_CONTROLLERS;
 						break;
 					case 'N': // setup NES
 						TASRunSetConsole(sr, CONSOLE_NES);
-						SetN64OutputMode();
+						SetSNESMode();
 						ss = SERIAL_NUM_CONTROLLERS;
 						break;
 					default: // Error: console type not understood

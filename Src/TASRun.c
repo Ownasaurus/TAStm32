@@ -3,6 +3,7 @@
 #include "snes.h"
 #include "TASRun.h"
 #include "stm32f4xx_hal.h"
+#include "main.h"
 
 #define MAX_NUM_RUNS 2
 
@@ -263,4 +264,27 @@ void SetN64OutputMode()
 	// port C4 to output mode
 	GPIOC->MODER &= ~(1 << 9);
 	GPIOC->MODER |= (1 << 8);
+}
+
+void SetN64Mode()
+{
+	GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+	GPIO_InitStruct.Pin = P1_DATA_2_Pin;
+	GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+
+	HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+}
+
+void SetSNESMode()
+{
+	GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+	GPIO_InitStruct.Pin = P1_DATA_2_Pin;
+	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
+	GPIO_InitStruct.Pull = GPIO_PULLUP;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+
+	HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 }
