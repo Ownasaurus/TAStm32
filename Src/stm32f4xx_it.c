@@ -100,11 +100,11 @@ volatile uint32_t p2_d1_next = 0;
 volatile uint32_t p2_d2_next = 0;
 
 // leave enough room for SNES + overread
-volatile uint32_t P1_GPIOC_current[32];
-volatile uint32_t P1_GPIOC_next[32];
+volatile uint32_t P1_GPIOC_current[17];
+volatile uint32_t P1_GPIOC_next[17];
 
-volatile uint32_t P2_GPIOC_current[32];
-volatile uint32_t P2_GPIOC_next[32];
+volatile uint32_t P2_GPIOC_current[17];
+volatile uint32_t P2_GPIOC_next[17];
 
 volatile uint32_t V1_GPIOB_current[16];
 volatile uint32_t V1_GPIOB_next[16];
@@ -184,7 +184,7 @@ void EXTI0_IRQHandler(void)
 {
   /* USER CODE BEGIN EXTI0_IRQn 0 */
 	// P1_CLOCK
-	if(!p1_clock_filtered && p1_current_bit < 32) // sanity check... but 32 or more bits should never be read in a single latch!
+	if(!p1_clock_filtered && p1_current_bit < 17) // sanity check... but 32 or more bits should never be read in a single latch!
 	{
 		if(dpcmFix)
 		{
@@ -218,25 +218,21 @@ void EXTI1_IRQHandler(void)
 
 	if(recentLatch == 0) // no recent latch
 	{
-		// quickly set next frame of data and lower vis board latches
+		// quickly set first bit of data for the next frame
 		//GPIOC->BSRR = P1_GPIOC_next[0] | P2_GPIOC_next[0] | V2_GPIOC_next[0];
-		GPIOC->BSRR = (P1_GPIOC_next[0] & 0x00080008) | P2_GPIOC_next[0] | V2_GPIOC_next[0];
+		GPIOC->BSRR = (P1_GPIOC_next[0] & 0x00080008) | P2_GPIOC_next[0];
 		GPIOC->BSRR = (P1_GPIOC_next[0] & 0x00040004);
-		GPIOB->BSRR = V1_GPIOB_next[0];
 
-		// copy the 2nd bit too
+		// copy the 2nd bit over too
 		__disable_irq();
 		P1_GPIOC_current[1] = P1_GPIOC_next[1];
 		P2_GPIOC_current[1] = P2_GPIOC_next[1];
-		V1_GPIOB_current[1] = V1_GPIOB_next[1];
-		V2_GPIOC_current[1] = V2_GPIOC_next[1];
 		p1_current_bit = p2_current_bit = 1; // set the next bit to be read
 		__enable_irq();
 
+		// copy the rest of the bits. do not copy the overread since it will never change
 		memcpy((uint32_t*)&P1_GPIOC_current, (uint32_t*)&P1_GPIOC_next, 64);
 		memcpy((uint32_t*)&P2_GPIOC_current, (uint32_t*)&P2_GPIOC_next, 64);
-		memcpy((uint32_t*)&V1_GPIOB_current, (uint32_t*)&V1_GPIOB_next, 64);
-		memcpy((uint32_t*)&V2_GPIOC_current, (uint32_t*)&V2_GPIOC_next, 64);
 
 		// now prepare for the next frame!
 
@@ -375,8 +371,8 @@ void EXTI1_IRQHandler(void)
 			// fill the overread
 			if(TASRunGetOverread(0)) // overread is 1/HIGH
 			{
-				// so set logical LOW (button pressed)
-				for(uint8_t index = regbit;index < 32;index++)
+				// so set logical LOW (NES/SNES button pressed)
+				for(uint8_t index = regbit;index < 17;index++)
 				{
 					P1_GPIOC_current[index] = P1_GPIOC_next[index] = (1 << P1_D0_LOW_C) | (1 << P1_D1_LOW_C) | (1 << P1_D2_LOW_C);
 					P2_GPIOC_current[index] = P2_GPIOC_next[index] = (1 << P2_D0_LOW_C) | (1 << P2_D1_LOW_C) | (1 << P2_D2_LOW_C);
@@ -384,7 +380,7 @@ void EXTI1_IRQHandler(void)
 			}
 			else
 			{
-				for(uint8_t index = regbit;index < 32;index++)
+				for(uint8_t index = regbit;index < 17;index++)
 				{
 					P1_GPIOC_current[index] = P1_GPIOC_next[index] = (1 << P1_D0_HIGH_C) | (1 << P1_D1_HIGH_C) | (1 << P1_D2_HIGH_C);
 					P2_GPIOC_current[index] = P2_GPIOC_next[index] = (1 << P2_D0_HIGH_C) | (1 << P2_D1_HIGH_C) | (1 << P2_D2_HIGH_C);
@@ -393,6 +389,8 @@ void EXTI1_IRQHandler(void)
 		}
 
 		// vis board code = 16 clock pulses followed by a latch pulse
+		memcpy((uint32_t*)&V1_GPIOB_current, (uint32_t*)&V1_GPIOB_next, 64);
+		memcpy((uint32_t*)&V2_GPIOC_current, (uint32_t*)&V2_GPIOC_next, 64);
 		UpdateVisBoards();
 	}
 	else if(recentLatch == 1) // multiple close latches and DPCM fix is enabled
@@ -483,7 +481,7 @@ void EXTI9_5_IRQHandler(void)
 {
   /* USER CODE BEGIN EXTI9_5_IRQn 0 */
 	// P2_CLOCK
-	if(!p2_clock_filtered && p2_current_bit < 32) // sanity check... but 32 or more bits should never be read in a single latch!
+	if(!p2_clock_filtered && p2_current_bit < 17) // sanity check... but 32 or more bits should never be read in a single latch!
 	{
 		if(dpcmFix)
 		{
