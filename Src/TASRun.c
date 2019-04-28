@@ -237,6 +237,9 @@ uint8_t AddFrame(int runIndex, RunData (frame)[MAX_CONTROLLERS][MAX_DATA_LANES])
 
 	memcpy(tasruns[runIndex].buf,frame,sizeof(RunData[MAX_CONTROLLERS][MAX_DATA_LANES]));
 
+	// NOTE: These two pointer modifications must occur in an atomic fashion
+	//       A poorly-timed interrupt could cause bad things.
+	__disable_irq();
 	// loop around if necessary
 	if(tasruns[runIndex].buf != tasruns[runIndex].end)
 	{
@@ -248,6 +251,7 @@ uint8_t AddFrame(int runIndex, RunData (frame)[MAX_CONTROLLERS][MAX_DATA_LANES])
 	}
 
 	tasruns[runIndex].size++;
+	__enable_irq();
 
 	return 1;
 }
