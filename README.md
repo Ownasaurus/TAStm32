@@ -18,6 +18,8 @@ micro500 (@micro500) - spent a lot of time teaching me how console replay device
 
 true - for teaching me hardware concepts, helping me choose the perfect MCU for the job, and explaining a lot of low-level things to me
 
+Tien Majerle (@MaJerle) - the owner of https://stm32f4-discovery.net/ helped me with the function which jumps to the DFU bootloader code
+
 Ilari - for being an extraordinary wealth of knowledge on most topics
 
 Serisium (@serisium) - helped with debugging and PCB design

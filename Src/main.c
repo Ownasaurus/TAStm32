@@ -70,6 +70,7 @@
 TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim6;
 TIM_HandleTypeDef htim7;
+volatile uint8_t jumpToDFU;
 
 /* USER CODE BEGIN PV */
 extern volatile uint8_t toggleNext;
@@ -121,6 +122,7 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USB_DEVICE_Init();
+
   MX_TIM3_Init();
   MX_TIM6_Init();
   MX_TIM7_Init();
@@ -133,6 +135,7 @@ int main(void)
   HAL_NVIC_DisableIRQ(EXTI1_IRQn);
   HAL_NVIC_DisableIRQ(EXTI4_IRQn);
   HAL_NVIC_DisableIRQ(EXTI9_5_IRQn);
+  jumpToDFU = 0;
 
   // ensure no buttons are pressed initially
   HAL_GPIO_WritePin(GPIOC, P1_DATA_1_Pin|P1_DATA_0_Pin|P2_DATA_2_Pin|P2_DATA_1_Pin|P2_DATA_0_Pin, GPIO_PIN_SET);
@@ -146,6 +149,10 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  if(jumpToDFU == 1)
+	  {
+		  JumpToBootLoader();
+	  }
   }
   /* USER CODE END 3 */
 }
@@ -487,6 +494,97 @@ void ReInitClockTimers(void)
 	}
 
 }
+
+// Many thanks to Tien Majerle, owner of https://stm32f4-discovery.net/, for help with this function
+void JumpToBootLoader(void) {
+	void (*SysMemBootJump)(void);
+
+	// De-init USB
+	MX_USB_DEVICE_DeInit();
+
+	// Disable all of our interrupts (except systick which will be handled later)
+	HAL_NVIC_DisableIRQ(EXTI0_IRQn);
+	HAL_NVIC_DisableIRQ(EXTI1_IRQn);
+	HAL_NVIC_DisableIRQ(EXTI4_IRQn);
+	HAL_NVIC_DisableIRQ(EXTI9_5_IRQn);
+	HAL_NVIC_DisableIRQ(OTG_FS_IRQn);
+	HAL_NVIC_DisableIRQ(TIM3_IRQn);
+	HAL_NVIC_DisableIRQ(TIM6_DAC_IRQn);
+	HAL_NVIC_DisableIRQ(TIM7_IRQn);
+	HAL_NVIC_DisableIRQ(SysTick_IRQn);
+
+	// De-init timers
+	HAL_TIM_Base_DeInit(&htim3);
+	HAL_TIM_Base_DeInit(&htim6);
+	HAL_TIM_Base_DeInit(&htim7);
+
+	// clear all interrupts
+	while (HAL_NVIC_GetPendingIRQ(EXTI0_IRQn))
+	{
+		__HAL_GPIO_EXTI_CLEAR_IT(P1_CLOCK_Pin);
+		HAL_NVIC_ClearPendingIRQ(EXTI0_IRQn);
+	}
+	while (HAL_NVIC_GetPendingIRQ(EXTI1_IRQn))
+	{
+		__HAL_GPIO_EXTI_CLEAR_IT(P1_LATCH_Pin);
+		HAL_NVIC_ClearPendingIRQ(EXTI1_IRQn);
+	}
+	while (HAL_NVIC_GetPendingIRQ(EXTI4_IRQn))
+	{
+		__HAL_GPIO_EXTI_CLEAR_IT(P1_DATA_2_Pin);
+		HAL_NVIC_ClearPendingIRQ(EXTI4_IRQn);
+	}
+	while (HAL_NVIC_GetPendingIRQ(EXTI9_5_IRQn))
+	{
+		__HAL_GPIO_EXTI_CLEAR_IT(P2_CLOCK_Pin);
+		HAL_NVIC_ClearPendingIRQ(EXTI9_5_IRQn);
+	}
+	while (HAL_NVIC_GetPendingIRQ(TIM3_IRQn))
+	{
+		HAL_NVIC_ClearPendingIRQ(TIM3_IRQn);
+	}
+	while (HAL_NVIC_GetPendingIRQ(TIM6_DAC_IRQn))
+	{
+		HAL_NVIC_ClearPendingIRQ(TIM6_DAC_IRQn);
+	}
+	while (HAL_NVIC_GetPendingIRQ(TIM7_IRQn))
+	{
+		HAL_NVIC_ClearPendingIRQ(TIM7_IRQn);
+	}
+	while (HAL_NVIC_GetPendingIRQ(TIM7_IRQn))
+	{
+		HAL_NVIC_ClearPendingIRQ(TIM7_IRQn);
+	}
+	while (HAL_NVIC_GetPendingIRQ(OTG_FS_IRQn))
+	{
+		HAL_NVIC_ClearPendingIRQ(OTG_FS_IRQn);
+	}
+
+	// Prepare to jump
+	volatile uint32_t addr = 0x1FFF0000;
+
+	// reset RCC back to default values
+	HAL_RCC_DeInit();
+
+	// clear SysTick
+	SysTick->CTRL = 0;
+	SysTick->LOAD = 0;
+	SysTick->VAL = 0;
+
+	// remaps the address of the system memory to 0x00000000
+	// necessary for proper transition to bootloader
+	SYSCFG->MEMRMP = 0x01;
+
+	// sets destination address of the jump. note it is one word into the bootloader code which is the first instruction
+	SysMemBootJump = (void (*)(void)) (*((uint32_t *)(addr + 4)));
+
+	// sets the stack poitner to the first word of the bootloader code
+	__set_MSP(*(uint32_t *)addr);
+
+	// jump!
+	SysMemBootJump();
+}
+
 /* USER CODE END 4 */
 
 /**

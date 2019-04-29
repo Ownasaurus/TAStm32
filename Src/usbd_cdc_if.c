@@ -25,6 +25,7 @@
 /* USER CODE BEGIN INCLUDE */
 #include "TASRun.h"
 #include "stm32f4xx_it.h"
+#include "main.h"
 /* USER CODE END INCLUDE */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -47,6 +48,7 @@ extern volatile uint32_t V1_GPIOB_current[16];
 extern volatile uint32_t V1_GPIOB_next[16];
 extern volatile uint32_t V2_GPIOC_current[16];
 extern volatile uint32_t V2_GPIOC_next[16];
+extern volatile uint8_t jumpToDFU;
 extern const uint8_t SNES_RESET_HIGH_A;
 extern const uint8_t SNES_RESET_LOW_A;
 /* USER CODE END PV */
@@ -310,6 +312,10 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 						HAL_NVIC_DisableIRQ(EXTI4_IRQn);
 						HAL_NVIC_DisableIRQ(EXTI9_5_IRQn);
 
+						Disable8msTimer();
+						DisableP1ClockTimer();
+						DisableP2ClockTimer();
+
 						// clear all interrupts
 						while (HAL_NVIC_GetPendingIRQ(EXTI0_IRQn))
 						{
@@ -343,10 +349,6 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 						{
 							HAL_NVIC_ClearPendingIRQ(TIM7_IRQn);
 						}
-
-						Disable8msTimer();
-						DisableP1ClockTimer();
-						DisableP2ClockTimer();
 
 						// important to reset our state
 						recentLatch = 0;
@@ -417,6 +419,9 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 						break;
 					case 'P': // Transition
 						ss = SERIAL_POWER;
+						break;
+					case '\xDF':
+						jumpToDFU = 1;
 						break;
 					default: // Error: prefix not understood
 						CDC_Transmit_FS((uint8_t*)"\xFF", 1);

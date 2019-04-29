@@ -75,6 +75,7 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
 void ReInitClockTimers(void);
+void JumpToBootLoader(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
