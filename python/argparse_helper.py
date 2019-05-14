@@ -29,3 +29,8 @@ def audio_parser():
     parser.add_argument('--serial', help='Preselect the serial port')
     parser.add_argument('--debug', help='Enable Debug Mode', action='store_true')
     return parser
+
+def cli_parser():
+    parser = argparse.ArgumentParser(description='...')
+    parser.add_argument('--serial', help='Preselect the serial port')
+    return parser

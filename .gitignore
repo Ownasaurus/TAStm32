@@ -1,2 +1,10 @@
 /Debug/
 /Release/
+/python/__pycache__/
+/.vscode/
+/.code_review_properties
+/.settings/
+/pinmap.xcf
+*.r16m
+*.r08
+*.m64

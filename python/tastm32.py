@@ -11,8 +11,7 @@ import serial_helper
 import argparse_helper
 
 import r08, r16m, m64
-
-DEBUG = False
+import rundata
 
 int_buffer = 2048 # internal buffer size on replay device
 
@@ -162,8 +161,7 @@ class TAStm32():
             self.activeRuns[prefix] = False
             raise RuntimeError('Error during setup')
 
-    def main_loop(self):
-        global DEBUG
+    def main_loop_single(self):
         global buffer
         global run_id
         global fn
@@ -219,6 +217,141 @@ class TAStm32():
                 print('^C Exiting')
                 break
 
+    def main_loop_multi(self, runs):
+        for run in runs:
+            run.reset()
+            run.update()
+            for latch in range(int_buffer):
+                data = run.id + run.buffer[run.frame]
+                self.write(data)
+                run.frame += 1
+            err = self.read(int_buffer)
+            run.frame -= err.count(b'\xB0')
+            if err.count(b'\xB0') != 0:
+                print('Buffer Overflow x{}'.format(err.count(b'\xB0')))
+            for transition in run.transitions:
+                self.send_transition(run.id, *transition)
+        while True:
+            try:
+                c = self.read(1)
+                if c == '':
+                    continue
+                numBytes = self.ser.inWaiting()
+                if numBytes > 0:
+                    c += self.read(numBytes)
+                    if numBytes > int_buffer:
+                        print ("WARNING: High latch rate detected: " + str(numBytes))
+                for run in runs:
+                    latches = c.count(run.id)
+                    bulk = c.count(run.id.lower())
+                    missed = c.count(b'\xB0')
+                    if missed != 0:
+                        run.frame -= missed
+                        print('Buffer Overflow x{}'.format(missed))
+                    for latch in range(latches):
+                        try:
+                            data = run.id + run.buffer[run.frame]
+                            self.write(data)
+                            if run.frame % 100 == 0:
+                                print('Sending Latch: {}'.format(run.frame))
+                        except IndexError:
+                            pass
+                        run.frame += 1
+                    for cmd in range(bulk):
+                        for packet in range(packets):
+                            command = []
+                            for latch in range(latches_per_bulk_command//packets):
+                                try:
+                                    command.append(run.id + run.buffer[run.frame])
+                                    run.frame += 1
+                                    frame += 1
+                                    if run.frame % 100 == 0:
+                                        print('Sending Latch: {}'.format(run.frame))
+                                except IndexError:
+                                    pass
+                            data = b''.join(command)
+                            self.write(data)
+                        self.write(run_id.lower())
+                    if run.frame > run.frame_max:
+                        print("Run Finished")
+            except serial.SerialException:
+                print('ERROR: Serial Exception caught!')
+                break
+            except KeyboardInterrupt:
+                print('^C Exiting')
+                break
+
+def main_single(dev, args, data):
+    global DEBUG
+    global buffer
+    global run_id
+    global fn
+    dev.reset()
+    run_id = dev.setup_run(args.console, args.players, args.dpcm, args.overread, args.clock)
+    if run_id == None:
+        raise RuntimeError('ERROR')
+        sys.exit()
+    if args.console == 'n64':
+        buffer = m64.read_input(data)
+        blankframe = b'\x00\x00\x00\x00' * len(args.players)
+    elif args.console == 'snes':
+        buffer = r16m.read_input(data, args.players)
+        blankframe = b'\x00\x00' * len(args.players)
+    elif args.console == 'nes':
+        buffer = r08.read_input(data, args.players)
+        blankframe = b'\x00' * len(args.players)
+
+    # Send Blank Frames
+    for blank in range(args.blank):
+        data = run_id + blankframe
+        dev.write(data)
+        print('Sending Blank Latch: {}'.format(blank))
+    fn = 0
+    for latch in range(int_buffer-args.blank):
+        try:
+            data = run_id + buffer[fn]
+            dev.write(data)
+            print('Sending Latch: {}'.format(fn))
+            fn += 1
+        except IndexError:
+            pass
+    err = dev.read(int_buffer)
+    fn -= err.count(b'\xB0')
+    if err.count(b'\xB0') != 0:
+        print('Buffer Overflow x{}'.format(err.count(b'\xB0')))
+    if args.transition != None:
+        for transition in args.transition:
+            dev.send_transition(run_id, *transition)
+    print('Main Loop Start')
+    dev.main_loop_single()
+    print('Exiting')
+    dev.ser.close()
+    sys.exit(0)
+
+def main_multi(dev, args, data):
+    dev.reset()
+    run_id = dev.setup_run(args.console, args.players, args.dpcm, args.overread, args.clock)
+    if run_id == None:
+        raise RuntimeError('ERROR')
+    if args.console == 'n64':
+        buffer = m64.read_input(data)
+        blankframe = b'\x00\x00\x00\x00' * len(args.players)
+    elif args.console == 'snes':
+        buffer = r16m.read_input(data, args.players)
+        blankframe = b'\x00\x00' * len(args.players)
+    elif args.console == 'nes':
+        buffer = r08.read_input(data, args.players)
+        blankframe = b'\x00' * len(args.players)
+    runs = []
+    run = rundata.RunData(buffer, run_id)
+    run.transitions = args.transition
+    runs.append(run)
+    print('Main Loop Start')
+    dev.main_loop_multi(runs)
+    print('Exiting')
+    dev.ser.close()
+    sys.exit(0)
+
 def main():
     global DEBUG
     global buffer
@@ -272,47 +405,8 @@ def main():
         print('ERROR: the specified file (' + args.movie + ') failed to open')
         sys.exit(0)
 
-    dev.reset()
-    run_id = dev.setup_run(args.console, args.players, args.dpcm, args.overread, args.clock)
-    if run_id == None:
-        raise RuntimeError('ERROR')
-        sys.exit()
-    if args.console == 'n64':
-        buffer = m64.read_input(data)
-        blankframe = b'\x00\x00\x00\x00' * len(args.players)
-    elif args.console == 'snes':
-        buffer = r16m.read_input(data, args.players)
-        blankframe = b'\x00\x00' * len(args.players)
-    elif args.console == 'nes':
-        buffer = r08.read_input(data, args.players)
-        blankframe = b'\x00' * len(args.players)
-
-    # Send Blank Frames
-    for blank in range(args.blank):
-        data = run_id + blankframe
-        dev.write(data)
-        print('Sending Blank Latch: {}'.format(blank))
-    fn = 0
-    for latch in range(int_buffer-args.blank):
-        try:
-            data = run_id + buffer[fn]
-            dev.write(data)
-            print('Sending Latch: {}'.format(fn))
-            fn += 1
-        except IndexError:
-            pass
-    err = dev.read(int_buffer)
-    fn -= err.count(b'\xB0')
-    if err.count(b'\xB0') != 0:
-        print('Buffer Overflow x{}'.format(err.count(b'\xB0')))
-    if args.transition != None:
-        for transition in args.transition:
-            dev.send_transition(run_id, *transition)
-    print('Main Loop Start')
-    dev.main_loop()
-    print('Exiting')
-    dev.ser.close()
-    sys.exit(0)
+    # main_single(dev, args, data)
+    main_multi(dev, args, data)
 
 if __name__ == '__main__':
     main()
