@@ -15,7 +15,7 @@ else:
 # connect to device
 ser = dev
 
-print("--- Sending command to jump to DFU mode")
+print("--- Sending command power the console on")
 
-ser.write(b'\xDF')
+ser.write("P1".encode())
 time.sleep(0.1)
