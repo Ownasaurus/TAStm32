@@ -309,6 +309,7 @@ def main():
         for transition in args.transition:
             dev.send_transition(run_id, *transition)
     print('Main Loop Start')
+    dev.power_on()
     dev.main_loop()
     print('Exiting')
     dev.ser.close()

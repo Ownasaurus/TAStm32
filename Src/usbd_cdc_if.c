@@ -432,21 +432,21 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 				switch(Buf[byteNum])
 				{
 					case '0': // power off
-						GPIOA->BSRR = (1 << SNES_RESET_HIGH_A);
+						GPIOA->BSRR = (1 << SNES_RESET_LOW_A);
 						break;
 					case '1': // power on
-						GPIOA->BSRR = (1 << SNES_RESET_LOW_A);
+						GPIOA->BSRR = (1 << SNES_RESET_HIGH_A);
 						break;
 					case 'S': // soft reset
-						GPIOA->BSRR = (1 << SNES_RESET_HIGH_A);
-						HAL_Delay(200);
 						GPIOA->BSRR = (1 << SNES_RESET_LOW_A);
+						HAL_Delay(200);
+						GPIOA->BSRR = (1 << SNES_RESET_HIGH_A);
 						HAL_Delay(200);
 						break;
 					case 'H': // hard reset
-						GPIOA->BSRR = (1 << SNES_RESET_HIGH_A);
-						HAL_Delay(1000);
 						GPIOA->BSRR = (1 << SNES_RESET_LOW_A);
+						HAL_Delay(1000);
+						GPIOA->BSRR = (1 << SNES_RESET_HIGH_A);
 						HAL_Delay(1000);
 						break;
 					default:

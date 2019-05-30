@@ -70,12 +70,12 @@
 TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim6;
 TIM_HandleTypeDef htim7;
-volatile uint8_t jumpToDFU;
 
 /* USER CODE BEGIN PV */
 extern volatile uint8_t toggleNext;
 extern volatile uint8_t clockFix;
 extern volatile uint8_t request_pending;
+volatile uint8_t jumpToDFU;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -122,7 +122,6 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USB_DEVICE_Init();
-
   MX_TIM3_Init();
   MX_TIM6_Init();
   MX_TIM7_Init();
@@ -352,7 +351,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOA, LD2_Pin|V2_CLOCK_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(SNES_RESET_GPIO_Port, SNES_RESET_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(SNES_RESET_GPIO_Port, SNES_RESET_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, V1_CLOCK_Pin|V1_LATCH_Pin|V1_DATA_1_Pin|V1_DATA_0_Pin, GPIO_PIN_RESET);
@@ -423,12 +422,19 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(P2_LATCH_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : SNES_RESET_Pin V2_CLOCK_Pin */
-  GPIO_InitStruct.Pin = SNES_RESET_Pin|V2_CLOCK_Pin;
+  /*Configure GPIO pin : SNES_RESET_Pin */
+  GPIO_InitStruct.Pin = SNES_RESET_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+  HAL_GPIO_Init(SNES_RESET_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : V2_CLOCK_Pin */
+  GPIO_InitStruct.Pin = V2_CLOCK_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+  HAL_GPIO_Init(V2_CLOCK_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : V2_LATCH_Pin V2_DATA_1_Pin V2_DATA_0_Pin */
   GPIO_InitStruct.Pin = V2_LATCH_Pin|V2_DATA_1_Pin|V2_DATA_0_Pin;

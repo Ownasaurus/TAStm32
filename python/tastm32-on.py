@@ -17,5 +17,5 @@ ser = dev
 
 print("--- Sending command power the console on")
 
-ser.write("P1".encode())
+dev.power_on()
 time.sleep(0.1)

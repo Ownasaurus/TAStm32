@@ -242,16 +242,16 @@ void EXTI1_IRQHandler(void)
 		}
 		else if(toggleNext == 2)
 		{
-			GPIOA->BSRR = (1 << SNES_RESET_LOW_A);
-			HAL_Delay(200);
 			GPIOA->BSRR = (1 << SNES_RESET_HIGH_A);
+			HAL_Delay(200);
+			GPIOA->BSRR = (1 << SNES_RESET_LOW_A);
 			HAL_Delay(200);
 		}
 		else if(toggleNext == 3)
 		{
-			GPIOA->BSRR = (1 << SNES_RESET_LOW_A);
-			HAL_Delay(1000);
 			GPIOA->BSRR = (1 << SNES_RESET_HIGH_A);
+			HAL_Delay(1000);
+			GPIOA->BSRR = (1 << SNES_RESET_LOW_A);
 			HAL_Delay(1000);
 		}
 
