@@ -77,6 +77,7 @@ typedef enum
 	SERIAL_TRANSITION,
 	SERIAL_POWER,
 	SERIAL_BULK,
+	SERIAL_LANE,
 } SerialState;
 
 typedef enum

@@ -304,6 +304,9 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 			case SERIAL_PREFIX:
 				switch(Buf[byteNum])
 				{
+					case 'L':
+						ss = SERIAL_LANE;
+						break;
 					case 'R': // Reset/clear all configuration
 
 						// disable interrupts on latch/clock/data for now
@@ -427,6 +430,14 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 						CDC_Transmit_FS((uint8_t*)"\xFF", 1);
 						break;
 				}
+				break;
+			case SERIAL_LANE:
+				if(Buf[byteNum] == 'A')
+				{
+					EXTI1_IRQHandler(); // simulate that a latch has occurred
+				}
+
+				ss = SERIAL_COMPLETE;
 				break;
 			case SERIAL_POWER:
 				switch(Buf[byteNum])
