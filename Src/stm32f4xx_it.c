@@ -435,7 +435,9 @@ void EXTI4_IRQHandler(void)
 	{
 	  case 0x00: // identity
 	  case 0xFF: // N64 reset
+		  //TODO: RESPOND DEPENDING ON CONSOLE TYPE
 		  SendIdentityN64();
+		  //SendIdentityGC();
 		  break;
 	  case 0x01: // poll for N64 state
 		  frame = GetNextFrame(0);
@@ -447,6 +449,14 @@ void EXTI4_IRQHandler(void)
 		  {
 			  SendControllerDataN64(frame[0][0][0]);
 		  }
+		  break;
+	  case 0x41: //gamecube origin call
+		  SendOriginGC();
+		  break;
+	  case 0x400302:
+	  case 0x400300:
+	  case 0x400301:
+		  SendControllerDataGC();
 		  break;
 	  case 0x02:
 	  case 0x03:

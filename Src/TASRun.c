@@ -34,7 +34,7 @@ RunData (*GetNextFrame(int runNum))[MAX_CONTROLLERS][MAX_DATA_LANES]
 		return NULL; // buffer underflow
 	}
 
-	RunData (*retval)[MAX_CONTROLLERS][MAX_DATA_LANES] = tasruns[runNum].current;
+	RunData (*retval)[MAX_CONTROLLERS][MAX_DATA_LANES] = (RunData*)tasruns[runNum].current;
 
 	// advance frame
 	if(tasruns[runNum].current != tasruns[runNum].end)
@@ -235,7 +235,7 @@ uint8_t AddFrame(int runIndex, RunData (frame)[MAX_CONTROLLERS][MAX_DATA_LANES])
 		return 0;
 	}
 
-	memcpy(tasruns[runIndex].buf,frame,sizeof(RunData[MAX_CONTROLLERS][MAX_DATA_LANES]));
+	memcpy((RunData*)tasruns[runIndex].buf,frame,sizeof(RunData[MAX_CONTROLLERS][MAX_DATA_LANES]));
 
 	// NOTE: These two pointer modifications must occur in an atomic fashion
 	//       A poorly-timed interrupt could cause bad things.

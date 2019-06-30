@@ -148,3 +148,51 @@ void SendControllerDataN64(unsigned long data)
 
     SendStop();
 }
+
+void SendControllerDataGC(uint64_t data)
+{
+    unsigned int size = sizeof(data); // should be 8 bytes
+
+    for(unsigned int i = 0;i < size;i++) // for each byte
+	{
+		for(int b = 7;b >=0;b--) // for each bit in the byte
+		{
+			if((data >> (b+(i*8)) & 1))
+			{
+				write_1();
+			}
+			else
+			{
+				write_0();
+			}
+		}
+	}
+
+    SendStop();
+}
+
+void SendIdentityGC()
+{
+    SendByte(0x90);
+    SendByte(0x00);
+    SendByte(0x0C);
+    SendStop();
+}
+
+void SendOriginGC()
+{
+	/*gc_data.a_x_axis = 1; //reverse(128);
+	gc_data.a_y_axis = 1; //reverse(128);
+	gc_data.c_x_axis = 1; //reverse(128);
+	gc_data.c_y_axis = 1; //reverse(128);
+	gc_data.l_trigger = 0;
+	gc_data.r_trigger = 0;*/
+
+	//TODO: set the appropriate bits for the data
+
+	SendControllerDataGC(0);
+
+	SendByte(0x00);
+	SendByte(0x00);
+	SendStop();
+}
