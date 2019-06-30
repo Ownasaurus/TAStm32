@@ -231,16 +231,36 @@ void SendIdentityGC()
 
 void SendOriginGC()
 {
-	/*gc_data.a_x_axis = 1; //reverse(128);
+	GCControllerData gc_data;
+
+	memset(&gc_data, 0, sizeof(gc_data));
+
+	gc_data.a_x_axis = 1; //reverse(128);
 	gc_data.a_y_axis = 1; //reverse(128);
 	gc_data.c_x_axis = 1; //reverse(128);
 	gc_data.c_y_axis = 1; //reverse(128);
 	gc_data.l_trigger = 0;
-	gc_data.r_trigger = 0;*/
+	gc_data.r_trigger = 0;
 
-	//TODO: set the appropriate bits for the data
+	uint64_t data = 0;
+	memcpy(&data,&gc_data,sizeof(data));
 
-	SendControllerDataGC(0);
+	unsigned int size = sizeof(data); // should be 8 bytes
+
+	for(unsigned int i = 0;i < size;i++) // for each byte
+	{
+		for(int b = 7;b >=0;b--) // for each bit in the byte
+		{
+			if((data >> (b+(i*8)) & 1))
+			{
+				write_1();
+			}
+			else
+			{
+				write_0();
+			}
+		}
+	}
 
 	SendByte(0x00);
 	SendByte(0x00);

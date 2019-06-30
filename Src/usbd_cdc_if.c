@@ -497,7 +497,7 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 						HAL_NVIC_EnableIRQ(EXTI1_IRQn);
 						HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
 					}
-					else if(c == CONSOLE_N64)
+					else if(c == CONSOLE_N64 || c == CONSOLE_GC)
 					{
 						HAL_NVIC_EnableIRQ(EXTI4_IRQn);
 					}
@@ -511,6 +511,11 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 				{
 					case 'M': // setup N64
 						TASRunSetConsole(sr, CONSOLE_N64);
+						SetN64Mode();
+						ss = SERIAL_NUM_CONTROLLERS;
+						break;
+					case 'G': // setup Gamecube
+						TASRunSetConsole(sr, CONSOLE_GC);
 						SetN64Mode();
 						ss = SERIAL_NUM_CONTROLLERS;
 						break;

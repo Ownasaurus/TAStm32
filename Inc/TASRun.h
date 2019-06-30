@@ -14,7 +14,8 @@ typedef enum
 {
 	CONSOLE_N64,
 	CONSOLE_SNES,
-	CONSOLE_NES
+	CONSOLE_NES,
+	CONSOLE_GC
 } Console;
 
 
