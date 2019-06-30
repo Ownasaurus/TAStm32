@@ -14,7 +14,7 @@ import r08, r16m, m64
 
 DEBUG = False
 
-int_buffer = 2048 # internal buffer size on replay device
+int_buffer = 1024 # internal buffer size on replay device
 
 latches_per_bulk_command = 28
 packets = 4

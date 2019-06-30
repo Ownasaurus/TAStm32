@@ -422,7 +422,7 @@ void EXTI4_IRQHandler(void)
 	// Read 64 command
 	__disable_irq();
 	uint32_t cmd;
-	RunData (*frame)[MAX_CONTROLLERS][MAX_DATA_LANES];
+	RunData (*frame)[MAX_CONTROLLERS][MAX_DATA_LANES] = NULL;
 
 	cmd = readCommand();
 
@@ -447,7 +447,7 @@ void EXTI4_IRQHandler(void)
 		  }
 		  else
 		  {
-			  SendControllerDataN64(frame[0][0][0]);
+			  SendRunDataN64(frame[0][0][0].n64_data);
 		  }
 		  break;
 	  case 0x41: //gamecube origin call
@@ -456,7 +456,15 @@ void EXTI4_IRQHandler(void)
 	  case 0x400302:
 	  case 0x400300:
 	  case 0x400301:
-		  SendControllerDataGC();
+		  frame = GetNextFrame(0);
+		  if(frame == NULL) // buffer underflow
+		  {
+			  SendControllerDataGC(0); // send blank controller data
+		  }
+		  else
+		  {
+			  SendRunDataGC(frame[0][0][0].gc_data);
+		  }
 		  break;
 	  case 0x02:
 	  case 0x03:

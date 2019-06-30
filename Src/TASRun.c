@@ -34,7 +34,7 @@ RunData (*GetNextFrame(int runNum))[MAX_CONTROLLERS][MAX_DATA_LANES]
 		return NULL; // buffer underflow
 	}
 
-	RunData (*retval)[MAX_CONTROLLERS][MAX_DATA_LANES] = (RunData*)tasruns[runNum].current;
+	RunData (*retval)[MAX_CONTROLLERS][MAX_DATA_LANES] = tasruns[runNum].current;
 
 	// advance frame
 	if(tasruns[runNum].current != tasruns[runNum].end)

@@ -5,7 +5,7 @@
 #include "n64.h"
 #include "snes.h"
 
-#define MAX_SIZE 2048
+#define MAX_SIZE 1024
 #define MAX_CONTROLLERS 2
 #define MAX_DATA_LANES 3
 #define MAX_TRANSITIONS 5
@@ -23,6 +23,7 @@ typedef union
 	N64ControllerData n64_data;
 	SNESControllerData snes_data;
 	NESControllerData nes_data;
+	GCControllerData gc_data;
 } RunData;
 
 typedef enum

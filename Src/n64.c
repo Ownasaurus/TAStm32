@@ -126,6 +126,31 @@ void SendByte(unsigned char b)
     }
 }
 
+void SendRunDataN64(N64ControllerData n64data)
+{
+	unsigned long data = 0;
+	memcpy(&data,&n64data,sizeof(data));
+    // send one byte at a time from MSB to LSB
+	unsigned int size = sizeof(data); // should be 4 bytes
+
+    for(unsigned int i = 0;i < size;i++) // for each byte
+    {
+    	for(int b = 7;b >=0;b--) // for each bit in the byte
+    	{
+			if((data >> (b+(i*8)) & 1))
+			{
+				write_1();
+			}
+			else
+			{
+				write_0();
+			}
+    	}
+    }
+
+    SendStop();
+}
+
 void SendControllerDataN64(unsigned long data)
 {
     // send one byte at a time from MSB to LSB
@@ -145,6 +170,31 @@ void SendControllerDataN64(unsigned long data)
 			}
     	}
     }
+
+    SendStop();
+}
+
+void SendRunDataGC(GCControllerData gcdata)
+{
+	uint64_t data = 0;
+	memcpy(&data,&gcdata,sizeof(data));
+
+    unsigned int size = sizeof(data); // should be 8 bytes
+
+    for(unsigned int i = 0;i < size;i++) // for each byte
+	{
+		for(int b = 7;b >=0;b--) // for each bit in the byte
+		{
+			if((data >> (b+(i*8)) & 1))
+			{
+				write_1();
+			}
+			else
+			{
+				write_0();
+			}
+		}
+	}
 
     SendStop();
 }
