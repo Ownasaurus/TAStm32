@@ -211,6 +211,9 @@ void ExtractDataAndAdvance(RunData (rd)[MAX_CONTROLLERS][MAX_DATA_LANES], int in
 		case CONSOLE_NES:
 			bytesPerInput = sizeof(NESControllerData);
 			break;
+		case CONSOLE_GC:
+			bytesPerInput = sizeof(GCControllerData);
+			break;
 		default: // should never reach this
 			break;
 	}

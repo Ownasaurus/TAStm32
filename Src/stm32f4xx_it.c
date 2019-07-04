@@ -92,12 +92,12 @@ const uint8_t V2_CLOCK_LOW_A = 31;
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
-volatile uint32_t p1_d0_next = 0;
-volatile uint32_t p1_d1_next = 0;
-volatile uint32_t p1_d2_next = 0;
-volatile uint32_t p2_d0_next = 0;
-volatile uint32_t p2_d1_next = 0;
-volatile uint32_t p2_d2_next = 0;
+volatile uint64_t p1_d0_next = 0;
+volatile uint64_t p1_d1_next = 0;
+volatile uint64_t p1_d2_next = 0;
+volatile uint64_t p2_d0_next = 0;
+volatile uint64_t p2_d1_next = 0;
+volatile uint64_t p2_d2_next = 0;
 
 // leave enough room for SNES + overread
 volatile uint32_t P1_GPIOC_current[17];
@@ -267,12 +267,13 @@ void EXTI1_IRQHandler(void)
 
 		if(dataptr)
 		{
-			memcpy((uint32_t*)&p1_d0_next, &dataptr[0][0][0], sizeof(RunData));
-			memcpy((uint32_t*)&p1_d1_next, &dataptr[0][0][1], sizeof(RunData));
-			memcpy((uint32_t*)&p1_d2_next, &dataptr[0][0][2], sizeof(RunData));
-			memcpy((uint32_t*)&p2_d0_next, &dataptr[0][1][0], sizeof(RunData));
-			memcpy((uint32_t*)&p2_d1_next, &dataptr[0][1][1], sizeof(RunData));
-			memcpy((uint32_t*)&p2_d2_next, &dataptr[0][1][2], sizeof(RunData));
+			//TODO: MAKE FASTER. ONLY COPY WHAT IS NEEDED
+			memcpy((uint64_t*)&p1_d0_next, &dataptr[0][0][0], sizeof(RunData));
+			memcpy((uint64_t*)&p1_d1_next, &dataptr[0][0][1], sizeof(RunData));
+			memcpy((uint64_t*)&p1_d2_next, &dataptr[0][0][2], sizeof(RunData));
+			memcpy((uint64_t*)&p2_d0_next, &dataptr[0][1][0], sizeof(RunData));
+			memcpy((uint64_t*)&p2_d1_next, &dataptr[0][1][1], sizeof(RunData));
+			memcpy((uint64_t*)&p2_d2_next, &dataptr[0][1][2], sizeof(RunData));
 
 			c = TASRunGetConsole(0);
 
@@ -300,22 +301,22 @@ void EXTI1_IRQHandler(void)
 			// fill the regular data
 			while(databit >= 0)
 			{
-				P1_GPIOC_next[regbit] = (((p1_d0_next >> databit) & 1) << P1_D0_LOW_C) |
-										(((p1_d1_next >> databit) & 1) << P1_D1_LOW_C) |
-										(((p1_d2_next >> databit) & 1) << P1_D2_LOW_C);
+				P1_GPIOC_next[regbit] = (uint32_t)(((p1_d0_next >> databit) & 1) << P1_D0_LOW_C) |
+										(uint32_t)(((p1_d1_next >> databit) & 1) << P1_D1_LOW_C) |
+										(uint32_t)(((p1_d2_next >> databit) & 1) << P1_D2_LOW_C);
 				P1_GPIOC_next[regbit] |= (((~P1_GPIOC_next[regbit]) & 0x001C0000) >> 16);
 
-				P2_GPIOC_next[regbit] = (((p2_d0_next >> databit) & 1) << P2_D0_LOW_C) |
-										(((p2_d1_next >> databit) & 1) << P2_D1_LOW_C) |
-										(((p2_d2_next >> databit) & 1) << P2_D2_LOW_C);
+				P2_GPIOC_next[regbit] = (uint32_t)(((p2_d0_next >> databit) & 1) << P2_D0_LOW_C) |
+										(uint32_t)(((p2_d1_next >> databit) & 1) << P2_D1_LOW_C) |
+										(uint32_t)(((p2_d2_next >> databit) & 1) << P2_D2_LOW_C);
 				P2_GPIOC_next[regbit] |= (((~P2_GPIOC_next[regbit]) & 0x03800000) >> 16);
 
-				V1_GPIOB_next[regbit] = (((p1_d0_next >> databit) & 1) << V1_D0_HIGH_B) |
-										(((p1_d1_next >> databit) & 1) << V1_D1_HIGH_B);
+				V1_GPIOB_next[regbit] = (uint32_t)(((p1_d0_next >> databit) & 1) << V1_D0_HIGH_B) |
+										(uint32_t)(((p1_d1_next >> databit) & 1) << V1_D1_HIGH_B);
 				V1_GPIOB_next[regbit] |= (((~V1_GPIOB_next[regbit]) & 0x00C0) << 16);
 
-				V2_GPIOC_next[regbit] = (((p2_d0_next >> databit) & 1) << V2_D0_HIGH_C) |
-										(((p2_d1_next >> databit) & 1) << V2_D1_HIGH_C);
+				V2_GPIOC_next[regbit] = (uint32_t)(((p2_d0_next >> databit) & 1) << V2_D0_HIGH_C) |
+										(uint32_t)(((p2_d1_next >> databit) & 1) << V2_D1_HIGH_C);
 				V2_GPIOC_next[regbit] |= (((~V2_GPIOC_next[regbit]) & 0x1800) << 16);
 
 				regbit++;
