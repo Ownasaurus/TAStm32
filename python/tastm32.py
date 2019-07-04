@@ -10,7 +10,7 @@ import psutil
 import serial_helper
 import argparse_helper
 
-import r08, r16m, m64
+import r08, r16m, m64, dtm
 
 DEBUG = False
 
@@ -152,6 +152,16 @@ class TAStm32():
                 sbyte = sbyte ^ 0x40
             if clock_filter:
                 sbyte = sbyte + clock_filter
+        elif console == 'gc':
+            cbyte = b'G'
+            pbyte = 0
+            for player in players:
+                p = int(player)
+                if p != 1:
+                    raise RuntimeError('Invalid player for SNES')
+                else:
+                    pbyte = pbyte ^ 2**(8-p)
+            sbyte = 0
         command = b'S' + prefix + cbyte + int_to_byte(pbyte) + int_to_byte(sbyte)
         self.write(command)
         time.sleep(0.1)
@@ -286,6 +296,9 @@ def main():
     elif args.console == 'nes':
         buffer = r08.read_input(data, args.players)
         blankframe = b'\x00' * len(args.players)
+    elif args.console == 'gc':
+        buffer = dtm.read_input(data)
+        blankframe = b'\x00\x00\x00\x00\x00\x00\x00\x00' * len(args.players)
 
     # Send Blank Frames
     for blank in range(args.blank):
