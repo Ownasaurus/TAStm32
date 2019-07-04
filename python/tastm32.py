@@ -157,8 +157,8 @@ class TAStm32():
             pbyte = 0
             for player in players:
                 p = int(player)
-                if p != 1:
-                    raise RuntimeError('Invalid player for SNES')
+                if p < 0 or p > 1:
+                    raise RuntimeError('Invalid player for GC')
                 else:
                     pbyte = pbyte ^ 2**(8-p)
             sbyte = 0

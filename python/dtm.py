@@ -48,8 +48,6 @@ def _process_input(data):
 
     new[0] = new_byte1
     new[1] = new_byte2
-    print('old', data)
-    print('new', bytes(new))
     return new
 
 def read_input(data, header=None):
