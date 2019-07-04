@@ -32,19 +32,19 @@ def _process_input(data):
     new[6] = data[2]
     new[7] = data[3]
 
-    new_byte1 += (old_byte1 & 0x01) << 3 # start
-    new_byte1 += (old_byte1 & 0x10)      # Y
-    new_byte1 += (old_byte1 & 0x08) << 2 # X
-    new_byte1 += (old_byte1 & 0x04) << 4 # B
-    new_byte1 += (old_byte1 & 0x02) << 6 # A
+    new_byte1 += (old_byte1 & 0x01) << 4 # start
+    new_byte1 += (old_byte1 & 0x10) >> 1 # Y
+    new_byte1 += (old_byte1 & 0x08) >> 1 # X
+    new_byte1 += (old_byte1 & 0x04) >> 1 # B
+    new_byte1 += (old_byte1 & 0x02) >> 1 # A
 
-    new_byte2 += (old_byte2 & 0x04) >> 1 # L
-    new_byte2 += (old_byte2 & 0x08) >> 1 # R
-    new_byte2 += (old_byte1 & 0x20) >> 2 # Z
-    new_byte2 += (old_byte1 & 0x40) >> 2 # DpadU
-    new_byte2 += (old_byte1 & 0x80) >> 2 # DpadD
-    new_byte2 += (old_byte2 & 0x02) << 5 # DpadR
-    new_byte2 += (old_byte2 & 0x01) << 7 # DpadL
+    new_byte2 += (old_byte2 & 0x04) << 4 # L
+    new_byte2 += (old_byte2 & 0x08) << 2 # R
+    new_byte2 += (old_byte1 & 0x20) >> 1 # Z
+    new_byte2 += (old_byte1 & 0x40) >> 3 # DpadU
+    new_byte2 += (old_byte1 & 0x80) >> 5 # DpadD
+    new_byte2 += (old_byte2 & 0x02)      # DpadR
+    new_byte2 += (old_byte2 & 0x01)      # DpadL
 
     new[0] = new_byte1
     new[1] = new_byte2
