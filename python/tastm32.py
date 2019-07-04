@@ -64,6 +64,13 @@ class TAStm32():
         return data
 
     def reset(self):
+        c = self.read(1)
+        if c == '':
+            pass
+        else:
+            numBytes = self.ser.inWaiting()
+            if numBytes > 0:
+                c += self.read(numBytes)
         self.write(b'R')
         time.sleep(0.1)
         data = self.read(2)
