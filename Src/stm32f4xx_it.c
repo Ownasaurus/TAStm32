@@ -267,13 +267,12 @@ void EXTI1_IRQHandler(void)
 
 		if(dataptr)
 		{
-			//TODO: MAKE FASTER. ONLY COPY WHAT IS NEEDED
-			memcpy((uint64_t*)&p1_d0_next, &dataptr[0][0][0], sizeof(RunData));
+			/*memcpy((uint64_t*)&p1_d0_next, &dataptr[0][0][0], sizeof(RunData));
 			memcpy((uint64_t*)&p1_d1_next, &dataptr[0][0][1], sizeof(RunData));
 			memcpy((uint64_t*)&p1_d2_next, &dataptr[0][0][2], sizeof(RunData));
 			memcpy((uint64_t*)&p2_d0_next, &dataptr[0][1][0], sizeof(RunData));
 			memcpy((uint64_t*)&p2_d1_next, &dataptr[0][1][1], sizeof(RunData));
-			memcpy((uint64_t*)&p2_d2_next, &dataptr[0][1][2], sizeof(RunData));
+			memcpy((uint64_t*)&p2_d2_next, &dataptr[0][1][2], sizeof(RunData));*/
 
 			c = TASRunGetConsole(0);
 
@@ -281,10 +280,22 @@ void EXTI1_IRQHandler(void)
 			if(c == CONSOLE_NES)
 			{
 				databit = 7; // number of bits of NES - 1
+
+				memcpy((uint8_t*)&p1_d0_next, &dataptr[0][0][0], sizeof(NESControllerData));
+				memcpy((uint8_t*)&p1_d1_next, &dataptr[0][0][1], sizeof(NESControllerData));
+				memcpy((uint8_t*)&p1_d2_next, &dataptr[0][0][2], sizeof(NESControllerData));
+				memcpy((uint8_t*)&p2_d0_next, &dataptr[0][1][0], sizeof(NESControllerData));
+				memcpy((uint8_t*)&p2_d1_next, &dataptr[0][1][1], sizeof(NESControllerData));
+				memcpy((uint8_t*)&p2_d2_next, &dataptr[0][1][2], sizeof(NESControllerData));
 			}
 			else
 			{
 				databit = 15; // number of bits of SNES - 1
+
+				memcpy((uint16_t*)&p1_d0_next, &dataptr[0][0][0], sizeof(SNESControllerData));
+				memcpy((uint16_t*)&p1_d1_next, &dataptr[0][0][1], sizeof(SNESControllerData));
+				memcpy((uint16_t*)&p2_d0_next, &dataptr[0][1][0], sizeof(SNESControllerData));
+				memcpy((uint16_t*)&p2_d1_next, &dataptr[0][1][1], sizeof(SNESControllerData));
 
 				// fix endianness
 				p1_d0_next = ((p1_d0_next >> 8) & 0xFF) | ((p1_d0_next << 8) & 0xFF00);
@@ -421,6 +432,9 @@ void EXTI4_IRQHandler(void)
   /* USER CODE BEGIN EXTI4_IRQn 0 */
 	// P1_DATA_2 == N64_DATA
 	// Read 64 command
+	Console c = TASRunGetConsole(0);
+	GCControllerData gc_data;
+
 	__disable_irq();
 	uint32_t cmd;
 	RunData (*frame)[MAX_CONTROLLERS][MAX_DATA_LANES] = NULL;
@@ -435,10 +449,17 @@ void EXTI4_IRQHandler(void)
 	switch(cmd)
 	{
 	  case 0x00: // identity
+		  if(c == CONSOLE_N64)
+		  {
+			  SendIdentityN64();
+		  }
+		  else if(c == CONSOLE_GC)
+		  {
+			  SendIdentityGC();
+		  }
+		  break;
 	  case 0xFF: // N64 reset
-		  //TODO: RESPOND DEPENDING ON CONSOLE TYPE
 		  SendIdentityN64();
-		  //SendIdentityGC();
 		  break;
 	  case 0x01: // poll for N64 state
 		  frame = GetNextFrame(0);
@@ -460,7 +481,14 @@ void EXTI4_IRQHandler(void)
 		  frame = GetNextFrame(0);
 		  if(frame == NULL) // buffer underflow
 		  {
-			  SendControllerDataGC(0); // send blank controller data
+				memset(&gc_data, 0, sizeof(gc_data));
+
+				gc_data.a_x_axis = 128;
+				gc_data.a_y_axis = 128;
+				gc_data.c_x_axis = 128;
+				gc_data.c_y_axis = 128;
+
+				SendRunDataGC(gc_data); // send blank controller data
 		  }
 		  else
 		  {
@@ -479,13 +507,19 @@ void EXTI4_IRQHandler(void)
 
 	__enable_irq();
 
-	if(cmd == 0x01)
+	switch(cmd)
 	{
-		CDC_Transmit_FS((uint8_t*)"A", 1);
+		case 0x01: // N64 poll
+		case 0x400302: // GC poll
+		case 0x400300: // GC poll
+		case 0x400301: // GC poll
+			CDC_Transmit_FS((uint8_t*)"A", 1);
 
-		if(frame == NULL) // there was a buffer underflow
-			CDC_Transmit_FS((uint8_t*)"\xB2", 1);
+			if(frame == NULL) // there was a buffer underflow
+				CDC_Transmit_FS((uint8_t*)"\xB2", 1);
+		break;
 	}
+
   /* USER CODE END EXTI4_IRQn 0 */
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_4);
   /* USER CODE BEGIN EXTI4_IRQn 1 */

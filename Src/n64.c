@@ -235,10 +235,10 @@ void SendOriginGC()
 
 	memset(&gc_data, 0, sizeof(gc_data));
 
-	gc_data.a_x_axis = 1; //reverse(128);
-	gc_data.a_y_axis = 1; //reverse(128);
-	gc_data.c_x_axis = 1; //reverse(128);
-	gc_data.c_y_axis = 1; //reverse(128);
+	gc_data.a_x_axis = 128;
+	gc_data.a_y_axis = 128;
+	gc_data.c_x_axis = 128;
+	gc_data.c_y_axis = 128;
 	gc_data.l_trigger = 0;
 	gc_data.r_trigger = 0;
 

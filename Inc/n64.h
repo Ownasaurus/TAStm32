@@ -31,22 +31,21 @@ typedef struct __attribute__((packed))
 
 typedef struct __attribute__((packed))
 {
-
-	unsigned int beginning_zeros : 3;
-	unsigned int start : 1;
+	unsigned int a : 1;
+	unsigned int b : 1;
+	unsigned int x : 1; // 1 bit wide
 	unsigned int y : 1;
-    unsigned int x : 1; // 1 bit wide
-    unsigned int b : 1;
-    unsigned int a : 1;
+	unsigned int start : 1;
+	unsigned int beginning_zeros : 3;
 
-    unsigned int beginning_one : 1;
-    unsigned int l : 1;
-    unsigned int r : 1;
-    unsigned int z : 1;
-    unsigned int d_up : 1;
-    unsigned int d_down : 1;
-    unsigned int d_right : 1;
     unsigned int d_left : 1;
+    unsigned int d_right : 1;
+    unsigned int d_down : 1;
+    unsigned int d_up : 1;
+    unsigned int z : 1;
+    unsigned int r : 1;
+    unsigned int l : 1;
+    unsigned int beginning_one : 1;
 
     uint8_t a_x_axis;
     uint8_t a_y_axis;
