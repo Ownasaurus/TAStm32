@@ -211,6 +211,9 @@ void ExtractDataAndAdvance(RunData (rd)[MAX_CONTROLLERS][MAX_DATA_LANES], int in
 		case CONSOLE_NES:
 			bytesPerInput = sizeof(NESControllerData);
 			break;
+		case CONSOLE_GC:
+			bytesPerInput = sizeof(GCControllerData);
+			break;
 		default: // should never reach this
 			break;
 	}
@@ -235,7 +238,7 @@ uint8_t AddFrame(int runIndex, RunData (frame)[MAX_CONTROLLERS][MAX_DATA_LANES])
 		return 0;
 	}
 
-	memcpy(tasruns[runIndex].buf,frame,sizeof(RunData[MAX_CONTROLLERS][MAX_DATA_LANES]));
+	memcpy((RunData*)tasruns[runIndex].buf,frame,sizeof(RunData[MAX_CONTROLLERS][MAX_DATA_LANES]));
 
 	// NOTE: These two pointer modifications must occur in an atomic fashion
 	//       A poorly-timed interrupt could cause bad things.

@@ -126,6 +126,31 @@ void SendByte(unsigned char b)
     }
 }
 
+void SendRunDataN64(N64ControllerData n64data)
+{
+	unsigned long data = 0;
+	memcpy(&data,&n64data,sizeof(data));
+    // send one byte at a time from MSB to LSB
+	unsigned int size = sizeof(data); // should be 4 bytes
+
+    for(unsigned int i = 0;i < size;i++) // for each byte
+    {
+    	for(int b = 7;b >=0;b--) // for each bit in the byte
+    	{
+			if((data >> (b+(i*8)) & 1))
+			{
+				write_1();
+			}
+			else
+			{
+				write_0();
+			}
+    	}
+    }
+
+    SendStop();
+}
+
 void SendControllerDataN64(unsigned long data)
 {
     // send one byte at a time from MSB to LSB
@@ -147,4 +172,97 @@ void SendControllerDataN64(unsigned long data)
     }
 
     SendStop();
+}
+
+void SendRunDataGC(GCControllerData gcdata)
+{
+	uint64_t data = 0;
+	memcpy(&data,&gcdata,sizeof(data));
+
+    unsigned int size = sizeof(data); // should be 8 bytes
+
+    for(unsigned int i = 0;i < size;i++) // for each byte
+	{
+		for(int b = 7;b >=0;b--) // for each bit in the byte
+		{
+			if((data >> (b+(i*8)) & 1))
+			{
+				write_1();
+			}
+			else
+			{
+				write_0();
+			}
+		}
+	}
+
+    SendStop();
+}
+
+void SendControllerDataGC(uint64_t data)
+{
+    unsigned int size = sizeof(data); // should be 8 bytes
+
+    for(unsigned int i = 0;i < size;i++) // for each byte
+	{
+		for(int b = 7;b >=0;b--) // for each bit in the byte
+		{
+			if((data >> (b+(i*8)) & 1))
+			{
+				write_1();
+			}
+			else
+			{
+				write_0();
+			}
+		}
+	}
+
+    SendStop();
+}
+
+void SendIdentityGC()
+{
+    SendByte(0x90);
+    SendByte(0x00);
+    SendByte(0x0C);
+    SendStop();
+}
+
+void SendOriginGC()
+{
+	GCControllerData gc_data;
+
+	memset(&gc_data, 0, sizeof(gc_data));
+
+	gc_data.a_x_axis = 128;
+	gc_data.a_y_axis = 128;
+	gc_data.c_x_axis = 128;
+	gc_data.c_y_axis = 128;
+	gc_data.l_trigger = 0;
+	gc_data.r_trigger = 0;
+
+	uint64_t data = 0;
+	memcpy(&data,&gc_data,sizeof(data));
+
+	unsigned int size = sizeof(data); // should be 8 bytes
+
+	for(unsigned int i = 0;i < size;i++) // for each byte
+	{
+		for(int b = 7;b >=0;b--) // for each bit in the byte
+		{
+			if((data >> (b+(i*8)) & 1))
+			{
+				write_1();
+			}
+			else
+			{
+				write_0();
+			}
+		}
+	}
+
+	SendByte(0x00);
+	SendByte(0x00);
+	SendStop();
 }
