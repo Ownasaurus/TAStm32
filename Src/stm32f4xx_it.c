@@ -267,13 +267,6 @@ void EXTI1_IRQHandler(void)
 
 		if(dataptr)
 		{
-			/*memcpy((uint64_t*)&p1_d0_next, &dataptr[0][0][0], sizeof(RunData));
-			memcpy((uint64_t*)&p1_d1_next, &dataptr[0][0][1], sizeof(RunData));
-			memcpy((uint64_t*)&p1_d2_next, &dataptr[0][0][2], sizeof(RunData));
-			memcpy((uint64_t*)&p2_d0_next, &dataptr[0][1][0], sizeof(RunData));
-			memcpy((uint64_t*)&p2_d1_next, &dataptr[0][1][1], sizeof(RunData));
-			memcpy((uint64_t*)&p2_d2_next, &dataptr[0][1][2], sizeof(RunData));*/
-
 			c = TASRunGetConsole(0);
 
 			databit = 0;

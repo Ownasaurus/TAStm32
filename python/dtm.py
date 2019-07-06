@@ -74,7 +74,6 @@ def read_input(data, header=None):
         for pd in frame:
             fd += _process_input(pd)
         input_data.append(fd)
-        input_data.append(fd) # smash polls at 120hz, so input must be duplicated. unsure if needed for other games
     return input_data
 
 def main():
