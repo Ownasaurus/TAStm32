@@ -239,6 +239,7 @@ void SendOriginGC()
 	gc_data.a_y_axis = 128;
 	gc_data.c_x_axis = 128;
 	gc_data.c_y_axis = 128;
+	gc_data.beginning_one = 1;
 	gc_data.l_trigger = 0;
 	gc_data.r_trigger = 0;
 

@@ -186,7 +186,7 @@ void EXTI0_IRQHandler(void)
 	// P1_CLOCK
 	if(!p1_clock_filtered && p1_current_bit < 17) // sanity check... but 32 or more bits should never be read in a single latch!
 	{
-		if(dpcmFix)
+		if(clockFix)
 		{
 			my_wait_us_asm(2); // necessary to prevent switching too fast in DPCM fix mode
 		}
@@ -480,11 +480,13 @@ void EXTI4_IRQHandler(void)
 				gc_data.a_y_axis = 128;
 				gc_data.c_x_axis = 128;
 				gc_data.c_y_axis = 128;
+				gc_data.beginning_one = 1;
 
 				SendRunDataGC(gc_data); // send blank controller data
 		  }
 		  else
 		  {
+			  frame[0][0][0].gc_data.beginning_one = 1;
 			  SendRunDataGC(frame[0][0][0].gc_data);
 		  }
 		  break;
@@ -529,7 +531,7 @@ void EXTI9_5_IRQHandler(void)
 	// P2_CLOCK
 	if(!p2_clock_filtered && p2_current_bit < 17) // sanity check... but 32 or more bits should never be read in a single latch!
 	{
-		if(dpcmFix)
+		if(clockFix)
 		{
 			my_wait_us_asm(2); // necessary to prevent switching too fast in DPCM fix mode
 		}
