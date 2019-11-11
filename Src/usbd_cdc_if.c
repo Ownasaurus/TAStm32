@@ -484,7 +484,10 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 						clockFix = 1;
 					}
 
-					EXTI1_IRQHandler();
+					if(c == CONSOLE_NES || c == CONSOLE_SNES)
+					{
+						EXTI1_IRQHandler();
+					}
 
 					TASRunSetInitialized(0, 1);
 
