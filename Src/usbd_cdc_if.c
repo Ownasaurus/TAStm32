@@ -484,13 +484,17 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 						clockFix = 1;
 					}
 
-					EXTI1_IRQHandler();
+					Console c = TASRunGetConsole(0);
+
+					// thanks to booto for this logic fix
+					if(c == CONSOLE_NES || c == CONSOLE_SNES) // needed to prime the buffer for NES/SNES
+					{
+						EXTI1_IRQHandler();
+					}
 
 					TASRunSetInitialized(0, 1);
 
 					// enable interrupts as needed
-					Console c = TASRunGetConsole(0);
-
 					if(c == CONSOLE_NES || c == CONSOLE_SNES)
 					{
 						HAL_NVIC_EnableIRQ(EXTI0_IRQn);

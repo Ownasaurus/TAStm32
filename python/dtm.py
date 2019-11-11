@@ -69,7 +69,11 @@ def read_input(data, header=None):
     input_struct = struct.Struct('8s'*controllerCount)
     input_iter = input_struct.iter_unpack(data[start:])
     input_data = []
+    #alternate = 0
     for frame in input_iter:
+        #alternate = 1 - alternate
+        #if alternate == 1:
+        #    continue;
         fd = b''
         for pd in frame:
             fd += _process_input(pd)

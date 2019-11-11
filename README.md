@@ -24,7 +24,9 @@ Ilari - for being an extraordinary wealth of knowledge on most topics
 
 Serisium (@serisium) - helped with debugging and PCB design
 
-rcombs (@rcombs)- helped with optimizing the N64 protocol
+rcombs (@rcombs) - helped with optimizing the N64 protocol
+
+booto (@booto) - Helped fix an off-by-one input error with the N64 and GC protocols
 
 #### If I accidentally forgot to credit you, please let me know so I can fix it!
 
