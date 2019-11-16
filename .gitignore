@@ -1,2 +1,9 @@
 /Debug/
 /Release/
+*.r08
+*.r16m
+*.dtm
+*.sav
+*.bak
+*.m64
+python/__pycache__/
