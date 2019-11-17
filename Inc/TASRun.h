@@ -81,6 +81,8 @@ uint8_t AddFrame(int runIndex, RunData (frame)[MAX_CONTROLLERS][MAX_DATA_LANES])
 Console TASRunGetConsole(int numRun);
 void ExtractDataAndAdvance(RunData (rd)[MAX_CONTROLLERS][MAX_DATA_LANES], int index, uint8_t* Buf, int *byteNum);
 RunData (*GetNextFrame(int runNum))[MAX_CONTROLLERS][MAX_DATA_LANES];
+int ExtractDataAndAddFrame(int run_index, uint8_t *buffer, uint32_t n);
+uint32_t GetSizeOfInputForRun(int run_index);
 
 void SetN64InputMode();
 void SetN64OutputMode();

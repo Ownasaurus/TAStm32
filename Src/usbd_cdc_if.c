@@ -25,6 +25,7 @@
 /* USER CODE BEGIN INCLUDE */
 #include "TASRun.h"
 #include "stm32f4xx_it.h"
+#include "serial_interface.h"
 #include "main.h"
 /* USER CODE END INCLUDE */
 
@@ -291,7 +292,9 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t* pbuf, uint16_t length)
 static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 {
   /* USER CODE BEGIN 6 */
-	static SerialState ss = SERIAL_PREFIX;
+	serial_interface_set_output_function(CDC_Transmit_FS);
+
+	static SerialInterfaceState ss = SERIAL_PREFIX;
 	static SerialRun sr = RUN_NONE;
 	RunData frame[MAX_CONTROLLERS][MAX_DATA_LANES];
 	uint8_t val;
@@ -379,7 +382,7 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 						break;
 					case 'A': // Run #1 controller data
 						sr = RUN_A;
-						ss = SERIAL_CONTROLLER_DATA;
+						ss = SERIAL_CONTROLLER_DATA_START;
 						break;
 					case 'a': // 28 frame data burst is complete
 						request_pending = 0;
@@ -466,7 +469,7 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 				}
 				ss = SERIAL_COMPLETE;
 				break;
-			case SERIAL_CONTROLLER_DATA:
+			case SERIAL_CONTROLLER_DATA_START:
 				ExtractDataAndAdvance(frame, sr, Buf, &byteNum);
 				if(AddFrame(sr, frame) == 0) // buffer must have been full
 				{

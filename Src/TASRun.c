@@ -192,6 +192,76 @@ void TASRunSetConsole(int numRun, Console console)
 	tasruns[numRun].console = console;
 }
 
+uint32_t GetSizeOfControllerDataForConsole(int console_type)
+{
+	switch (console_type) {
+		case CONSOLE_N64:
+		return sizeof(N64ControllerData);
+		break;
+	case CONSOLE_SNES:
+		return sizeof(SNESControllerData);
+		break;
+	case CONSOLE_NES:
+		return sizeof(NESControllerData);
+		break;
+	case CONSOLE_GC:
+		return sizeof(GCControllerData) ;
+		break;
+	}
+	return 0; // should never reach this
+}
+
+uint32_t GetSizeOfInputForRun(int run_index)
+{
+	return tasruns[run_index].numControllers * tasruns[run_index].numDataLanes * GetSizeOfControllerDataForConsole(tasruns[run_index].console);
+}
+
+int ExtractDataAndAddFrame(int run_index, uint8_t *buffer, uint32_t n)
+{
+	size_t bytesPerInput = GetSizeOfControllerDataForConsole(tasruns[run_index].console);
+	uint8_t numControllers = tasruns[run_index].numControllers;
+	uint8_t numDataLanes = tasruns[run_index].numDataLanes;
+
+	RunData frame[MAX_CONTROLLERS][MAX_DATA_LANES];
+
+	if(tasruns[run_index].size == MAX_SIZE)
+	{
+		return 0;
+	}
+
+	memset(frame, 0, sizeof(frame)); // prepare the data container
+
+	uint8_t *buffer_position = buffer;
+	for(int x = 0;x < numControllers;x++)
+	{
+		for(int y = 0;y < numDataLanes;y++)
+		{
+			memcpy(&frame[x][y], buffer_position, bytesPerInput); // copy only what is necessary
+			buffer_position += bytesPerInput; // advance the index only what is necessary
+		}
+	}
+
+	memcpy((RunData*)tasruns[run_index].buf,frame,sizeof(frame));
+
+	// NOTE: These two pointer modifications must occur in an atomic fashion
+	//       A poorly-timed interrupt could cause bad things.
+	__disable_irq();
+	// loop around if necessary
+	if(tasruns[run_index].buf != tasruns[run_index].end)
+	{
+		(tasruns[run_index].buf)++;
+	}
+	else // buf is at end, so wrap around to beginning
+	{
+		tasruns[run_index].buf = tasruns[run_index].runData;
+	}
+
+	tasruns[run_index].size++;
+	__enable_irq();
+
+	return 1;
+}
+
 void ExtractDataAndAdvance(RunData (rd)[MAX_CONTROLLERS][MAX_DATA_LANES], int index, uint8_t* Buf, int *byteNum)
 {
 	uint8_t bytesPerInput = 0;
