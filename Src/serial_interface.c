@@ -30,7 +30,8 @@ extern volatile uint8_t bulk_mode;
 // only instance of this, but make callers use access functions
 static serial_interface_state_t instance;
 
-static uint8_t NullOutputFunction(uint8_t *buffer, uint16_t n) {
+static uint8_t NullOutputFunction(uint8_t *buffer, uint16_t n)
+{
 	return 0;
 }
 

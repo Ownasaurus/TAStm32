@@ -224,11 +224,6 @@ int ExtractDataAndAddFrame(int run_index, uint8_t *buffer, uint32_t n)
 
 	RunData frame[MAX_CONTROLLERS][MAX_DATA_LANES];
 
-	if(tasruns[run_index].size == MAX_SIZE)
-	{
-		return 0;
-	}
-
 	memset(frame, 0, sizeof(frame)); // prepare the data container
 
 	uint8_t *buffer_position = buffer;
@@ -239,6 +234,11 @@ int ExtractDataAndAddFrame(int run_index, uint8_t *buffer, uint32_t n)
 			memcpy(&frame[x][y], buffer_position, bytesPerInput); // copy only what is necessary
 			buffer_position += bytesPerInput; // advance the index only what is necessary
 		}
+	}
+
+	if(tasruns[run_index].size == MAX_SIZE)
+	{
+		return 0;
 	}
 
 	memcpy((RunData*)tasruns[run_index].buf,frame,sizeof(frame));
