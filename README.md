@@ -11,6 +11,7 @@ This project aims to create an easy-to-use, multi-system TAS replay device to be
 #### TheMas3212 - The main contributor to this project. Aided with all things python, designing the serial communication protocol, helping with PCB design, and debugging throughout the whole process.
 #### CraftedCart - Designed the awesome-looking 3D case
 #### total (@tewtal) - Helped with NES/SNES protocol and debugging. Provided his code as a reference
+#### booto (@booto) - Helped fix N64/GC protocols, serial-over-USB, and debugging
 
 DwangoAC (@dwangoac) - warmly accepting me into the TASBot community
 
@@ -25,8 +26,6 @@ Ilari - for being an extraordinary wealth of knowledge on most topics
 Serisium (@serisium) - helped with debugging and PCB design
 
 rcombs (@rcombs) - helped with optimizing the N64 protocol
-
-booto (@booto) - Helped fix an off-by-one input error with the N64 and GC protocols
 
 #### If I accidentally forgot to credit you, please let me know so I can fix it!
 

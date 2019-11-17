@@ -2,11 +2,12 @@
 #include <string.h>
 #include "n64.h"
 #include "stm32f4xx_hal.h"
+#include "main.h"
 
 void my_wait_us_asm(int n);
 
-// N64 data pin is p1_d2, which is PC4
-#define N64_READ (GPIOC->IDR & 0x0010)
+// N64 data pin is p1_d2
+#define N64_READ (P1_DATA_2_GPIO_Port->IDR & P1_DATA_2_Pin)
 
 uint32_t readCommand()
 {
@@ -80,9 +81,9 @@ uint8_t GetMiddleOfPulse()
 
 void SendStop()
 {
-	GPIOC->BSRR = (1 << 20);
+	P1_DATA_2_GPIO_Port->BSRR = P1_DATA_2_Pin<<16;
 	my_wait_us_asm(1);
-	GPIOC->BSRR = (1 << 4);
+	P1_DATA_2_GPIO_Port->BSRR = P1_DATA_2_Pin;
 }
 
 void SendIdentityN64()
@@ -96,17 +97,17 @@ void SendIdentityN64()
 
 void write_1()
 {
-	GPIOC->BSRR = (1 << 20);
+	P1_DATA_2_GPIO_Port->BSRR = P1_DATA_2_Pin<<16;
 	my_wait_us_asm(1);
-	GPIOC->BSRR = (1 << 4);
+	P1_DATA_2_GPIO_Port->BSRR = P1_DATA_2_Pin;
     my_wait_us_asm(3);
 }
 
 void write_0()
 {
-	GPIOC->BSRR = (1 << 20);
+	P1_DATA_2_GPIO_Port->BSRR = P1_DATA_2_Pin<<16;
 	my_wait_us_asm(3);
-	GPIOC->BSRR = (1 << 4);
+	P1_DATA_2_GPIO_Port->BSRR = P1_DATA_2_Pin;
     my_wait_us_asm(1);
 }
 
