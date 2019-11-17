@@ -79,8 +79,6 @@ void JumpToBootLoader(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define B1_Pin GPIO_PIN_13
-#define B1_GPIO_Port GPIOC
 #define P1_CLOCK_Pin GPIO_PIN_0
 #define P1_CLOCK_GPIO_Port GPIOC
 #define P1_CLOCK_EXTI_IRQn EXTI0_IRQn
