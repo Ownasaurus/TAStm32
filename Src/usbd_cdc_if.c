@@ -35,15 +35,15 @@
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
-extern volatile uint8_t p1_current_bit;
-extern volatile uint8_t p2_current_bit;
+extern uint8_t p1_current_bit;
+extern uint8_t p2_current_bit;
 extern volatile uint8_t recentLatch;
 extern volatile uint8_t toggleNext;
 extern volatile uint8_t dpcmFix;
 extern volatile uint8_t clockFix;
-extern volatile uint32_t P1_GPIOC_current[17];
+extern uint32_t P1_GPIOC_current[17];
 extern volatile uint32_t P1_GPIOC_next[17];
-extern volatile uint32_t P2_GPIOC_current[17];
+extern uint32_t P2_GPIOC_current[17];
 extern volatile uint32_t P2_GPIOC_next[17];
 extern volatile uint32_t V1_GPIOB_current[16];
 extern volatile uint32_t V1_GPIOB_next[16];

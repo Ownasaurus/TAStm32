@@ -41,6 +41,7 @@
 #include "n64.h"
 #include "TASRun.h"
 #include "usbd_cdc_if.h"
+#include "serial_interface.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -100,10 +101,10 @@ volatile uint64_t p2_d1_next = 0;
 volatile uint64_t p2_d2_next = 0;
 
 // leave enough room for SNES + overread
-volatile uint32_t P1_GPIOC_current[17];
+uint32_t P1_GPIOC_current[17];
 volatile uint32_t P1_GPIOC_next[17];
 
-volatile uint32_t P2_GPIOC_current[17];
+uint32_t P2_GPIOC_current[17];
 volatile uint32_t P2_GPIOC_next[17];
 
 volatile uint32_t V1_GPIOB_current[16];
@@ -112,8 +113,8 @@ volatile uint32_t V1_GPIOB_next[16];
 volatile uint32_t V2_GPIOC_current[16];
 volatile uint32_t V2_GPIOC_next[16];
 
-volatile uint8_t p1_current_bit = 0;
-volatile uint8_t p2_current_bit = 0;
+uint8_t p1_current_bit = 0;
+uint8_t p2_current_bit = 0;
 
 volatile uint8_t recentLatch = 0;
 volatile uint8_t toggleNext = 0;
