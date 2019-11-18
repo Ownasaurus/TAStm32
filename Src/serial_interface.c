@@ -24,8 +24,8 @@ extern volatile uint8_t jumpToDFU;
 extern const uint8_t SNES_RESET_HIGH_A;
 extern const uint8_t SNES_RESET_LOW_A;
 
-extern volatile uint8_t request_pending;
-extern volatile uint8_t bulk_mode;
+extern uint8_t request_pending;
+extern uint8_t bulk_mode;
 
 // only instance of this, but make callers use access functions
 static serial_interface_state_t instance;

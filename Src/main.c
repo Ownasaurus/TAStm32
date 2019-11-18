@@ -79,7 +79,7 @@ extern volatile uint8_t toggleNext;
 extern volatile uint8_t clockFix;
 extern volatile uint8_t request_pending;
 
-volatile uint8_t jumpToDFU;
+uint8_t jumpToDFU;
 static uint8_t input;
 /* USER CODE END PV */
 
