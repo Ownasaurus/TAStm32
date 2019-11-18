@@ -366,6 +366,7 @@ static void MX_USART2_UART_Init(void)
   }
 
   /* USER CODE BEGIN USART2_Init 2 */
+  //RXNE = "Receive Data register not empty"
   __HAL_UART_ENABLE_IT(&huart2, UART_IT_RXNE); // enable receive interrupts; bypass the need for calls to HAL_UART_Receive_IT()
   /* USER CODE END USART2_Init 2 */
 
