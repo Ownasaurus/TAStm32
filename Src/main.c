@@ -80,7 +80,6 @@ extern volatile uint8_t clockFix;
 extern volatile uint8_t request_pending;
 
 uint8_t jumpToDFU;
-static uint8_t input;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -96,20 +95,7 @@ static void MX_USART2_UART_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-static uint8_t UART2_OutputFunction(uint8_t *buffer, uint16_t n)
-{
-	return HAL_UART_Transmit_IT(&huart2, buffer, n);
-}
 
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
-{
-  if (huart == &huart2)
-  {
-	  serial_interface_set_output_function(UART2_OutputFunction);
-	  serial_interface_consume(input);
-	  HAL_UART_Receive_IT(&huart2, &input, 1);
-  }
-}
 /* USER CODE END 0 */
 
 /**
@@ -137,8 +123,7 @@ int main(void)
 
   /* USER CODE BEGIN SysInit */
   serial_interface_reset();
-  //serial_interface_set_output_function(CDC_Transmit_FS);
-  serial_interface_set_output_function(UART2_OutputFunction);
+
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
@@ -162,7 +147,7 @@ int main(void)
   // ensure no buttons are pressed initially
   HAL_GPIO_WritePin(GPIOC, P1_DATA_1_Pin|P1_DATA_0_Pin|P2_DATA_2_Pin|P2_DATA_1_Pin|P2_DATA_0_Pin, GPIO_PIN_SET);
 
-  HAL_UART_Receive_IT(&huart2, &input, 1);
+  //HAL_UART_Receive_IT(&huart2, &input, 1);
 
   /* USER CODE END 2 */
 
@@ -379,8 +364,9 @@ static void MX_USART2_UART_Init(void)
   {
     Error_Handler();
   }
-  /* USER CODE BEGIN USART2_Init 2 */
 
+  /* USER CODE BEGIN USART2_Init 2 */
+  __HAL_UART_ENABLE_IT(&huart2, UART_IT_RXNE); // enable receive interrupts; bypass the need for calls to HAL_UART_Receive_IT()
   /* USER CODE END USART2_Init 2 */
 
 }

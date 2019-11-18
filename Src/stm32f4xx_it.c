@@ -137,6 +137,7 @@ void ResetAndEnableP1ClockTimer();
 void DisableP2ClockTimer();
 void ResetAndEnableP2ClockTimer();
 void UpdateVisBoards();
+uint8_t UART2_OutputFunction(uint8_t *buffer, uint16_t n);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -570,10 +571,16 @@ void TIM3_IRQHandler(void)
 /**
   * @brief This function handles USART2 global interrupt.
   */
+
 void USART2_IRQHandler(void)
 {
   /* USER CODE BEGIN USART2_IRQn 0 */
+  // PROCESS USARTD IRQ HERE
+  uint8_t input = ((huart2.Instance)->DR) & (uint8_t)0xFF; // get the last byte from the data register
+  serial_interface_set_output_function(UART2_OutputFunction);
+  serial_interface_consume(input);
 
+  return; // AVOID THE HAL LIBRARY CALL
   /* USER CODE END USART2_IRQn 0 */
   HAL_UART_IRQHandler(&huart2);
   /* USER CODE BEGIN USART2_IRQn 1 */
@@ -751,6 +758,11 @@ __attribute__((optimize("O0"))) inline void UpdateVisBoards()
 	WAIT_4_CYCLES;
 	GPIOB->BSRR = (1 << V1_LATCH_LOW_B);
 	GPIOC->BSRR = (1 << V2_LATCH_LOW_C);
+}
+
+uint8_t UART2_OutputFunction(uint8_t *buffer, uint16_t n)
+{
+	return HAL_UART_Transmit_IT(&huart2, buffer, n);
 }
 /* USER CODE END 1 */
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
