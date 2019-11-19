@@ -138,6 +138,7 @@ void DisableP2ClockTimer();
 void ResetAndEnableP2ClockTimer();
 void UpdateVisBoards();
 uint8_t UART2_OutputFunction(uint8_t *buffer, uint16_t n);
+HAL_StatusTypeDef Simple_Transmit(UART_HandleTypeDef *huart);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -574,22 +575,45 @@ void TIM3_IRQHandler(void)
 
 void USART2_IRQHandler(void)
 {
-  /* USER CODE BEGIN USART2_IRQn 0 */
-	// PROCESS USART2 IRQ HERE
-	uint8_t input = *huart2.pRxBuffPtr++ = ((huart2.Instance)->DR) & (uint8_t)0xFF; // get the last byte from the data register
+	static uint8_t debug_buffer[1024];
+	static uint8_t ct = 0;
+	/* USER CODE BEGIN USART2_IRQn 0 */
+	uint32_t isrflags   = READ_REG(huart2.Instance->SR);
+	uint32_t cr1its     = READ_REG(huart2.Instance->CR1);
+	/* UART in mode Transmitter ------------------------------------------------*/
+	if (((isrflags & USART_SR_TXE) != RESET) && ((cr1its & USART_CR1_TXEIE) != RESET))
+	{
+		Simple_Transmit(&huart2);
+		return;
+	}
+
+	/* UART in mode Transmitter end --------------------------------------------*/
+	if (((isrflags & USART_SR_TC) != RESET) && ((cr1its & USART_CR1_TCIE) != RESET))
+	{
+		/* Disable the UART Transmit Complete Interrupt */
+		__HAL_UART_DISABLE_IT(&huart2, UART_IT_TC);
+
+		/* Tx process is ended, restore huart->gState to Ready */
+		huart2.gState = HAL_UART_STATE_READY;
+		return;
+	}
+
+	// PROCESS USART2 Rx IRQ HERE
+	uint8_t input = ((huart2.Instance)->DR) & (uint8_t)0xFF; // get the last byte from the data register
+	debug_buffer[ct++] = input;
+	if(ct == 1024)
+	{
+		ct = 0;
+	}
 	serial_interface_set_output_function(UART2_OutputFunction);
 	serial_interface_consume(input);
 
-	// clear the interrupt flag that was (probably) thrown
-	// TODO: Fix?
-	__HAL_UART_CLEAR_FLAG(&huart2, UART_FLAG_RXNE);
-
 	return; // AVOID THE HAL LIBRARY CALL
-  /* USER CODE END USART2_IRQn 0 */
-  HAL_UART_IRQHandler(&huart2);
-  /* USER CODE BEGIN USART2_IRQn 1 */
+	/* USER CODE END USART2_IRQn 0 */
+	HAL_UART_IRQHandler(&huart2);
+	/* USER CODE BEGIN USART2_IRQn 1 */
 
-  /* USER CODE END USART2_IRQn 1 */
+	/* USER CODE END USART2_IRQn 1 */
 }
 
 /**
@@ -639,6 +663,29 @@ void OTG_FS_IRQHandler(void)
 }
 
 /* USER CODE BEGIN 1 */
+HAL_StatusTypeDef Simple_Transmit(UART_HandleTypeDef *huart)
+{
+  /* Check that a Tx process is ongoing */
+  if (huart->gState == HAL_UART_STATE_BUSY_TX)
+  {
+    huart->Instance->DR = (uint8_t)(*huart->pTxBuffPtr++ & (uint8_t)0x00FF);
+
+    if (--huart->TxXferCount == 0U)
+    {
+      /* Disable the UART Transmit Complete Interrupt */
+      __HAL_UART_DISABLE_IT(huart, UART_IT_TXE);
+
+      /* Enable the UART Transmit Complete Interrupt */
+      __HAL_UART_ENABLE_IT(huart, UART_IT_TC);
+    }
+    return HAL_OK;
+  }
+  else
+  {
+    return HAL_BUSY;
+  }
+}
+
 void Disable8msTimer()
 {
 	TIM3->CNT = 0; // reset count
