@@ -57,6 +57,8 @@ typedef struct
 	uint8_t initialized;
 	volatile uint32_t frameCount;
 	Transition transitions_dpcm[MAX_TRANSITIONS];
+	uint8_t console_data_size;
+	uint8_t input_data_size;
 } TASRun;
 
 uint16_t TASRunGetSize(uint8_t runNum);
@@ -82,7 +84,8 @@ Console TASRunGetConsole(int numRun);
 void ExtractDataAndAdvance(RunData (rd)[MAX_CONTROLLERS][MAX_DATA_LANES], int index, uint8_t* Buf, int *byteNum);
 RunData (*GetNextFrame(int runNum))[MAX_CONTROLLERS][MAX_DATA_LANES];
 int ExtractDataAndAddFrame(int run_index, uint8_t *buffer, uint32_t n);
-uint32_t GetSizeOfInputForRun(int run_index);
+uint8_t GetSizeOfInputForRun(int run_index);
+void UpdateSizeOfInputForRun(int run_index);
 
 void SetN64InputMode();
 void SetN64OutputMode();

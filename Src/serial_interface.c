@@ -46,13 +46,23 @@ void serial_interface_set_output_function(OutputFunction func)
 	instance.output_func = func;
 }
 
-uint8_t serial_interface_output(uint8_t *buffer, uint16_t n)
+inline uint8_t serial_interface_output(uint8_t *buffer, uint16_t n)
 {
 	return instance.output_func(buffer, n);
 }
 
 void serial_interface_consume(uint8_t input)
 {
+	static volatile uint8_t debug_buffer[1024];
+	static uint8_t ct = 0;
+
+	debug_buffer[ct] = input;
+	ct++;
+	if(ct == 1024)
+	{
+		ct = 0;
+	}
+
 	switch(instance.state)
 	{
 		case SERIAL_COMPLETE: // in case more than 1 command is sent at a time
@@ -159,7 +169,6 @@ void serial_interface_consume(uint8_t input)
 					break;
 			}
 			break;
-
 		case SERIAL_CMD_Q_1:
 			if(input != 'A')
 			{

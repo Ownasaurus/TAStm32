@@ -165,6 +165,7 @@ void ResetTASRuns()
 void TASRunSetNumControllers(int numRun, uint8_t numControllers)
 {
 	tasruns[numRun].numControllers = numControllers;
+	UpdateSizeOfInputForRun(numRun);
 }
 
 uint8_t TASRunGetNumControllers(int numRun)
@@ -175,6 +176,7 @@ uint8_t TASRunGetNumControllers(int numRun)
 void TASRunSetNumDataLanes(int numRun, uint8_t numDataLanes)
 {
 	tasruns[numRun].numDataLanes = numDataLanes;
+	UpdateSizeOfInputForRun(numRun);
 }
 
 uint8_t TASRunGetNumDataLanes(int numRun)
@@ -190,35 +192,37 @@ Console TASRunGetConsole(int numRun)
 void TASRunSetConsole(int numRun, Console console)
 {
 	tasruns[numRun].console = console;
-}
 
-uint32_t GetSizeOfControllerDataForConsole(int console_type)
-{
-	switch (console_type) {
+	switch (console)
+	{
 		case CONSOLE_N64:
-		return sizeof(N64ControllerData);
-		break;
-	case CONSOLE_SNES:
-		return sizeof(SNESControllerData);
-		break;
-	case CONSOLE_NES:
-		return sizeof(NESControllerData);
-		break;
-	case CONSOLE_GC:
-		return sizeof(GCControllerData) ;
-		break;
+			tasruns[numRun].console_data_size = sizeof(N64ControllerData);
+			break;
+		case CONSOLE_SNES:
+			tasruns[numRun].console_data_size = sizeof(SNESControllerData);
+			break;
+		case CONSOLE_NES:
+			tasruns[numRun].console_data_size = sizeof(NESControllerData);
+			break;
+		case CONSOLE_GC:
+			tasruns[numRun].console_data_size = sizeof(GCControllerData);
+			break;
 	}
-	return 0; // should never reach this
 }
 
-uint32_t GetSizeOfInputForRun(int run_index)
+void UpdateSizeOfInputForRun(int run_index)
 {
-	return tasruns[run_index].numControllers * tasruns[run_index].numDataLanes * GetSizeOfControllerDataForConsole(tasruns[run_index].console);
+	tasruns[run_index].input_data_size = tasruns[run_index].numControllers * tasruns[run_index].numDataLanes * tasruns[run_index].console_data_size;
+}
+
+uint8_t GetSizeOfInputForRun(int run_index)
+{
+	return tasruns[run_index].input_data_size;
 }
 
 int ExtractDataAndAddFrame(int run_index, uint8_t *buffer, uint32_t n)
 {
-	size_t bytesPerInput = GetSizeOfControllerDataForConsole(tasruns[run_index].console);
+	size_t bytesPerInput = tasruns[run_index].console_data_size;
 	uint8_t numControllers = tasruns[run_index].numControllers;
 	uint8_t numDataLanes = tasruns[run_index].numDataLanes;
 

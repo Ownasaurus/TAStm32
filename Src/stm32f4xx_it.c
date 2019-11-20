@@ -575,8 +575,6 @@ void TIM3_IRQHandler(void)
 
 void USART2_IRQHandler(void)
 {
-	static uint8_t debug_buffer[1024];
-	static uint8_t ct = 0;
 	/* USER CODE BEGIN USART2_IRQn 0 */
 	uint32_t isrflags   = READ_REG(huart2.Instance->SR);
 	uint32_t cr1its     = READ_REG(huart2.Instance->CR1);
@@ -600,11 +598,7 @@ void USART2_IRQHandler(void)
 
 	// PROCESS USART2 Rx IRQ HERE
 	uint8_t input = ((huart2.Instance)->DR) & (uint8_t)0xFF; // get the last byte from the data register
-	debug_buffer[ct++] = input;
-	if(ct == 1024)
-	{
-		ct = 0;
-	}
+
 	serial_interface_set_output_function(UART2_OutputFunction);
 	serial_interface_consume(input);
 

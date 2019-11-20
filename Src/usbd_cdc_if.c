@@ -52,6 +52,7 @@ extern volatile uint32_t V2_GPIOC_next[16];
 extern uint8_t jumpToDFU;
 extern const uint8_t SNES_RESET_HIGH_A;
 extern const uint8_t SNES_RESET_LOW_A;
+
 /* USER CODE END PV */
 
 /** @addtogroup STM32_USB_OTG_DEVICE_LIBRARY
@@ -289,6 +290,9 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t* pbuf, uint16_t length)
   * @param  Len: Number of data received (in bytes)
   * @retval Result of the operation: USBD_OK if all operations are OK else USBD_FAIL
   */
+static uint8_t controller_data_buffer[sizeof(RunData) * MAX_CONTROLLERS * MAX_DATA_LANES];
+static uint8_t controller_data_bytes_read = 0;
+
 static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 {
   /* USER CODE BEGIN 6 */
@@ -296,8 +300,9 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 
 	static SerialInterfaceState ss = SERIAL_PREFIX;
 	static SerialRun sr = RUN_NONE;
-	RunData frame[MAX_CONTROLLERS][MAX_DATA_LANES];
 	uint8_t val;
+	static uint8_t console_size = 0;
+	static uint8_t input_size = 0;
 
 	for(int byteNum = 0;byteNum < *Len;byteNum++)
 	{
@@ -388,34 +393,7 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 						request_pending = 0;
 						break;
 					case 'Q':
-						byteNum++; // advance to 2nd character in command
-						val = Buf[byteNum];
-
-						if(val != 'A')
-						{
-							CDC_Transmit_FS((uint8_t*)"\xFE", 1); // run not supported
-							sr = RUN_NONE;
-							ss = SERIAL_COMPLETE;
-							break;
-						}
-
-						byteNum++; // advance to 3nd character in command
-						val = Buf[byteNum];
-
-						if(val == '1') // enter bulk transfer mode
-						{
-							bulk_mode = 1;
-						}
-						else if(val == '0') // exit bulk transfer mode
-						{
-							bulk_mode = 0;
-						}
-						else // should not reach this
-						{
-							CDC_Transmit_FS((uint8_t*)"\xFA", 1); // Error during bulk transfer toggle
-							sr = RUN_NONE;
-							ss = SERIAL_COMPLETE;
-						}
+						ss = SERIAL_CMD_Q_1;
 						break;
 					case 'S': // Setup a run
 						ss = SERIAL_SETUP;
@@ -433,6 +411,30 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 						CDC_Transmit_FS((uint8_t*)"\xFF", 1);
 						break;
 				}
+				break;
+			case SERIAL_CMD_Q_1:
+				if(Buf[byteNum] != 'A')
+				{
+					CDC_Transmit_FS((uint8_t*)"\xFE", 1); // run not supported
+					sr = RUN_NONE;
+					ss = SERIAL_COMPLETE;
+				} else {
+					ss = SERIAL_CMD_Q_2;
+				}
+				break;
+			case SERIAL_CMD_Q_2:
+				if (Buf[byteNum] == '1') // enter bulk transfer mode
+				{
+					bulk_mode = 1;
+				} else if (Buf[byteNum] == '0') // exit bulk transfer mode
+				{
+					bulk_mode = 0;
+				} else // should not reach this
+				{
+					CDC_Transmit_FS((uint8_t*) "\xFA", 1); // Error during bulk transfer toggle
+					sr = RUN_NONE;
+				}
+				ss = SERIAL_COMPLETE;
 				break;
 			case SERIAL_LANE:
 				if(Buf[byteNum] == 'A')
@@ -470,9 +472,20 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 				ss = SERIAL_COMPLETE;
 				break;
 			case SERIAL_CONTROLLER_DATA_START:
-				ExtractDataAndAdvance(frame, sr, Buf, &byteNum);
-				if(AddFrame(sr, frame) == 0) // buffer must have been full
+				controller_data_bytes_read = 0;
+				ss = SERIAL_CONTROLLER_DATA_CONTINUE;
+				// fall through
+			case SERIAL_CONTROLLER_DATA_CONTINUE:
+				controller_data_buffer[controller_data_bytes_read++] = Buf[byteNum];
+				if (controller_data_bytes_read < 8)
 				{
+					// wait for next byte...
+					break;
+				}
+
+				if (ExtractDataAndAddFrame(sr, controller_data_buffer, controller_data_bytes_read) == 0)
+				{
+					// buffer must have been full
 					CDC_Transmit_FS((uint8_t*)"\xB0", 1);
 				}
 
@@ -520,21 +533,25 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 						TASRunSetConsole(sr, CONSOLE_N64);
 						SetN64Mode();
 						ss = SERIAL_NUM_CONTROLLERS;
+						console_size = 4;
 						break;
 					case 'G': // setup Gamecube
 						TASRunSetConsole(sr, CONSOLE_GC);
 						SetN64Mode();
 						ss = SERIAL_NUM_CONTROLLERS;
+						console_size = 8;
 						break;
 					case 'S': // setup SNES
 						TASRunSetConsole(sr, CONSOLE_SNES);
 						SetSNESMode();
 						ss = SERIAL_NUM_CONTROLLERS;
+						console_size = 2;
 						break;
 					case 'N': // setup NES
 						TASRunSetConsole(sr, CONSOLE_NES);
 						SetSNESMode();
 						ss = SERIAL_NUM_CONTROLLERS;
+						console_size = 1;
 						break;
 					default: // Error: console type not understood
 						ss = SERIAL_COMPLETE;
@@ -607,6 +624,7 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 				}
 
 				ss = SERIAL_SETTINGS;
+				input_size = GetSizeOfInputForRun(sr);
 				break;
 			case SERIAL_SETTINGS:
 				val = Buf[byteNum];
