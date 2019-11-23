@@ -302,9 +302,7 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 	static TASRun *tasrun = NULL;
 	uint8_t val;
 
-	for(int byteNum = 0;byteNum < *Len;byteNum++)
-	{
-		serial_interface_consume(Buf[byteNum]);
+	serial_interface_consume(Buf, *Len);
 		/*switch(ss)
 		{
 			case SERIAL_COMPLETE: // in case more than 1 command is sent at a time
@@ -710,7 +708,6 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 			default:
 				break;
 		}*/
-	}
 
   USBD_CDC_SetRxBuffer(&hUsbDeviceFS, &Buf[0]);
   USBD_CDC_ReceivePacket(&hUsbDeviceFS);

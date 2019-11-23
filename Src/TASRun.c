@@ -175,7 +175,7 @@ int ExtractDataAndAddFrame(TASRun *tasrun, uint8_t *buffer, uint32_t n)
 
 	RunData frame[MAX_CONTROLLERS][MAX_DATA_LANES];
 
-	memset(frame, 0, sizeof(frame)); // prepare the data container
+	//memset(frame, 0, sizeof(frame)); // prepare the data container
 
 	uint8_t *buffer_position = buffer;
 	for(int x = 0;x < numControllers;x++)

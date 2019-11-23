@@ -49,6 +49,6 @@ typedef struct {
 void serial_interface_reset();
 void serial_interface_set_output_function(OutputFunction func);
 uint8_t serial_interface_output(uint8_t *buffer, uint16_t n);
-void serial_interface_consume(uint8_t byte);
+void serial_interface_consume(uint8_t *buffer, uint32_t n);
 
 #endif  // __INPUT_PROCESSOR__H

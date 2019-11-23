@@ -602,7 +602,7 @@ void USART2_IRQHandler(void)
 	uint8_t input = ((huart2.Instance)->DR) & (uint8_t)0xFF; // get the last byte from the data register
 
 	serial_interface_set_output_function(UART2_OutputFunction);
-	serial_interface_consume(input);
+	serial_interface_consume(&input, 1);
 
 	return; // AVOID THE HAL LIBRARY CALL
 	/* USER CODE END USART2_IRQn 0 */
