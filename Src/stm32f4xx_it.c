@@ -598,13 +598,15 @@ void USART2_IRQHandler(void)
 		return;
 	}
 
-	// PROCESS USART2 Rx IRQ HERE
-	uint8_t input = ((huart2.Instance)->DR) & (uint8_t)0xFF; // get the last byte from the data register
+	if(((isrflags & USART_SR_RXNE) != RESET) && ((cr1its & USART_CR1_RXNEIE) != RESET))
+	{
+		// PROCESS USART2 Rx IRQ HERE
+		uint8_t input = ((huart2.Instance)->DR) & (uint8_t)0xFF; // get the last byte from the data register
 
-	serial_interface_set_output_function(UART2_OutputFunction);
-	serial_interface_consume(&input, 1);
-
-	return; // AVOID THE HAL LIBRARY CALL
+		serial_interface_set_output_function(UART2_OutputFunction);
+		serial_interface_consume(&input, 1);
+		return;
+	}
 	/* USER CODE END USART2_IRQn 0 */
 	HAL_UART_IRQHandler(&huart2);
 	/* USER CODE BEGIN USART2_IRQn 1 */

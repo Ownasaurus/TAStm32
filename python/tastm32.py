@@ -26,7 +26,7 @@ def int_to_byte(interger):
 class TAStm32():
     def __init__(self, ser):
         try:
-            self.ser = serial.Serial(ser, 115200, timeout=0)
+            self.ser = serial.Serial(ser, 2000000, timeout=0)
         except serial.SerialException:
             print ('ERROR: the specified interface (' + ser + ') is in use')
             sys.exit(0)
