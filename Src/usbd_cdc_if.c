@@ -304,7 +304,8 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 
 	for(int byteNum = 0;byteNum < *Len;byteNum++)
 	{
-		switch(ss)
+		serial_interface_consume(Buf[byteNum]);
+		/*switch(ss)
 		{
 			case SERIAL_COMPLETE: // in case more than 1 command is sent at a time
 			case SERIAL_PREFIX:
@@ -475,9 +476,7 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 				// fall through
 			case SERIAL_CONTROLLER_DATA_CONTINUE:
 				controller_data_buffer[controller_data_bytes_read++] = Buf[byteNum];
-				if (controller_data_bytes_read < tasrun->input_data_size)
-				//if (controller_data_bytes_read < GetSizeOfInputForRun(tasrun))
-					//if (controller_data_bytes_read < 8)
+				if (controller_data_bytes_read < GetSizeOfInputForRun(tasrun))
 				{
 					// wait for next byte...
 					break;
@@ -710,7 +709,7 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 				break;
 			default:
 				break;
-		}
+		}*/
 	}
 
   USBD_CDC_SetRxBuffer(&hUsbDeviceFS, &Buf[0]);
