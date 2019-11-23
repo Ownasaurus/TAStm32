@@ -5,34 +5,10 @@
 #include "stm32f4xx_hal.h"
 #include "main.h"
 
-#define MAX_NUM_RUNS 2
-
 extern TIM_HandleTypeDef htim6;
 extern TIM_HandleTypeDef htim7;
 
 TASRun tasruns[MAX_NUM_RUNS];
-
-TASRun *TASRunGetByIndex(uint8_t runNum) {
-	if (runNum >= MAX_NUM_RUNS) {
-		return NULL;
-	}
-	return &tasruns[runNum];
-}
-
-uint16_t TASRunGetSize(const TASRun *tasrun)
-{
-	return tasrun->size;
-}
-
-uint8_t TASRunIsInitialized(const TASRun *tasrun)
-{
-	return tasrun->initialized;
-}
-
-void TASRunSetInitialized(TASRun *tasrun, uint8_t init)
-{
-	tasrun->initialized = init;
-}
 
 RunData (*GetNextFrame(TASRun *tasrun))[MAX_CONTROLLERS][MAX_DATA_LANES]
 {
@@ -76,11 +52,6 @@ uint8_t AddTransition(TASRun *tasrun, TransitionType type, uint32_t frameNumber)
 	return 0; // failure: no room to add transition
 }
 
-uint32_t TASRunGetFrameCount(const TASRun *tasrun)
-{
-	return tasrun->frameCount;
-}
-
 uint8_t TASRunIncrementFrameCount(TASRun *tasrun)
 {
 	tasrun->frameCount++;
@@ -120,25 +91,6 @@ uint8_t TASRunIncrementFrameCount(TASRun *tasrun)
 	return 0;
 }
 
-void TASRunSetOverread(TASRun *tasrun, uint8_t overread)
-{
-	tasrun->overread = overread;
-}
-
-uint8_t TASRunGetOverread(const TASRun *tasrun)
-{
-	return tasrun->overread;
-}
-
-void TASRunSetDPCMFix(TASRun *tasrun, uint8_t dpcm)
-{
-	tasrun->dpcmFix = dpcm;
-}
-
-uint8_t TASRunGetDPCMFix(const TASRun *tasrun)
-{
-	return tasrun->dpcmFix;
-}
 
 void TASRunSetClockFix(TASRun *tasrun, uint8_t cf)
 {
@@ -169,16 +121,19 @@ void ResetTASRuns()
 	}
 }
 
+
+static void UpdateSizeOfInputForRun(TASRun *tasrun)
+{
+	tasrun->input_data_size = tasrun->numControllers * tasrun->numDataLanes * tasrun->console_data_size;
+}
+
 void TASRunSetNumControllers(TASRun *tasrun, uint8_t numControllers)
 {
 	tasrun->numControllers = numControllers;
 	UpdateSizeOfInputForRun(tasrun);
 }
 
-uint8_t TASRunGetNumControllers(const TASRun *tasrun)
-{
-	return tasrun->numControllers;
-}
+
 
 void TASRunSetNumDataLanes(TASRun *tasrun, uint8_t numDataLanes)
 {
@@ -186,15 +141,7 @@ void TASRunSetNumDataLanes(TASRun *tasrun, uint8_t numDataLanes)
 	UpdateSizeOfInputForRun(tasrun);
 }
 
-uint8_t TASRunGetNumDataLanes(const TASRun *tasrun)
-{
-	return tasrun->numDataLanes;
-}
 
-Console TASRunGetConsole(const TASRun *tasrun)
-{
-	return tasrun->console;
-}
 
 void TASRunSetConsole(TASRun *tasrun, Console console)
 {
@@ -215,17 +162,10 @@ void TASRunSetConsole(TASRun *tasrun, Console console)
 			tasrun->console_data_size = sizeof(GCControllerData);
 			break;
 	}
+	UpdateSizeOfInputForRun(tasrun);
 }
 
-void UpdateSizeOfInputForRun(TASRun *tasrun)
-{
-	tasrun->input_data_size = tasrun->numControllers * tasrun->numDataLanes * tasrun->console_data_size;
-}
 
-uint8_t GetSizeOfInputForRun(const TASRun *tasrun)
-{
-	return tasrun->input_data_size;
-}
 
 int ExtractDataAndAddFrame(TASRun *tasrun, uint8_t *buffer, uint32_t n)
 {
@@ -340,25 +280,6 @@ uint8_t AddFrame(TASRun *tasrun, RunData (frame)[MAX_CONTROLLERS][MAX_DATA_LANES
 	return 1;
 }
 
-void SetN64InputMode()
-{
-	// port C4 to input mode
-	const uint32_t MODER_SLOT = (P1_DATA_2_Pin*P1_DATA_2_Pin);
-	const uint32_t MODER_MASK = 0b11 * MODER_SLOT;
-	const uint32_t MODER_NEW_VALUE = GPIO_MODE_INPUT * MODER_SLOT;
-
-	P1_DATA_2_GPIO_Port->MODER = (P1_DATA_2_GPIO_Port->MODER & ~MODER_MASK) | MODER_NEW_VALUE;
-}
-
-void SetN64OutputMode()
-{
-	// port C4 to output mode
-	const uint32_t MODER_SLOT = (P1_DATA_2_Pin*P1_DATA_2_Pin);
-	const uint32_t MODER_MASK = 0b11 * MODER_SLOT;
-	const uint32_t MODER_NEW_VALUE = GPIO_MODE_OUTPUT_PP * MODER_SLOT;
-	P1_DATA_2_GPIO_Port->MODER = (P1_DATA_2_GPIO_Port->MODER & ~MODER_MASK) | MODER_NEW_VALUE;
-}
-
 void SetN64Mode()
 {
 	GPIO_InitTypeDef GPIO_InitStruct = {0};
@@ -381,3 +302,4 @@ void SetSNESMode()
 
 	HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 }
+
