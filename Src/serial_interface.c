@@ -55,7 +55,7 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 {
 	for (uint32_t i = 0; i != n; ++i)
 	{
-		uint8_t input = buffer[n];
+		uint8_t input = buffer[i];
 		switch(instance.state)
 		{
 			case SERIAL_COMPLETE: // in case more than 1 command is sent at a time

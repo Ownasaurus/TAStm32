@@ -103,6 +103,7 @@ static void MX_USART2_UART_Init(void);
   * @retval int
   */
 int main(void)
+
 {
   /* USER CODE BEGIN 1 */
 
