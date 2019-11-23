@@ -241,17 +241,17 @@ void serial_interface_consume(uint8_t input)
 				serial_interface_output((uint8_t*)"\xB0", 1);
 			}
 
-			if(!TASRunIsInitialized(0) && TASRunGetSize(0) > 0) // this should only run once per run to set up the 1st frame of data
+			if(!TASRunIsInitialized(instance.tasrun) && TASRunGetSize(instance.tasrun) > 0) // this should only run once per run to set up the 1st frame of data
 			{
 
-				Console c = TASRunGetConsole(0);
+				Console c = TASRunGetConsole(instance.tasrun);
 				if(c == CONSOLE_NES || c == CONSOLE_SNES)
 				{
-					if(TASRunGetDPCMFix(0))
+					if(TASRunGetDPCMFix(instance.tasrun))
 					{
 						toggleNext = 1;
 					}
-					if(TASRunGetClockFix(0))
+					if(TASRunGetClockFix(instance.tasrun))
 					{
 						clockFix = 1;
 					}
@@ -259,7 +259,7 @@ void serial_interface_consume(uint8_t input)
 					EXTI1_IRQHandler();
 				}
 
-				TASRunSetInitialized(0, 1);
+				TASRunSetInitialized(instance.tasrun, 1);
 
 				if(c == CONSOLE_NES || c == CONSOLE_SNES)
 				{
@@ -371,11 +371,11 @@ void serial_interface_consume(uint8_t input)
 			break;
 		}
 		case SERIAL_SETTINGS:
-			TASRunSetDPCMFix(0, ((input >> 7) & 1));
-			TASRunSetOverread(0, ((input >> 6) & 1));
+			TASRunSetDPCMFix(instance.tasrun, ((input >> 7) & 1));
+			TASRunSetOverread(instance.tasrun, ((input >> 6) & 1));
 			// acceptable values for clock fix: 0 --> 63
 			// effective range of clock fix timer: 0us --> 15.75 us
-			TASRunSetClockFix(0, input & 0x3F); // get lower 6 bits
+			TASRunSetClockFix(instance.tasrun, input & 0x3F); // get lower 6 bits
 			ReInitClockTimers();
 
 			serial_interface_output((uint8_t*)"\x01S", 2);
@@ -416,7 +416,7 @@ void serial_interface_consume(uint8_t input)
 
 			if(input == 'A') // transition to ACE
 			{
-				if(!AddTransition(0, TRANSITION_ACE, tempVal)) // try adding transition
+				if(!AddTransition(instance.tasrun, TRANSITION_ACE, tempVal)) // try adding transition
 				{
 					// adding transition failed
 					instance.state = SERIAL_COMPLETE;
@@ -427,7 +427,7 @@ void serial_interface_consume(uint8_t input)
 			}
 			else if(input == 'N')
 			{
-				if(!AddTransition(0, TRANSITION_NORMAL, tempVal)) // try adding transition
+				if(!AddTransition(instance.tasrun, TRANSITION_NORMAL, tempVal)) // try adding transition
 				{
 					// adding transition failed
 					instance.state = SERIAL_COMPLETE;
@@ -438,7 +438,7 @@ void serial_interface_consume(uint8_t input)
 			}
 			else if(input == 'S')
 			{
-				if(!AddTransition(0, TRANSITION_RESET_SOFT, tempVal)) // try adding transition
+				if(!AddTransition(instance.tasrun, TRANSITION_RESET_SOFT, tempVal)) // try adding transition
 				{
 					// adding transition failed
 					instance.state = SERIAL_COMPLETE;
@@ -449,7 +449,7 @@ void serial_interface_consume(uint8_t input)
 			}
 			else if(input == 'H')
 			{
-				if(!AddTransition(0, TRANSITION_RESET_HARD, tempVal)) // try adding transition
+				if(!AddTransition(instance.tasrun, TRANSITION_RESET_HARD, tempVal)) // try adding transition
 				{
 					// adding transition failed
 					instance.state = SERIAL_COMPLETE;

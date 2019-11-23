@@ -487,18 +487,18 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 					CDC_Transmit_FS((uint8_t*)"\xB0", 1);
 				}
 
-				if(!TASRunIsInitialized(0) && TASRunGetSize(0) > 0) // this should only run once per run to set up the 1st frame of data
+				if(!TASRunIsInitialized(tasrun) && TASRunGetSize(tasrun) > 0) // this should only run once per run to set up the 1st frame of data
 				{
-					if(TASRunGetDPCMFix(0))
+					if(TASRunGetDPCMFix(tasrun))
 					{
 						toggleNext = 1;
 					}
-					if(TASRunGetClockFix(0))
+					if(TASRunGetClockFix(tasrun))
 					{
 						clockFix = 1;
 					}
 
-					Console c = TASRunGetConsole(0);
+					Console c = TASRunGetConsole(tasrun);
 
 					// thanks to booto for this logic fix
 					if(c == CONSOLE_NES || c == CONSOLE_SNES) // needed to prime the buffer for NES/SNES
@@ -506,7 +506,7 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 						EXTI1_IRQHandler();
 					}
 
-					TASRunSetInitialized(0, 1);
+					TASRunSetInitialized(tasrun, 1);
 
 					// enable interrupts as needed
 					if(c == CONSOLE_NES || c == CONSOLE_SNES)
@@ -622,11 +622,11 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 			case SERIAL_SETTINGS:
 				val = Buf[byteNum];
 
-				TASRunSetDPCMFix(0, ((val >> 7) & 1));
-				TASRunSetOverread(0, ((val >> 6) & 1));
+				TASRunSetDPCMFix(tasrun, ((val >> 7) & 1));
+				TASRunSetOverread(tasrun, ((val >> 6) & 1));
 				// acceptable values for clock fix: 0 --> 63
 				// effective range of clock fix timer: 0us --> 15.75 us
-				TASRunSetClockFix(0, val & 0x3F); // get lower 6 bits
+				TASRunSetClockFix(tasrun, val & 0x3F); // get lower 6 bits
 				ReInitClockTimers();
 
 				CDC_Transmit_FS((uint8_t*)"\x01S", 2);
@@ -660,7 +660,7 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 
 				if(val == 'A') // transition to ACE
 				{
-					if(!AddTransition(0, TRANSITION_ACE, tempVal)) // try adding transition
+					if(!AddTransition(tasrun, TRANSITION_ACE, tempVal)) // try adding transition
 					{
 						// adding transition failed
 						ss = SERIAL_COMPLETE;
@@ -671,7 +671,7 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 				}
 				else if(val == 'N')
 				{
-					if(!AddTransition(0, TRANSITION_NORMAL, tempVal)) // try adding transition
+					if(!AddTransition(tasrun, TRANSITION_NORMAL, tempVal)) // try adding transition
 					{
 						// adding transition failed
 						ss = SERIAL_COMPLETE;
@@ -682,7 +682,7 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 				}
 				else if(val == 'S')
 				{
-					if(!AddTransition(0, TRANSITION_RESET_SOFT, tempVal)) // try adding transition
+					if(!AddTransition(tasrun, TRANSITION_RESET_SOFT, tempVal)) // try adding transition
 					{
 						// adding transition failed
 						ss = SERIAL_COMPLETE;
@@ -693,7 +693,7 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 				}
 				else if(val == 'H')
 				{
-					if(!AddTransition(0, TRANSITION_RESET_HARD, tempVal)) // try adding transition
+					if(!AddTransition(tasrun, TRANSITION_RESET_HARD, tempVal)) // try adding transition
 					{
 						// adding transition failed
 						ss = SERIAL_COMPLETE;

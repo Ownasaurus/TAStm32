@@ -219,6 +219,7 @@ void EXTI1_IRQHandler(void)
 
 	// P1_LATCH
 	int8_t regbit = 50, databit = -1; // random initial values
+	TASRun *tasrun = TASRunGetByIndex(RUN_A);
 
 	if(recentLatch == 0) // no recent latch
 	{
@@ -265,13 +266,13 @@ void EXTI1_IRQHandler(void)
 			ResetAndEnable8msTimer(); // start timer and proceed as normal
 		}
 
-		toggleNext = TASRunIncrementFrameCount(0);
+		toggleNext = TASRunIncrementFrameCount(tasrun);
 
-		RunData (*dataptr)[MAX_CONTROLLERS][MAX_DATA_LANES] = GetNextFrame(0);
+		RunData (*dataptr)[MAX_CONTROLLERS][MAX_DATA_LANES] = GetNextFrame(tasrun);
 
 		if(dataptr)
 		{
-			c = TASRunGetConsole(0);
+			c = TASRunGetConsole(tasrun);
 
 			databit = 0;
 			if(c == CONSOLE_NES)
@@ -353,11 +354,11 @@ void EXTI1_IRQHandler(void)
 			}
 		}
 
-		if(TASRunIsInitialized(0))
+		if(TASRunIsInitialized(tasrun))
 		{
 			if(bulk_mode)
 			{
-				if(!request_pending && TASRunGetSize(0) <= (MAX_SIZE-28)) // not full enough
+				if(!request_pending && TASRunGetSize(tasrun) <= (MAX_SIZE-28)) // not full enough
 				{
 					if(serial_interface_output((uint8_t*)"a", 1) == USBD_OK) // notify that we latched and want more
 					{
@@ -378,7 +379,7 @@ void EXTI1_IRQHandler(void)
 				regbit = 16;
 
 			// fill the overread
-			if(TASRunGetOverread(0)) // overread is 1/HIGH
+			if(TASRunGetOverread(tasrun)) // overread is 1/HIGH
 			{
 				// so set logical LOW (NES/SNES button pressed)
 				for(uint8_t index = regbit;index < 17;index++)
@@ -429,7 +430,8 @@ void EXTI4_IRQHandler(void)
   /* USER CODE BEGIN EXTI4_IRQn 0 */
 	// P1_DATA_2 == N64_DATA
 	// Read 64 command
-	Console c = TASRunGetConsole(0);
+	TASRun *tasrun = TASRunGetByIndex(RUN_A);
+	Console c = TASRunGetConsole(tasrun);
 	GCControllerData gc_data;
 
 	__disable_irq();
@@ -459,7 +461,7 @@ void EXTI4_IRQHandler(void)
 		  SendIdentityN64();
 		  break;
 	  case 0x01: // poll for N64 state
-		  frame = GetNextFrame(0);
+		  frame = GetNextFrame(tasrun);
 		  if(frame == NULL) // buffer underflow
 		  {
 			  SendControllerDataN64(0); // send blank controller data
@@ -475,7 +477,7 @@ void EXTI4_IRQHandler(void)
 	  case 0x400302:
 	  case 0x400300:
 	  case 0x400301:
-		  frame = GetNextFrame(0);
+		  frame = GetNextFrame(tasrun);
 		  if(frame == NULL) // buffer underflow
 		  {
 				memset(&gc_data, 0, sizeof(gc_data));
