@@ -39,7 +39,8 @@ typedef uint8_t (*OutputFunction)(uint8_t *buffer, uint16_t n);
 
 typedef struct {
 	SerialInterfaceState state;
-	SerialRun selected_run;
+	//SerialRun selected_run;
+	TASRun *tasrun;
 	OutputFunction output_func;
 	uint8_t controller_data_buffer[sizeof(RunData) * MAX_CONTROLLERS * MAX_DATA_LANES];
 	uint32_t controller_data_bytes_read;

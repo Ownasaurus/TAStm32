@@ -299,10 +299,8 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 	serial_interface_set_output_function(CDC_Transmit_FS);
 
 	static SerialInterfaceState ss = SERIAL_PREFIX;
-	static SerialRun sr = RUN_NONE;
+	static TASRun *tasrun = NULL;
 	uint8_t val;
-	static uint8_t console_size = 0;
-	static uint8_t input_size = 0;
 
 	for(int byteNum = 0;byteNum < *Len;byteNum++)
 	{
@@ -386,7 +384,7 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 						ss = SERIAL_COMPLETE;
 						break;
 					case 'A': // Run #1 controller data
-						sr = RUN_A;
+						tasrun = TASRunGetByIndex(RUN_A);
 						ss = SERIAL_CONTROLLER_DATA_START;
 						break;
 					case 'a': // 28 frame data burst is complete
@@ -416,7 +414,7 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 				if(Buf[byteNum] != 'A')
 				{
 					CDC_Transmit_FS((uint8_t*)"\xFE", 1); // run not supported
-					sr = RUN_NONE;
+					tasrun = NULL;
 					ss = SERIAL_COMPLETE;
 				} else {
 					ss = SERIAL_CMD_Q_2;
@@ -432,7 +430,7 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 				} else // should not reach this
 				{
 					CDC_Transmit_FS((uint8_t*) "\xFA", 1); // Error during bulk transfer toggle
-					sr = RUN_NONE;
+					tasrun = NULL;
 				}
 				ss = SERIAL_COMPLETE;
 				break;
@@ -483,7 +481,7 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 					break;
 				}
 
-				if (ExtractDataAndAddFrame(sr, controller_data_buffer, controller_data_bytes_read) == 0)
+				if (ExtractDataAndAddFrame(tasrun, controller_data_buffer, controller_data_bytes_read) == 0)
 				{
 					// buffer must have been full
 					CDC_Transmit_FS((uint8_t*)"\xB0", 1);
@@ -524,38 +522,34 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 				}
 
 				ss = SERIAL_COMPLETE;
-				sr = RUN_NONE;
+				tasrun = NULL;
 				break;
 			case SERIAL_CONSOLE:
 				switch(Buf[byteNum])
 				{
 					case 'M': // setup N64
-						TASRunSetConsole(sr, CONSOLE_N64);
+						TASRunSetConsole(tasrun, CONSOLE_N64);
 						SetN64Mode();
 						ss = SERIAL_NUM_CONTROLLERS;
-						console_size = 4;
 						break;
 					case 'G': // setup Gamecube
-						TASRunSetConsole(sr, CONSOLE_GC);
+						TASRunSetConsole(tasrun, CONSOLE_GC);
 						SetN64Mode();
 						ss = SERIAL_NUM_CONTROLLERS;
-						console_size = 8;
 						break;
 					case 'S': // setup SNES
-						TASRunSetConsole(sr, CONSOLE_SNES);
+						TASRunSetConsole(tasrun, CONSOLE_SNES);
 						SetSNESMode();
 						ss = SERIAL_NUM_CONTROLLERS;
-						console_size = 2;
 						break;
 					case 'N': // setup NES
-						TASRunSetConsole(sr, CONSOLE_NES);
+						TASRunSetConsole(tasrun, CONSOLE_NES);
 						SetSNESMode();
 						ss = SERIAL_NUM_CONTROLLERS;
-						console_size = 1;
 						break;
 					default: // Error: console type not understood
 						ss = SERIAL_COMPLETE;
-						sr = RUN_NONE;
+						tasrun = NULL;
 						CDC_Transmit_FS((uint8_t*)"\xFC", 1);
 						break;
 				}
@@ -564,12 +558,12 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 				switch(Buf[byteNum])
 				{
 					case 'A': // setup Run #1
-						sr = RUN_A;
+						tasrun = TASRunGetByIndex(RUN_A);
 						ss = SERIAL_CONSOLE;
 						break;
 					default: // Error: run number not understood
 						ss = SERIAL_COMPLETE;
-						sr = RUN_NONE;
+						tasrun = NULL;
 						CDC_Transmit_FS((uint8_t*)"\xFE", 1);
 						break;
 				}
@@ -598,11 +592,11 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 				{
 					if(p2 != 0) // 2 controllers
 					{
-						TASRunSetNumControllers(sr, 2);
+						TASRunSetNumControllers(tasrun, 2);
 
 						if(p1_lanes == p2_lanes)
 						{
-							TASRunSetNumDataLanes(sr, p1_lanes);
+							TASRunSetNumDataLanes(tasrun, p1_lanes);
 						}
 						else // error
 						{
@@ -611,20 +605,19 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 					}
 					else // 1 controller
 					{
-						TASRunSetNumControllers(sr, 1);
-						TASRunSetNumDataLanes(sr, p1_lanes);
+						TASRunSetNumControllers(tasrun, 1);
+						TASRunSetNumDataLanes(tasrun, p1_lanes);
 					}
 				}
 				else
 				{
 					ss = SERIAL_COMPLETE;
-					sr = RUN_NONE;
+					tasrun = NULL;
 					CDC_Transmit_FS((uint8_t*)"\xFD", 1);
 					break;
 				}
 
 				ss = SERIAL_SETTINGS;
-				input_size = GetSizeOfInputForRun(sr);
 				break;
 			case SERIAL_SETTINGS:
 				val = Buf[byteNum];
@@ -639,19 +632,19 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 				CDC_Transmit_FS((uint8_t*)"\x01S", 2);
 
 				ss = SERIAL_COMPLETE;
-				sr = RUN_NONE;
+				tasrun = NULL;
 				break;
 			case SERIAL_TRANSITION:
 				// process 2nd character in command for run letter
 				val = Buf[byteNum];
 				if(val == 'A')
 				{
-					sr = RUN_A;
+					tasrun = TASRunGetByIndex(RUN_A);
 				}
 				else
 				{
 					ss = SERIAL_COMPLETE;
-					sr = RUN_NONE;
+					tasrun = NULL;
 					CDC_Transmit_FS((uint8_t*)"\xFE", 1);
 					break;
 				}
@@ -671,7 +664,7 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 					{
 						// adding transition failed
 						ss = SERIAL_COMPLETE;
-						sr = RUN_NONE;
+						tasrun = NULL;
 						CDC_Transmit_FS((uint8_t*)"\xFB", 1);
 						break;
 					}
@@ -682,7 +675,7 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 					{
 						// adding transition failed
 						ss = SERIAL_COMPLETE;
-						sr = RUN_NONE;
+						tasrun = NULL;
 						CDC_Transmit_FS((uint8_t*)"\xFB", 1);
 						break;
 					}
@@ -693,7 +686,7 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 					{
 						// adding transition failed
 						ss = SERIAL_COMPLETE;
-						sr = RUN_NONE;
+						tasrun = NULL;
 						CDC_Transmit_FS((uint8_t*)"\xFB", 1);
 						break;
 					}
@@ -704,14 +697,14 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 					{
 						// adding transition failed
 						ss = SERIAL_COMPLETE;
-						sr = RUN_NONE;
+						tasrun = NULL;
 						CDC_Transmit_FS((uint8_t*)"\xFB", 1);
 						break;
 					}
 				}
 
 				ss = SERIAL_COMPLETE;
-				sr = RUN_NONE;
+				tasrun = NULL;
 				break;
 			default:
 				break;

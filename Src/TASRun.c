@@ -12,54 +12,61 @@ extern TIM_HandleTypeDef htim7;
 
 TASRun tasruns[MAX_NUM_RUNS];
 
-uint16_t TASRunGetSize(uint8_t runNum)
-{
-	return tasruns[runNum].size;
+TASRun *TASRunGetByIndex(uint8_t runNum) {
+	if (runNum >= MAX_NUM_RUNS) {
+		return NULL;
+	}
+	return &tasruns[runNum];
 }
 
-uint8_t TASRunIsInitialized(uint8_t runNum)
+uint16_t TASRunGetSize(const TASRun *tasrun)
 {
-	return tasruns[runNum].initialized;
+	return tasrun->size;
 }
 
-void TASRunSetInitialized(uint8_t runNum, uint8_t init)
+uint8_t TASRunIsInitialized(const TASRun *tasrun)
 {
-	tasruns[runNum].initialized = init;
+	return tasrun->initialized;
 }
 
-RunData (*GetNextFrame(int runNum))[MAX_CONTROLLERS][MAX_DATA_LANES]
+void TASRunSetInitialized(TASRun *tasrun, uint8_t init)
 {
-	if(tasruns[runNum].size == 0) // in case of buffer underflow
+	tasrun->initialized = init;
+}
+
+RunData (*GetNextFrame(TASRun *tasrun))[MAX_CONTROLLERS][MAX_DATA_LANES]
+{
+	if(tasrun->size == 0) // in case of buffer underflow
 	{
 		return NULL; // buffer underflow
 	}
 
-	RunData (*retval)[MAX_CONTROLLERS][MAX_DATA_LANES] = tasruns[runNum].current;
+	RunData (*retval)[MAX_CONTROLLERS][MAX_DATA_LANES] = tasrun->current;
 
 	// advance frame
-	if(tasruns[runNum].current != tasruns[runNum].end)
+	if(tasrun->current != tasrun->end)
 	{
-		(tasruns[runNum].current)++;
+		(tasrun->current)++;
 	}
 	else
 	{
-		tasruns[runNum].current = tasruns[runNum].runData;
+		tasrun->current = tasrun->runData;
 	}
 
-	tasruns[runNum].size--;
+	tasrun->size--;
 
 	return retval;
 }
 
-uint8_t AddTransition(int numRun, TransitionType type, uint32_t frameNumber)
+uint8_t AddTransition(TASRun *tasrun, TransitionType type, uint32_t frameNumber)
 {
 	int x = 0;
 	while(x < MAX_TRANSITIONS)
 	{
-		if(tasruns[numRun].transitions_dpcm[x].frameno == 0) // first blank transition slot found
+		if(tasrun->transitions_dpcm[x].frameno == 0) // first blank transition slot found
 		{
-			tasruns[numRun].transitions_dpcm[x].frameno = frameNumber;
-			tasruns[numRun].transitions_dpcm[x].type = type;
+			tasrun->transitions_dpcm[x].frameno = frameNumber;
+			tasrun->transitions_dpcm[x].type = type;
 			return 1;
 		}
 
@@ -69,33 +76,33 @@ uint8_t AddTransition(int numRun, TransitionType type, uint32_t frameNumber)
 	return 0; // failure: no room to add transition
 }
 
-uint32_t TASRunGetFrameCount(int numRun)
+uint32_t TASRunGetFrameCount(const TASRun *tasrun)
 {
-	return tasruns[numRun].frameCount;
+	return tasrun->frameCount;
 }
 
-uint8_t TASRunIncrementFrameCount(int numRun)
+uint8_t TASRunIncrementFrameCount(TASRun *tasrun)
 {
-	tasruns[numRun].frameCount++;
+	tasrun->frameCount++;
 
 	int x = 0;
 	while(x < MAX_TRANSITIONS)
 	{
-		if(tasruns[numRun].transitions_dpcm[x].frameno == 0) // out of transitions to search for
+		if(tasrun->transitions_dpcm[x].frameno == 0) // out of transitions to search for
 		{
 			break;
 		}
 
-		if(tasruns[numRun].transitions_dpcm[x].frameno == tasruns[numRun].frameCount)
+		if(tasrun->transitions_dpcm[x].frameno == tasrun->frameCount)
 		{
-			switch(tasruns[numRun].transitions_dpcm[x].type)
+			switch(tasrun->transitions_dpcm[x].type)
 			{
 				case TRANSITION_ACE:
-					tasruns[numRun].dpcmFix = 0;
+					tasrun->dpcmFix = 0;
 					return 1;
 				break;
 				case TRANSITION_NORMAL:
-					tasruns[numRun].dpcmFix = 1;
+					tasrun->dpcmFix = 1;
 					return 1;
 				break;
 				case TRANSITION_RESET_SOFT:
@@ -113,42 +120,42 @@ uint8_t TASRunIncrementFrameCount(int numRun)
 	return 0;
 }
 
-void TASRunSetOverread(int numRun, uint8_t overread)
+void TASRunSetOverread(TASRun *tasrun, uint8_t overread)
 {
-	tasruns[numRun].overread = overread;
+	tasrun->overread = overread;
 }
 
-uint8_t TASRunGetOverread(int numRun)
+uint8_t TASRunGetOverread(const TASRun *tasrun)
 {
-	return tasruns[numRun].overread;
+	return tasrun->overread;
 }
 
-void TASRunSetDPCMFix(int numRun, uint8_t dpcm)
+void TASRunSetDPCMFix(TASRun *tasrun, uint8_t dpcm)
 {
-	tasruns[numRun].dpcmFix = dpcm;
+	tasrun->dpcmFix = dpcm;
 }
 
-uint8_t TASRunGetDPCMFix(int numRun)
+uint8_t TASRunGetDPCMFix(const TASRun *tasrun)
 {
-	return tasruns[numRun].dpcmFix;
+	return tasrun->dpcmFix;
 }
 
-void TASRunSetClockFix(int numRun, uint8_t cf)
+void TASRunSetClockFix(TASRun *tasrun, uint8_t cf)
 {
 	if(cf > 1)
 	{
-		tasruns[numRun].clockFix = cf;
+		tasrun->clockFix = cf;
 		htim6.Init.Period = htim7.Init.Period = cf-1;
 	}
 	else
 	{
-		tasruns[numRun].clockFix = 0;
+		tasrun->clockFix = 0;
 	}
 }
 
-uint8_t TASRunGetClockFix(int numRun)
+uint8_t TASRunGetClockFix(const TASRun *tasrun)
 {
-	return (tasruns[numRun].clockFix != 0) ? 1 : 0;
+	return (tasrun->clockFix != 0) ? 1 : 0;
 }
 
 void ResetTASRuns()
@@ -162,69 +169,69 @@ void ResetTASRuns()
 	}
 }
 
-void TASRunSetNumControllers(int numRun, uint8_t numControllers)
+void TASRunSetNumControllers(TASRun *tasrun, uint8_t numControllers)
 {
-	tasruns[numRun].numControllers = numControllers;
-	UpdateSizeOfInputForRun(numRun);
+	tasrun->numControllers = numControllers;
+	UpdateSizeOfInputForRun(tasrun);
 }
 
-uint8_t TASRunGetNumControllers(int numRun)
+uint8_t TASRunGetNumControllers(const TASRun *tasrun)
 {
-	return tasruns[numRun].numControllers;
+	return tasrun->numControllers;
 }
 
-void TASRunSetNumDataLanes(int numRun, uint8_t numDataLanes)
+void TASRunSetNumDataLanes(TASRun *tasrun, uint8_t numDataLanes)
 {
-	tasruns[numRun].numDataLanes = numDataLanes;
-	UpdateSizeOfInputForRun(numRun);
+	tasrun->numDataLanes = numDataLanes;
+	UpdateSizeOfInputForRun(tasrun);
 }
 
-uint8_t TASRunGetNumDataLanes(int numRun)
+uint8_t TASRunGetNumDataLanes(const TASRun *tasrun)
 {
-	return tasruns[numRun].numDataLanes;
+	return tasrun->numDataLanes;
 }
 
-Console TASRunGetConsole(int numRun)
+Console TASRunGetConsole(const TASRun *tasrun)
 {
-	return tasruns[numRun].console;
+	return tasrun->console;
 }
 
-void TASRunSetConsole(int numRun, Console console)
+void TASRunSetConsole(TASRun *tasrun, Console console)
 {
-	tasruns[numRun].console = console;
+	tasrun->console = console;
 
 	switch (console)
 	{
 		case CONSOLE_N64:
-			tasruns[numRun].console_data_size = sizeof(N64ControllerData);
+			tasrun->console_data_size = sizeof(N64ControllerData);
 			break;
 		case CONSOLE_SNES:
-			tasruns[numRun].console_data_size = sizeof(SNESControllerData);
+			tasrun->console_data_size = sizeof(SNESControllerData);
 			break;
 		case CONSOLE_NES:
-			tasruns[numRun].console_data_size = sizeof(NESControllerData);
+			tasrun->console_data_size = sizeof(NESControllerData);
 			break;
 		case CONSOLE_GC:
-			tasruns[numRun].console_data_size = sizeof(GCControllerData);
+			tasrun->console_data_size = sizeof(GCControllerData);
 			break;
 	}
 }
 
-void UpdateSizeOfInputForRun(int run_index)
+void UpdateSizeOfInputForRun(TASRun *tasrun)
 {
-	tasruns[run_index].input_data_size = tasruns[run_index].numControllers * tasruns[run_index].numDataLanes * tasruns[run_index].console_data_size;
+	tasrun->input_data_size = tasrun->numControllers * tasrun->numDataLanes * tasrun->console_data_size;
 }
 
-uint8_t GetSizeOfInputForRun(int run_index)
+uint8_t GetSizeOfInputForRun(const TASRun *tasrun)
 {
-	return tasruns[run_index].input_data_size;
+	return tasrun->input_data_size;
 }
 
-int ExtractDataAndAddFrame(int run_index, uint8_t *buffer, uint32_t n)
+int ExtractDataAndAddFrame(TASRun *tasrun, uint8_t *buffer, uint32_t n)
 {
-	size_t bytesPerInput = tasruns[run_index].console_data_size;
-	uint8_t numControllers = tasruns[run_index].numControllers;
-	uint8_t numDataLanes = tasruns[run_index].numDataLanes;
+	size_t bytesPerInput = tasrun->console_data_size;
+	uint8_t numControllers = tasrun->numControllers;
+	uint8_t numDataLanes = tasrun->numDataLanes;
 
 	RunData frame[MAX_CONTROLLERS][MAX_DATA_LANES];
 
@@ -240,41 +247,41 @@ int ExtractDataAndAddFrame(int run_index, uint8_t *buffer, uint32_t n)
 		}
 	}
 
-	if(tasruns[run_index].size == MAX_SIZE)
+	if(tasrun->size == MAX_SIZE)
 	{
 		return 0;
 	}
 
-	memcpy((RunData*)tasruns[run_index].buf,frame,sizeof(frame));
+	memcpy((RunData*)tasrun->buf,frame,sizeof(frame));
 
 	// NOTE: These two pointer modifications must occur in an atomic fashion
 	//       A poorly-timed interrupt could cause bad things.
 	__disable_irq();
 	// loop around if necessary
-	if(tasruns[run_index].buf != tasruns[run_index].end)
+	if(tasrun->buf != tasrun->end)
 	{
-		(tasruns[run_index].buf)++;
+		(tasrun->buf)++;
 	}
 	else // buf is at end, so wrap around to beginning
 	{
-		tasruns[run_index].buf = tasruns[run_index].runData;
+		tasrun->buf = tasrun->runData;
 	}
 
-	tasruns[run_index].size++;
+	tasrun->size++;
 	__enable_irq();
 
 	return 1;
 }
 
-void ExtractDataAndAdvance(RunData (rd)[MAX_CONTROLLERS][MAX_DATA_LANES], int index, uint8_t* Buf, int *byteNum)
+void ExtractDataAndAdvance(RunData (rd)[MAX_CONTROLLERS][MAX_DATA_LANES], TASRun *tasrun, uint8_t* Buf, int *byteNum)
 {
 	uint8_t bytesPerInput = 0;
-	uint8_t numControllers = tasruns[index].numControllers;
-	uint8_t numDataLanes = tasruns[index].numDataLanes;
+	uint8_t numControllers = tasrun->numControllers;
+	uint8_t numDataLanes = tasrun->numDataLanes;
 
 	memset(rd, 0, sizeof(RunData[MAX_CONTROLLERS][MAX_DATA_LANES])); // prepare the data container
 
-	switch(tasruns[index].console)
+	switch(tasrun->console)
 	{
 		case CONSOLE_N64:
 			bytesPerInput = sizeof(N64ControllerData);
@@ -304,30 +311,30 @@ void ExtractDataAndAdvance(RunData (rd)[MAX_CONTROLLERS][MAX_DATA_LANES], int in
 	(*byteNum)--; // back up 1 since the main loop will advance it one
 }
 
-uint8_t AddFrame(int runIndex, RunData (frame)[MAX_CONTROLLERS][MAX_DATA_LANES])
+uint8_t AddFrame(TASRun *tasrun, RunData (frame)[MAX_CONTROLLERS][MAX_DATA_LANES])
 {
 	// first check buffer isn't full
-	if(tasruns[runIndex].size == MAX_SIZE)
+	if(tasrun->size == MAX_SIZE)
 	{
 		return 0;
 	}
 
-	memcpy((RunData*)tasruns[runIndex].buf,frame,sizeof(RunData[MAX_CONTROLLERS][MAX_DATA_LANES]));
+	memcpy((RunData*)tasrun->buf,frame,sizeof(RunData[MAX_CONTROLLERS][MAX_DATA_LANES]));
 
 	// NOTE: These two pointer modifications must occur in an atomic fashion
 	//       A poorly-timed interrupt could cause bad things.
 	__disable_irq();
 	// loop around if necessary
-	if(tasruns[runIndex].buf != tasruns[runIndex].end)
+	if(tasrun->buf != tasrun->end)
 	{
-		(tasruns[runIndex].buf)++;
+		(tasrun->buf)++;
 	}
 	else // buf is at end, so wrap around to beginning
 	{
-		tasruns[runIndex].buf = tasruns[runIndex].runData;
+		tasrun->buf = tasrun->runData;
 	}
 
-	tasruns[runIndex].size++;
+	tasrun->size++;
 	__enable_irq();
 
 	return 1;
