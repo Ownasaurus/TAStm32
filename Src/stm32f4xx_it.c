@@ -41,6 +41,7 @@
 #include "n64.h"
 #include "TASRun.h"
 #include "usbd_cdc_if.h"
+#include "serial_interface.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -100,10 +101,10 @@ volatile uint64_t p2_d1_next = 0;
 volatile uint64_t p2_d2_next = 0;
 
 // leave enough room for SNES + overread
-volatile uint32_t P1_GPIOC_current[17];
+uint32_t P1_GPIOC_current[17];
 volatile uint32_t P1_GPIOC_next[17];
 
-volatile uint32_t P2_GPIOC_current[17];
+uint32_t P2_GPIOC_current[17];
 volatile uint32_t P2_GPIOC_next[17];
 
 volatile uint32_t V1_GPIOB_current[16];
@@ -112,8 +113,8 @@ volatile uint32_t V1_GPIOB_next[16];
 volatile uint32_t V2_GPIOC_current[16];
 volatile uint32_t V2_GPIOC_next[16];
 
-volatile uint8_t p1_current_bit = 0;
-volatile uint8_t p2_current_bit = 0;
+uint8_t p1_current_bit = 0;
+uint8_t p2_current_bit = 0;
 
 volatile uint8_t recentLatch = 0;
 volatile uint8_t toggleNext = 0;
@@ -136,6 +137,8 @@ void ResetAndEnableP1ClockTimer();
 void DisableP2ClockTimer();
 void ResetAndEnableP2ClockTimer();
 void UpdateVisBoards();
+uint8_t UART2_OutputFunction(uint8_t *buffer, uint16_t n);
+HAL_StatusTypeDef Simple_Transmit(UART_HandleTypeDef *huart);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -148,6 +151,7 @@ extern PCD_HandleTypeDef hpcd_USB_OTG_FS;
 extern TIM_HandleTypeDef htim3;
 extern TIM_HandleTypeDef htim6;
 extern TIM_HandleTypeDef htim7;
+extern UART_HandleTypeDef huart2;
 /* USER CODE BEGIN EV */
 extern volatile uint8_t request_pending;
 extern volatile uint8_t bulk_mode;
@@ -215,6 +219,7 @@ void EXTI1_IRQHandler(void)
 
 	// P1_LATCH
 	int8_t regbit = 50, databit = -1; // random initial values
+	TASRun *tasrun = TASRunGetByIndex(RUN_A);
 
 	if(recentLatch == 0) // no recent latch
 	{
@@ -261,13 +266,13 @@ void EXTI1_IRQHandler(void)
 			ResetAndEnable8msTimer(); // start timer and proceed as normal
 		}
 
-		toggleNext = TASRunIncrementFrameCount(0);
+		toggleNext = TASRunIncrementFrameCount(tasrun);
 
-		RunData (*dataptr)[MAX_CONTROLLERS][MAX_DATA_LANES] = GetNextFrame(0);
+		RunData (*dataptr)[MAX_CONTROLLERS][MAX_DATA_LANES] = GetNextFrame(tasrun);
 
 		if(dataptr)
 		{
-			c = TASRunGetConsole(0);
+			c = TASRunGetConsole(tasrun);
 
 			databit = 0;
 			if(c == CONSOLE_NES)
@@ -349,13 +354,13 @@ void EXTI1_IRQHandler(void)
 			}
 		}
 
-		if(TASRunIsInitialized(0))
+		if(TASRunIsInitialized(tasrun))
 		{
 			if(bulk_mode)
 			{
-				if(!request_pending && TASRunGetSize(0) <= (MAX_SIZE-28)) // not full enough
+				if(!request_pending && TASRunGetSize(tasrun) <= (MAX_SIZE-28)) // not full enough
 				{
-					if(CDC_Transmit_FS((uint8_t*)"a", 1) == USBD_OK) // notify that we latched and want more
+					if(serial_interface_output((uint8_t*)"a", 1) == USBD_OK) // notify that we latched and want more
 					{
 						request_pending = 1;
 					}
@@ -363,7 +368,7 @@ void EXTI1_IRQHandler(void)
 			}
 			else
 			{
-				CDC_Transmit_FS((uint8_t*)"A", 1); // notify that we latched
+				serial_interface_output((uint8_t*)"A", 1); // notify that we latched
 			}
 		}
 		else
@@ -374,7 +379,7 @@ void EXTI1_IRQHandler(void)
 				regbit = 16;
 
 			// fill the overread
-			if(TASRunGetOverread(0)) // overread is 1/HIGH
+			if(TASRunGetOverread(tasrun)) // overread is 1/HIGH
 			{
 				// so set logical LOW (NES/SNES button pressed)
 				for(uint8_t index = regbit;index < 17;index++)
@@ -425,7 +430,8 @@ void EXTI4_IRQHandler(void)
   /* USER CODE BEGIN EXTI4_IRQn 0 */
 	// P1_DATA_2 == N64_DATA
 	// Read 64 command
-	Console c = TASRunGetConsole(0);
+	TASRun *tasrun = TASRunGetByIndex(RUN_A);
+	Console c = TASRunGetConsole(tasrun);
 	GCControllerData gc_data;
 
 	__disable_irq();
@@ -455,7 +461,7 @@ void EXTI4_IRQHandler(void)
 		  SendIdentityN64();
 		  break;
 	  case 0x01: // poll for N64 state
-		  frame = GetNextFrame(0);
+		  frame = GetNextFrame(tasrun);
 		  if(frame == NULL) // buffer underflow
 		  {
 			  SendControllerDataN64(0); // send blank controller data
@@ -471,7 +477,7 @@ void EXTI4_IRQHandler(void)
 	  case 0x400302:
 	  case 0x400300:
 	  case 0x400301:
-		  frame = GetNextFrame(0);
+		  frame = GetNextFrame(tasrun);
 		  if(frame == NULL) // buffer underflow
 		  {
 				memset(&gc_data, 0, sizeof(gc_data));
@@ -508,10 +514,10 @@ void EXTI4_IRQHandler(void)
 		case 0x400302: // GC poll
 		case 0x400300: // GC poll
 		case 0x400301: // GC poll
-			CDC_Transmit_FS((uint8_t*)"A", 1);
+			serial_interface_output((uint8_t*)"A", 1);
 
 			if(frame == NULL) // there was a buffer underflow
-				CDC_Transmit_FS((uint8_t*)"\xB2", 1);
+				serial_interface_output((uint8_t*)"\xB2", 1);
 		break;
 	}
 
@@ -566,6 +572,49 @@ void TIM3_IRQHandler(void)
 }
 
 /**
+  * @brief This function handles USART2 global interrupt.
+  */
+
+void USART2_IRQHandler(void)
+{
+	/* USER CODE BEGIN USART2_IRQn 0 */
+	uint32_t isrflags   = READ_REG(huart2.Instance->SR);
+	uint32_t cr1its     = READ_REG(huart2.Instance->CR1);
+	/* UART in mode Transmitter ------------------------------------------------*/
+	if (((isrflags & USART_SR_TXE) != RESET) && ((cr1its & USART_CR1_TXEIE) != RESET))
+	{
+		Simple_Transmit(&huart2);
+		return;
+	}
+
+	/* UART in mode Transmitter end --------------------------------------------*/
+	if (((isrflags & USART_SR_TC) != RESET) && ((cr1its & USART_CR1_TCIE) != RESET))
+	{
+		/* Disable the UART Transmit Complete Interrupt */
+		__HAL_UART_DISABLE_IT(&huart2, UART_IT_TC);
+
+		/* Tx process is ended, restore huart->gState to Ready */
+		huart2.gState = HAL_UART_STATE_READY;
+		return;
+	}
+
+	if(((isrflags & USART_SR_RXNE) != RESET) && ((cr1its & USART_CR1_RXNEIE) != RESET))
+	{
+		// PROCESS USART2 Rx IRQ HERE
+		uint8_t input = ((huart2.Instance)->DR) & (uint8_t)0xFF; // get the last byte from the data register
+
+		serial_interface_set_output_function(UART2_OutputFunction);
+		serial_interface_consume(&input, 1);
+		return;
+	}
+	/* USER CODE END USART2_IRQn 0 */
+	HAL_UART_IRQHandler(&huart2);
+	/* USER CODE BEGIN USART2_IRQn 1 */
+
+	/* USER CODE END USART2_IRQn 1 */
+}
+
+/**
   * @brief This function handles TIM6 global interrupt and DAC1, DAC2 underrun error interrupts.
   */
 void TIM6_DAC_IRQHandler(void)
@@ -612,6 +661,29 @@ void OTG_FS_IRQHandler(void)
 }
 
 /* USER CODE BEGIN 1 */
+HAL_StatusTypeDef Simple_Transmit(UART_HandleTypeDef *huart)
+{
+  /* Check that a Tx process is ongoing */
+  if (huart->gState == HAL_UART_STATE_BUSY_TX)
+  {
+    huart->Instance->DR = (uint8_t)(*huart->pTxBuffPtr++ & (uint8_t)0x00FF);
+
+    if (--huart->TxXferCount == 0U)
+    {
+      /* Disable the UART Transmit Complete Interrupt */
+      __HAL_UART_DISABLE_IT(huart, UART_IT_TXE);
+
+      /* Enable the UART Transmit Complete Interrupt */
+      __HAL_UART_ENABLE_IT(huart, UART_IT_TC);
+    }
+    return HAL_OK;
+  }
+  else
+  {
+    return HAL_BUSY;
+  }
+}
+
 void Disable8msTimer()
 {
 	TIM3->CNT = 0; // reset count
@@ -735,6 +807,11 @@ __attribute__((optimize("O0"))) inline void UpdateVisBoards()
 	WAIT_4_CYCLES;
 	GPIOB->BSRR = (1 << V1_LATCH_LOW_B);
 	GPIOC->BSRR = (1 << V2_LATCH_LOW_C);
+}
+
+uint8_t UART2_OutputFunction(uint8_t *buffer, uint16_t n)
+{
+	return HAL_UART_Transmit_IT(&huart2, buffer, n);
 }
 /* USER CODE END 1 */
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
