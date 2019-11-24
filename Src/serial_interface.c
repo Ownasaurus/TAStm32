@@ -391,6 +391,7 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 				if(input == 'A')
 				{
 					instance.tasrun = TASRunGetByIndex(RUN_A);
+
 					instance.state = SERIAL_TRANSITION_1;
 				}
 				else
@@ -401,23 +402,26 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 				}
 				break;
 			case SERIAL_TRANSITION_1:
-				// ignore 3rd byte
+				// 3rd byte is transition type
+				instance.transition_type = input;
 				instance.state = SERIAL_TRANSITION_2;
 				break;
 			case SERIAL_TRANSITION_2:
+				// next 4 bytes are transition frame number (uint32_t)
 				instance.controller_data_bytes_read = 0;
 				instance.state = SERIAL_TRANSITION_3;  // intentional fall through
 			case SERIAL_TRANSITION_3:
 				if (instance.controller_data_bytes_read < sizeof(uint32_t))
 				{
-					instance.controller_data_buffer[instance.controller_data_bytes_read] = input;
+					instance.controller_data_buffer[instance.controller_data_bytes_read++] = input;
 					break;
 				}
 
 				uint32_t tempVal;
 				memcpy(&tempVal, instance.controller_data_buffer, sizeof(uint32_t));
 
-				if(input == 'A') // transition to ACE
+				// now make a decision based off of the 3rd byte noted earlier
+				if(instance.transition_type == 'A') // transition to ACE
 				{
 					if(!AddTransition(instance.tasrun, TRANSITION_ACE, tempVal)) // try adding transition
 					{
@@ -428,7 +432,7 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 						break;
 					}
 				}
-				else if(input == 'N')
+				else if(instance.transition_type == 'N')
 				{
 					if(!AddTransition(instance.tasrun, TRANSITION_NORMAL, tempVal)) // try adding transition
 					{
@@ -439,7 +443,7 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 						break;
 					}
 				}
-				else if(input == 'S')
+				else if(instance.transition_type == 'S')
 				{
 					if(!AddTransition(instance.tasrun, TRANSITION_RESET_SOFT, tempVal)) // try adding transition
 					{
@@ -450,7 +454,7 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 						break;
 					}
 				}
-				else if(input == 'H')
+				else if(instance.transition_type == 'H')
 				{
 					if(!AddTransition(instance.tasrun, TRANSITION_RESET_HARD, tempVal)) // try adding transition
 					{

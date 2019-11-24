@@ -37,9 +37,10 @@ typedef enum
 
 typedef uint8_t (*OutputFunction)(uint8_t *buffer, uint16_t n);
 
-typedef struct {
+typedef struct
+{
 	SerialInterfaceState state;
-	//SerialRun selected_run;
+	uint8_t transition_type;
 	TASRun *tasrun;
 	OutputFunction output_func;
 	uint8_t controller_data_buffer[sizeof(RunData) * MAX_CONTROLLERS * MAX_DATA_LANES];
