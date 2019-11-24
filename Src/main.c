@@ -148,8 +148,6 @@ int main(void)
   // ensure no buttons are pressed initially
   HAL_GPIO_WritePin(GPIOC, P1_DATA_1_Pin|P1_DATA_0_Pin|P2_DATA_2_Pin|P2_DATA_1_Pin|P2_DATA_0_Pin, GPIO_PIN_SET);
 
-  //HAL_UART_Receive_IT(&huart2, &input, 1);
-
   /* USER CODE END 2 */
 
   /* Infinite loop */
