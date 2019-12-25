@@ -25,12 +25,20 @@ def int_to_byte(interger):
 
 class TAStm32():
     def __init__(self, ser):
-        try:
-            self.ser = serial.Serial(ser, 115200, timeout=0)
-        except serial.SerialException:
+        att = 0
+        while att < 5:
+            try:
+                self.ser = serial.Serial(ser, 115200, timeout=0)
+                break
+            except serial.SerialException:
+                att += 1
+                self.ser = None
+                continue
+        if self.ser == None:
             print ('ERROR: the specified interface (' + ser + ') is in use')
             sys.exit(0)
-        self.activeRuns = {b'A': False, b'B': False, b'C': False, b'D': False}
+        else:
+            self.activeRuns = {b'A': False, b'B': False, b'C': False, b'D': False}
 
     def get_run_prefix(self):
         if self.activeRuns[b'A']:
