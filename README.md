@@ -15,11 +15,8 @@ Install the [latest Python 3 release](https://www.python.org/downloads/windows/)
 
 Log out/log in to refresh the PATH variable
 
-run in cmd:
-
-py -3 -m pip install pyserial
-
-py -3 -m pip install psutil
+    py -3 -m pip install pyserial
+    py -3 -m pip install psutil
 
 clone this repo
 
