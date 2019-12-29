@@ -287,6 +287,7 @@ void EXTI1_IRQHandler(void)
 		{
 			dataptr = GetNextFrame(tasrun);
 			before_trains = 0;
+			between_trains = 0;
 		}
 		else
 		{
