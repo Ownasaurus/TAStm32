@@ -739,27 +739,27 @@ void ResetAndEnableP2ClockTimer()
 
 __attribute__((optimize("O0"))) inline void UpdateVisBoards()
 {
-	// first 8 clock pulses at least 10ns in width
-	for(int x = 0;x < 8;x++)
-	{
-		//set vis data
-		GPIOB->BSRR = V1_GPIOB_current[x];
-		GPIOC->BSRR = V2_GPIOC_current[x];
-
-		// give time to it to register
-		WAIT_4_CYCLES;
-
-		GPIOB->BSRR = (1 << V1_CLOCK_HIGH_B);
-		GPIOA->BSRR = (1 << V2_CLOCK_HIGH_A);
-		// wait 4 cycles which should be well over the minimum required 10ns but still relatively quick
-		WAIT_4_CYCLES;
-		GPIOB->BSRR = (1 << V1_CLOCK_LOW_B);
-		GPIOA->BSRR = (1 << V2_CLOCK_LOW_A);
-		WAIT_4_CYCLES;
-	}
-
 	if(c == CONSOLE_NES)
 	{
+		// first 8 clock pulses at least 10ns in width
+		for(int x = 0;x < 8;x++)
+		{
+			//set vis data
+			GPIOB->BSRR = V1_GPIOB_current[x];
+			GPIOC->BSRR = V2_GPIOC_current[x];
+
+			// give time to it to register
+			WAIT_4_CYCLES;
+
+			GPIOB->BSRR = (1 << V1_CLOCK_HIGH_B);
+			GPIOA->BSRR = (1 << V2_CLOCK_HIGH_A);
+			// wait 4 cycles which should be well over the minimum required 10ns but still relatively quick
+			WAIT_4_CYCLES;
+			GPIOB->BSRR = (1 << V1_CLOCK_LOW_B);
+			GPIOA->BSRR = (1 << V2_CLOCK_LOW_A);
+			WAIT_4_CYCLES;
+		}
+
 		// set rest of the vis data to 0s
 		GPIOB->BSRR = (1 << V1_D0_LOW_B) | (1 << V1_D1_LOW_B);
 		GPIOC->BSRR = (1 << V2_D0_LOW_C) | (1 << V2_D1_LOW_C);
@@ -779,8 +779,38 @@ __attribute__((optimize("O0"))) inline void UpdateVisBoards()
 	}
 	else if(c == CONSOLE_SNES)
 	{
-		// do the other 8 bits
-		for(int x = 8;x < 15;x++)
+		// fix bit order
+
+		GPIOB->BSRR = V1_GPIOB_current[8];
+		GPIOC->BSRR = V2_GPIOC_current[8];
+
+		// give time to it to register
+		WAIT_4_CYCLES;
+
+		GPIOB->BSRR = (1 << V1_CLOCK_HIGH_B);
+		GPIOA->BSRR = (1 << V2_CLOCK_HIGH_A);
+		// wait 4 cycles which should be well over the minimum required 10ns but still relatively quick
+		WAIT_4_CYCLES;
+		GPIOB->BSRR = (1 << V1_CLOCK_LOW_B);
+		GPIOA->BSRR = (1 << V2_CLOCK_LOW_A);
+		WAIT_4_CYCLES;
+
+		GPIOB->BSRR = V1_GPIOB_current[0];
+		GPIOC->BSRR = V2_GPIOC_current[0];
+
+		// give time to it to register
+		WAIT_4_CYCLES;
+
+		GPIOB->BSRR = (1 << V1_CLOCK_HIGH_B);
+		GPIOA->BSRR = (1 << V2_CLOCK_HIGH_A);
+		// wait 4 cycles which should be well over the minimum required 10ns but still relatively quick
+		WAIT_4_CYCLES;
+		GPIOB->BSRR = (1 << V1_CLOCK_LOW_B);
+		GPIOA->BSRR = (1 << V2_CLOCK_LOW_A);
+		WAIT_4_CYCLES;
+
+		// at least 10ns in width
+		for(int x = 2;x < 8;x++)
 		{
 			//set vis data
 			GPIOB->BSRR = V1_GPIOB_current[x];
@@ -797,6 +827,54 @@ __attribute__((optimize("O0"))) inline void UpdateVisBoards()
 			GPIOA->BSRR = (1 << V2_CLOCK_LOW_A);
 			WAIT_4_CYCLES;
 		}
+
+		GPIOB->BSRR = V1_GPIOB_current[9];
+		GPIOC->BSRR = V2_GPIOC_current[9];
+
+		// give time to it to register
+		WAIT_4_CYCLES;
+
+		GPIOB->BSRR = (1 << V1_CLOCK_HIGH_B);
+		GPIOA->BSRR = (1 << V2_CLOCK_HIGH_A);
+		// wait 4 cycles which should be well over the minimum required 10ns but still relatively quick
+		WAIT_4_CYCLES;
+		GPIOB->BSRR = (1 << V1_CLOCK_LOW_B);
+		GPIOA->BSRR = (1 << V2_CLOCK_LOW_A);
+		WAIT_4_CYCLES;
+
+		GPIOB->BSRR = V1_GPIOB_current[1];
+		GPIOC->BSRR = V2_GPIOC_current[1];
+
+		// give time to it to register
+		WAIT_4_CYCLES;
+
+		GPIOB->BSRR = (1 << V1_CLOCK_HIGH_B);
+		GPIOA->BSRR = (1 << V2_CLOCK_HIGH_A);
+		// wait 4 cycles which should be well over the minimum required 10ns but still relatively quick
+		WAIT_4_CYCLES;
+		GPIOB->BSRR = (1 << V1_CLOCK_LOW_B);
+		GPIOA->BSRR = (1 << V2_CLOCK_LOW_A);
+		WAIT_4_CYCLES;
+
+		// at least 10ns in width
+		for(int x = 10;x < 16;x++)
+		{
+			//set vis data
+			GPIOB->BSRR = V1_GPIOB_current[x];
+			GPIOC->BSRR = V2_GPIOC_current[x];
+
+			// give time to it to register
+			WAIT_4_CYCLES;
+
+			GPIOB->BSRR = (1 << V1_CLOCK_HIGH_B);
+			GPIOA->BSRR = (1 << V2_CLOCK_HIGH_A);
+			// wait 4 cycles which should be well over the minimum required 10ns but still relatively quick
+			WAIT_4_CYCLES;
+			GPIOB->BSRR = (1 << V1_CLOCK_LOW_B);
+			GPIOA->BSRR = (1 << V2_CLOCK_LOW_A);
+			WAIT_4_CYCLES;
+		}
+
 	}
 	WAIT_4_CYCLES;
 
