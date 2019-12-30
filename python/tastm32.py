@@ -215,6 +215,21 @@ class TAStm32():
                 if missed != 0:
                     fn -= missed
                     print('Buffer Overflow x{}'.format(missed))
+
+                # Latch Trains
+                trainskips = c.count(b'UA')
+                if trainskips != 0:
+                    print(f'Extra frame detected. Skipping a frame to compensate x{trainskips}')
+                trainextra = c.count(b'UB')
+                if trainextra != 0:
+                    print(f'Short a frame. Adding a frame to compensate x{trainextra}')
+                trainfin = c.count(b'UC')
+                if trainfin != 0:
+                    print(f'END OF LATCH TRAIN x{trainfin}')
+                trainfailed = c.count(b'UF')
+                if trainfailed != 0:
+                    print(f'Off by many frames. Good luck x{trainfailed}')
+
                 for latch in range(latches):
                     try:
                         data = run_id + buffer[fn]
