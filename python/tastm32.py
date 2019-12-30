@@ -342,13 +342,14 @@ def main():
     for blank in range(args.blank):
         data = run_id + blankframe
         dev.write(data)
-        print('Sending Blank Latch: {}'.format(blank))
+    print(f'Sending Blank Latches: {args.blank}')
     fn = 0
     for latch in range(int_buffer-args.blank):
         try:
             data = run_id + buffer[fn]
             dev.write(data)
-            print('Sending Latch: {}'.format(fn))
+            if fn % 100 == 0:
+                print(f'Sending Latch: {fn}')
             fn += 1
         except IndexError:
             pass
