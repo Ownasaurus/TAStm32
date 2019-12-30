@@ -74,9 +74,15 @@ void TIM6_DAC_IRQHandler(void);
 void TIM7_IRQHandler(void);
 void OTG_FS_IRQHandler(void);
 /* USER CODE BEGIN EFP */
+void DisableTrainTimer();
 void Disable8msTimer();
 void DisableP1ClockTimer();
 void DisableP2ClockTimer();
+void ResetAndEnableTrainTimer();
+void ResetAndEnable8msTimer();
+void ResetAndEnableP1ClockTimer();
+void ResetAndEnableP2ClockTimer();
+void UpdateVisBoards();
 /* USER CODE END EFP */
 
 #ifdef __cplusplus

@@ -126,15 +126,13 @@ volatile uint8_t p2_clock_filtered = 0;
 
 // latch train vars
 uint8_t before_trains = 1;
-uint8_t current_train_index = 0;
-uint8_t current_train_latch_count = 0;
+uint16_t current_train_index = 0;
+uint16_t current_train_latch_count = 0;
 uint8_t between_trains = 1;
 
-uint16_t latch_trains[] = {	0xEC, 0x1D, 0x00, 0x04, 0x00, 0x13, 0x02, 0x79, 0x00, 0x7A, 0x00, 0x4D, 0x00, 0x4D,
-							0x00, 0x21, 0x00, 0x33, 0x02, 0x5D, 0x00, 0xBA, 0x00, 0xD1, 0x00, 0x45, 0x01, 0x07,
-							0x00, 0xCC, 0x00, 0xE7, 0x00, 0x4F, 0x01, 0x38, 0x00, 0xBF, 0x00, 0xC8, 0x00, 0x85,
-							0x01, 0x45, 0x00, 0xE5, 0x00, 0xE7, 0x00, 0x56, 0x00, 0xF9, 0x00, 0xCB, 0x00, 0xE3,
-							0x00, 0x53, 0x3F, 0x8E };
+uint16_t latch_trains[] = {	0x0004, 0x0013, 0x0279, 0x007A, 0x004D, 0x004D, 0x0021, 0x0033, 0x025D, 0x00BA, 0x00D1,
+							0x0045, 0x0107, 0x00CC, 0x00E7, 0x004F, 0x0138, 0x00BF, 0x00C8, 0x0085, 0x0145, 0x00E5,
+							0x00E7, 0x0056, 0x00F9, 0x00CB, 0x00E3, 0x0053, 0x3F8E};
 
 Console c = 0;
 /* USER CODE END PV */
@@ -142,15 +140,6 @@ Console c = 0;
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN PFP */
 void my_wait_us_asm(int n);
-void ResetAndEnableTrainTimer();
-void DisableTrainTimer();
-void ResetAndEnable8msTimer();
-void Disable8msTimer();
-void DisableP1ClockTimer();
-void ResetAndEnableP1ClockTimer();
-void DisableP2ClockTimer();
-void ResetAndEnableP2ClockTimer();
-void UpdateVisBoards();
 uint8_t UART2_OutputFunction(uint8_t *buffer, uint16_t n);
 HAL_StatusTypeDef Simple_Transmit(UART_HandleTypeDef *huart);
 /* USER CODE END PFP */
@@ -281,7 +270,7 @@ void EXTI1_IRQHandler(void)
 			ResetAndEnable8msTimer(); // start timer and proceed as normal
 		}
 
-		RunData (*dataptr)[MAX_CONTROLLERS][MAX_DATA_LANES];
+		static RunData (*dataptr)[MAX_CONTROLLERS][MAX_DATA_LANES];
 
 		if(before_trains) // initial setup should ignore latch train logic
 		{
@@ -301,18 +290,22 @@ void EXTI1_IRQHandler(void)
 				{
 					GetNextFrame(tasrun); // burn a frame of data
 					dataptr = GetNextFrame(tasrun); // use this frame instead
+					serial_interface_output((uint8_t*)"UB", 2);
 				}
 				else if(diff == -1) // we had one extra latch
 				{
 					// do NOT get next frame (yet). hold back for one
+					serial_interface_output((uint8_t*)"UA", 2);
 				}
 				else if(diff != 0) // large deviation
 				{
 					// AHHHH!!!!!! Give some sort of unrecoverable error?
+					serial_interface_output((uint8_t*)"UF", 2);
 				}
 				else // normalcy
 				{
 					dataptr = GetNextFrame(tasrun);
+					serial_interface_output((uint8_t*)"UC", 2);
 				}
 
 				current_train_index++; // we have begun the next train
@@ -325,6 +318,7 @@ void EXTI1_IRQHandler(void)
 				dataptr = GetNextFrame(tasrun);
 			}
 
+			DisableTrainTimer(); // reset counters back to 0
 			ResetAndEnableTrainTimer();
 		}
 
@@ -624,6 +618,7 @@ void TIM1_UP_TIM10_IRQHandler(void)
   /* USER CODE BEGIN TIM1_UP_TIM10_IRQn 0 */
   between_trains = 1; // if the timer expired, there was at least 20ms between latches. therefore we are between trains.
   DisableTrainTimer(); // to ensure it was a 1-shot
+
   /* USER CODE END TIM1_UP_TIM10_IRQn 0 */
   HAL_TIM_IRQHandler(&htim10);
   /* USER CODE BEGIN TIM1_UP_TIM10_IRQn 1 */

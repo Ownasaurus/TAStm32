@@ -27,6 +27,11 @@ extern const uint8_t SNES_RESET_LOW_A;
 extern uint8_t request_pending;
 extern uint8_t bulk_mode;
 
+extern uint8_t before_trains;
+extern uint16_t current_train_index;
+extern uint16_t current_train_latch_count;
+extern uint8_t between_trains;
+
 // only instance of this, but make callers use access functions
 static serial_interface_state_t instance;
 
@@ -76,6 +81,7 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 						Disable8msTimer();
 						DisableP1ClockTimer();
 						DisableP2ClockTimer();
+						DisableTrainTimer();
 
 						// clear all interrupts
 						while (HAL_NVIC_GetPendingIRQ(EXTI0_IRQn))
@@ -110,6 +116,10 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 						{
 							HAL_NVIC_ClearPendingIRQ(TIM7_IRQn);
 						}
+						while (HAL_NVIC_GetPendingIRQ(TIM1_UP_TIM10_IRQn))
+						{
+							HAL_NVIC_ClearPendingIRQ(TIM1_UP_TIM10_IRQn);
+						}
 
 						// important to reset our state
 						recentLatch = 0;
@@ -120,6 +130,10 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 						clockFix = 0;
 						request_pending = 0;
 						bulk_mode = 0;
+						before_trains = 1;
+						current_train_index = 0;
+						current_train_latch_count = 0;
+						between_trains = 1;
 
 						memset((uint32_t*)&P1_GPIOC_current, 0, 128);
 						memset((uint32_t*)&P1_GPIOC_next, 0, 128);

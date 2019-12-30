@@ -219,16 +219,16 @@ class TAStm32():
                 # Latch Trains
                 trainskips = c.count(b'UA')
                 if trainskips != 0:
-                    print(f'Extra frame detected. Skipping a frame to compensate x{trainskips}')
+                    print(f'--- Extra frame detected. Skipping a frame to compensate. x{trainskips}')
                 trainextra = c.count(b'UB')
                 if trainextra != 0:
-                    print(f'Short a frame. Adding a frame to compensate x{trainextra}')
+                    print(f'--- Short a frame. Adding a frame to compensate. x{trainextra}')
                 trainfin = c.count(b'UC')
                 if trainfin != 0:
-                    print(f'END OF LATCH TRAIN x{trainfin}')
+                    print(f'+++ Latch train success! x{trainfin}')
                 trainfailed = c.count(b'UF')
                 if trainfailed != 0:
-                    print(f'Off by many frames. Good luck x{trainfailed}')
+                    print(f'!!! Off by many frames. Run is probably broken. Good luck! x{trainfailed}')
 
                 for latch in range(latches):
                     try:
