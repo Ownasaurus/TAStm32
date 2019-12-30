@@ -121,6 +121,11 @@ class TAStm32():
             if command != '':
                 self.write(command)
 
+    def send_latchtrain(self, prefix, latchtrain):
+        if self.activeRuns[prefix]:
+            command = b''.join([b'U', prefix, struct.pack('I', len(latchtrain)), *[struct.pack('I', i) for i in latchtrain]])
+            self.write(command)
+
     def setup_run(self, console, players=[1], dpcm=False, overread=False, clock_filter=0):
         prefix = self.get_run_prefix()
         if prefix == None:
@@ -273,6 +278,9 @@ def main():
             elif transition[1] == 'H':
                 transition[1] = b'H'
 
+    if args.latchtrain != '':
+        args.latchtrain = [int(x) for x in args.latchtrain.split(',')]
+
     DEBUG = args.debug
 
     args.players = args.players.split(',')
@@ -336,6 +344,8 @@ def main():
     if args.transition != None:
         for transition in args.transition:
             dev.send_transition(run_id, *transition)
+    if args.latchtrain != None:
+        dev.send_latchtrain(run_id, args.latchtrain)
     print('Main Loop Start')
     dev.power_on()
     dev.main_loop()
