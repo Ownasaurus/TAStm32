@@ -9,8 +9,6 @@ This project aims to create an easy-to-use, multi-system TAS replay device to be
 
 ### Installation
 
-#### Windows
-
 Install the [latest Python 3 release](https://www.python.org/downloads/windows/)
 
 Log out/log in to refresh the PATH variable
@@ -24,11 +22,11 @@ clone this repo
 
 Dumped TAS movies are available in the [TASBot projects repo](https://github.com/dwangoac/TASBot-Projects/tree/master/replayfiles)
 
-[Scripts to dump your own TASes](https://github.com/dwangoac/TASBot-Projects/blob/master/Dump_Scripts/fceux_dump_latches.lua)
+[Scripts to dump your own TASes](https://github.com/dwangoac/TASBot-Projects/blob/master/Dump_Scripts/)
 
-Once you've prepared a movie dump, use it with the TAStm32 as such:
+Once you've prepared a movie dump, use it with the TAStm32. Here is one example example is here:
 
-    tastm32.py --console nes --players 1,5 --dpcm --clock 14 lordtom-maru-tompa-smb3-warps-improvement_-_subs_changes.frame.r08
+    py -3 tastm32.py --console snes --players 1,5 --dpcm --clock 14 --transition 2123 A --blank 1 smb3_agdq.r16m
 
 ### Special Thanks
 #### TheMas3212 - The main contributor to this project. Aided with all things python, designing the serial communication protocol, helping with PCB design, and debugging throughout the whole process.
