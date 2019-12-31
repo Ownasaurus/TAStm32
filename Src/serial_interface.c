@@ -139,9 +139,11 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 						current_train_index = 0;
 						current_train_latch_count = 0;
 						between_trains = 1;
+
 						if(latch_trains != NULL)
 						{
 							free(latch_trains);
+							latch_trains = NULL;
 						}
 
 						memset((uint32_t*)&P1_GPIOC_current, 0, 128);
