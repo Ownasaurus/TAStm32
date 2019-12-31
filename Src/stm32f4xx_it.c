@@ -124,19 +124,21 @@ volatile uint8_t clockFix = 0;
 volatile uint8_t p1_clock_filtered = 0;
 volatile uint8_t p2_clock_filtered = 0;
 
+// latch train vars
+uint8_t before_trains = 1;
+uint16_t current_train_index = 0;
+uint16_t current_train_latch_count = 0;
+uint8_t between_trains = 1;
+
+uint16_t* latch_trains = NULL;
+//{	0x0004, 0x0013, 0x0279, 0x007A, 0x004D, 0x004D, 0x0021, 0x0033, 0x025D, 0x00BA, 0x00D1, 0x0045, 0x0107, 0x00CC, 0x00E7, 0x004F, 0x0138, 0x00BF, 0x00C8, 0x0085, 0x0145, 0x00E5, 0x00E7, 0x0056, 0x00F9, 0x00CB, 0x00E3, 0x0053, 0x3F8E};
+
 Console c = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN PFP */
 void my_wait_us_asm(int n);
-void ResetAndEnable8msTimer();
-void Disable8msTimer();
-void DisableP1ClockTimer();
-void ResetAndEnableP1ClockTimer();
-void DisableP2ClockTimer();
-void ResetAndEnableP2ClockTimer();
-void UpdateVisBoards();
 uint8_t UART2_OutputFunction(uint8_t *buffer, uint16_t n);
 HAL_StatusTypeDef Simple_Transmit(UART_HandleTypeDef *huart);
 /* USER CODE END PFP */
@@ -151,6 +153,7 @@ extern PCD_HandleTypeDef hpcd_USB_OTG_FS;
 extern TIM_HandleTypeDef htim3;
 extern TIM_HandleTypeDef htim6;
 extern TIM_HandleTypeDef htim7;
+extern TIM_HandleTypeDef htim10;
 extern UART_HandleTypeDef huart2;
 /* USER CODE BEGIN EV */
 extern volatile uint8_t request_pending;
@@ -266,9 +269,59 @@ void EXTI1_IRQHandler(void)
 			ResetAndEnable8msTimer(); // start timer and proceed as normal
 		}
 
-		toggleNext = TASRunIncrementFrameCount(tasrun);
+		static RunData (*dataptr)[MAX_CONTROLLERS][MAX_DATA_LANES];
 
-		RunData (*dataptr)[MAX_CONTROLLERS][MAX_DATA_LANES] = GetNextFrame(tasrun);
+		if(before_trains) // initial setup should ignore latch train logic
+		{
+			dataptr = GetNextFrame(tasrun);
+			before_trains = 0;
+			between_trains = 0;
+		}
+		else
+		{
+			if(between_trains == 1) // at least one lag frame detected
+			{
+				// do what you gotta do
+				// adjust the frame of the run accordingly
+				int diff = latch_trains[current_train_index] - current_train_latch_count;
+
+				if(diff == 1) // we are one latch short
+				{
+					GetNextFrame(tasrun); // burn a frame of data
+					dataptr = GetNextFrame(tasrun); // use this frame instead
+					serial_interface_output((uint8_t*)"UB", 2);
+				}
+				else if(diff == -1) // we had one extra latch
+				{
+					// do NOT get next frame (yet). hold back for one
+					serial_interface_output((uint8_t*)"UA", 2);
+				}
+				else if(diff != 0) // large deviation
+				{
+					// AHHHH!!!!!! Give some sort of unrecoverable error?
+					serial_interface_output((uint8_t*)"UF", 2);
+				}
+				else // normalcy
+				{
+					dataptr = GetNextFrame(tasrun);
+					serial_interface_output((uint8_t*)"UC", 2);
+				}
+
+				current_train_index++; // we have begun the next train
+				current_train_latch_count = 1; // reset the latch count
+				between_trains = 0; // we are no longer between trains
+			}
+			else
+			{
+				current_train_latch_count++;
+				dataptr = GetNextFrame(tasrun);
+			}
+
+			DisableTrainTimer(); // reset counters back to 0
+			ResetAndEnableTrainTimer();
+		}
+
+		toggleNext = TASRunIncrementFrameCount(tasrun);
 
 		if(dataptr)
 		{
@@ -413,6 +466,8 @@ void EXTI1_IRQHandler(void)
 
 		p1_current_bit = p2_current_bit = 1;
 		__enable_irq();
+
+		ResetAndEnableTrainTimer();
 	}
 
   /* USER CODE END EXTI1_IRQn 0 */
@@ -555,6 +610,22 @@ void EXTI9_5_IRQHandler(void)
 }
 
 /**
+  * @brief This function handles TIM1 update interrupt and TIM10 global interrupt.
+  */
+void TIM1_UP_TIM10_IRQHandler(void)
+{
+  /* USER CODE BEGIN TIM1_UP_TIM10_IRQn 0 */
+  between_trains = 1; // if the timer expired, there was at least 20ms between latches. therefore we are between trains.
+  DisableTrainTimer(); // to ensure it was a 1-shot
+
+  /* USER CODE END TIM1_UP_TIM10_IRQn 0 */
+  HAL_TIM_IRQHandler(&htim10);
+  /* USER CODE BEGIN TIM1_UP_TIM10_IRQn 1 */
+
+  /* USER CODE END TIM1_UP_TIM10_IRQn 1 */
+}
+
+/**
   * @brief This function handles TIM3 global interrupt.
   */
 void TIM3_IRQHandler(void)
@@ -574,10 +645,9 @@ void TIM3_IRQHandler(void)
 /**
   * @brief This function handles USART2 global interrupt.
   */
-
 void USART2_IRQHandler(void)
 {
-	/* USER CODE BEGIN USART2_IRQn 0 */
+  /* USER CODE BEGIN USART2_IRQn 0 */
 	uint32_t isrflags   = READ_REG(huart2.Instance->SR);
 	uint32_t cr1its     = READ_REG(huart2.Instance->CR1);
 	/* UART in mode Transmitter ------------------------------------------------*/
@@ -607,11 +677,11 @@ void USART2_IRQHandler(void)
 		serial_interface_consume(&input, 1);
 		return;
 	}
-	/* USER CODE END USART2_IRQn 0 */
-	HAL_UART_IRQHandler(&huart2);
-	/* USER CODE BEGIN USART2_IRQn 1 */
+  /* USER CODE END USART2_IRQn 0 */
+  HAL_UART_IRQHandler(&huart2);
+  /* USER CODE BEGIN USART2_IRQn 1 */
 
-	/* USER CODE END USART2_IRQn 1 */
+  /* USER CODE END USART2_IRQn 1 */
 }
 
 /**
@@ -682,6 +752,19 @@ HAL_StatusTypeDef Simple_Transmit(UART_HandleTypeDef *huart)
   {
     return HAL_BUSY;
   }
+}
+
+void DisableTrainTimer()
+{
+	TIM10->CNT = 0; // reset count
+	TIM10->SR = 0; // reset flags
+
+	HAL_TIM_Base_Stop_IT(&htim10);
+}
+
+void ResetAndEnableTrainTimer()
+{
+	HAL_TIM_Base_Start_IT(&htim10);
 }
 
 void Disable8msTimer()

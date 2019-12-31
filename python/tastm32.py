@@ -121,6 +121,11 @@ class TAStm32():
             if command != '':
                 self.write(command)
 
+    def send_latchtrain(self, prefix, latchtrain):
+        if self.activeRuns[prefix]:
+            command = b''.join([b'U', prefix, struct.pack('H', len(latchtrain)), *[struct.pack('H', i) for i in latchtrain]])
+            self.write(command)
+
     def setup_run(self, console, players=[1], dpcm=False, overread=False, clock_filter=0):
         prefix = self.get_run_prefix()
         if prefix == None:
@@ -210,6 +215,21 @@ class TAStm32():
                 if missed != 0:
                     fn -= missed
                     print('Buffer Overflow x{}'.format(missed))
+
+                # Latch Trains
+                trainskips = c.count(b'UA')
+                if trainskips != 0:
+                    print(f'--- Extra frame detected. Skipping a frame to compensate. x{trainskips}')
+                trainextra = c.count(b'UB')
+                if trainextra != 0:
+                    print(f'--- Short a frame. Adding a frame to compensate. x{trainextra}')
+                trainfin = c.count(b'UC')
+                if trainfin != 0:
+                    print(f'+++ Latch train success! x{trainfin}')
+                trainfailed = c.count(b'UF')
+                if trainfailed != 0:
+                    print(f'!!! Off by many frames. Run is probably broken. Good luck! x{trainfailed}')
+
                 for latch in range(latches):
                     try:
                         data = run_id + buffer[fn]
@@ -273,6 +293,9 @@ def main():
             elif transition[1] == 'H':
                 transition[1] = b'H'
 
+    if args.latchtrain != '':
+        args.latchtrain = [int(x) for x in args.latchtrain.split(',')]
+
     DEBUG = args.debug
 
     args.players = args.players.split(',')
@@ -319,13 +342,14 @@ def main():
     for blank in range(args.blank):
         data = run_id + blankframe
         dev.write(data)
-        print('Sending Blank Latch: {}'.format(blank))
+    print(f'Sending Blank Latches: {args.blank}')
     fn = 0
     for latch in range(int_buffer-args.blank):
         try:
             data = run_id + buffer[fn]
             dev.write(data)
-            print('Sending Latch: {}'.format(fn))
+            if fn % 100 == 0:
+                print(f'Sending Latch: {fn}')
             fn += 1
         except IndexError:
             pass
@@ -336,6 +360,8 @@ def main():
     if args.transition != None:
         for transition in args.transition:
             dev.send_transition(run_id, *transition)
+    if args.latchtrain != None:
+        dev.send_latchtrain(run_id, args.latchtrain)
     print('Main Loop Start')
     dev.power_on()
     dev.main_loop()

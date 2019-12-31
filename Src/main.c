@@ -71,6 +71,7 @@
 TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim6;
 TIM_HandleTypeDef htim7;
+TIM_HandleTypeDef htim10;
 
 UART_HandleTypeDef huart2;
 
@@ -88,6 +89,7 @@ static void MX_GPIO_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_TIM6_Init(void);
 static void MX_TIM7_Init(void);
+static void MX_TIM10_Init(void);
 static void MX_USART2_UART_Init(void);
 /* USER CODE BEGIN PFP */
 
@@ -103,7 +105,6 @@ static void MX_USART2_UART_Init(void);
   * @retval int
   */
 int main(void)
-
 {
   /* USER CODE BEGIN 1 */
 
@@ -133,6 +134,7 @@ int main(void)
   MX_TIM3_Init();
   MX_TIM6_Init();
   MX_TIM7_Init();
+  MX_TIM10_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
 
@@ -337,6 +339,37 @@ static void MX_TIM7_Init(void)
 }
 
 /**
+  * @brief TIM10 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM10_Init(void)
+{
+
+  /* USER CODE BEGIN TIM10_Init 0 */
+
+  /* USER CODE END TIM10_Init 0 */
+
+  /* USER CODE BEGIN TIM10_Init 1 */
+
+  /* USER CODE END TIM10_Init 1 */
+  htim10.Instance = TIM10;
+  htim10.Init.Prescaler = 16800-1;
+  htim10.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim10.Init.Period = 200-1;
+  htim10.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim10.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim10) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM10_Init 2 */
+
+  /* USER CODE END TIM10_Init 2 */
+
+}
+
+/**
   * @brief USART2 Initialization Function
   * @param None
   * @retval None
@@ -363,7 +396,6 @@ static void MX_USART2_UART_Init(void)
   {
     Error_Handler();
   }
-
   /* USER CODE BEGIN USART2_Init 2 */
   //RXNE = "Receive Data register not empty"
   __HAL_UART_ENABLE_IT(&huart2, UART_IT_RXNE); // enable receive interrupts; bypass the need for calls to HAL_UART_Receive_IT()

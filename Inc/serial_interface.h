@@ -19,6 +19,11 @@ typedef enum
 	SERIAL_POWER,
 	SERIAL_BULK,
 	SERIAL_LANE,
+	SERIAL_TRAIN_RUN,
+	SERIAL_TRAIN_LEN_1,
+	SERIAL_TRAIN_LEN_2,
+	SERIAL_TRAIN_VAL_1,
+	SERIAL_TRAIN_VAL_2,
 	SERIAL_CMD_Q_1,
 	SERIAL_CMD_Q_2,
 	SERIAL_TRANSITION_1,
@@ -45,6 +50,8 @@ typedef struct
 	OutputFunction output_func;
 	uint8_t controller_data_buffer[sizeof(RunData) * MAX_CONTROLLERS * MAX_DATA_LANES];
 	uint32_t controller_data_bytes_read;
+	uint16_t latch_train_length;
+	uint16_t latch_train_index;
 } serial_interface_state_t;
 
 void serial_interface_reset();
