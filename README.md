@@ -7,6 +7,29 @@ Please see the "Wiki" section for the technical details of the serial communicat
 
 This project aims to create an easy-to-use, multi-system TAS replay device to be used on actual consoles. The name of this project comes from the fact that it is powered by a STM32F4 microcontroller.
 
+### Installation
+
+#### Windows
+
+Install the [latest Python 3 release](https://www.python.org/downloads/windows/)
+
+Log out/log in to refresh the PATH variable
+
+    py -3 -m pip install pyserial
+    py -3 -m pip install psutil
+
+clone this repo
+
+### Usage
+
+Dumped TAS movies are available in the [TASBot projects repo](https://github.com/dwangoac/TASBot-Projects/tree/master/replayfiles)
+
+[Scripts to dump your own TASes](https://github.com/dwangoac/TASBot-Projects/blob/master/Dump_Scripts/fceux_dump_latches.lua)
+
+Once you've prepared a movie dump, use it with the TAStm32 as such:
+
+    tastm32.py --console nes --players 1,5 --dpcm --clock 14 lordtom-maru-tompa-smb3-warps-improvement_-_subs_changes.frame.r08
+
 ### Special Thanks
 #### TheMas3212 - The main contributor to this project. Aided with all things python, designing the serial communication protocol, helping with PCB design, and debugging throughout the whole process.
 #### CraftedCart - Designed the awesome-looking 3D case
