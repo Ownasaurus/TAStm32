@@ -123,7 +123,7 @@ class TAStm32():
 
     def send_latchtrain(self, prefix, latchtrain):
         if self.activeRuns[prefix]:
-            command = b''.join([b'U', prefix, struct.pack('I', len(latchtrain)), *[struct.pack('I', i) for i in latchtrain]])
+            command = b''.join([b'U', prefix, struct.pack('H', len(latchtrain)), *[struct.pack('H', i) for i in latchtrain]])
             self.write(command)
 
     def setup_run(self, console, players=[1], dpcm=False, overread=False, clock_filter=0):

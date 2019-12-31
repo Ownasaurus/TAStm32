@@ -4,6 +4,7 @@
 #include "main.h"
 
 #include <string.h>
+#include <stdlib.h>
 
 // TODO: replace with atomics?
 extern volatile uint8_t p1_current_bit;
@@ -31,6 +32,7 @@ extern uint8_t before_trains;
 extern uint16_t current_train_index;
 extern uint16_t current_train_latch_count;
 extern uint8_t between_trains;
+extern uint16_t* latch_trains;
 
 // only instance of this, but make callers use access functions
 static serial_interface_state_t instance;
@@ -67,6 +69,9 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 			case SERIAL_PREFIX:
 				switch(input)
 				{
+					case 'U': // set up latch train for a run
+						instance.state = SERIAL_TRAIN_RUN;
+						break;
 					case 'L':
 						instance.state = SERIAL_LANE;
 						break;
@@ -134,6 +139,10 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 						current_train_index = 0;
 						current_train_latch_count = 0;
 						between_trains = 1;
+						if(latch_trains != NULL)
+						{
+							free(latch_trains);
+						}
 
 						memset((uint32_t*)&P1_GPIOC_current, 0, 128);
 						memset((uint32_t*)&P1_GPIOC_next, 0, 128);
@@ -176,13 +185,53 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 						break;
 				}
 				break;
+			case SERIAL_TRAIN_RUN:
+				if(input != 'A')
+				{
+					serial_interface_output((uint8_t*)"\xFE", 1); // run not supported
+					instance.tasrun = NULL;
+					instance.state = SERIAL_COMPLETE;
+				}
+				else
+				{
+					instance.state = SERIAL_TRAIN_LEN_1;
+				}
+				break;
+			case SERIAL_TRAIN_LEN_1:
+				instance.latch_train_length = input;
+				instance.state = SERIAL_TRAIN_LEN_2;
+				break;
+			case SERIAL_TRAIN_LEN_2:
+				instance.latch_train_length += (input << 8);
+				instance.state = SERIAL_TRAIN_VAL_1;
+
+				latch_trains = (uint16_t*)malloc(sizeof(uint16_t)*instance.latch_train_length);
+				break;
+			case SERIAL_TRAIN_VAL_1:
+				latch_trains[instance.latch_train_index] = input; // put low 8 bits
+				instance.state = SERIAL_TRAIN_VAL_2;
+				break;
+			case SERIAL_TRAIN_VAL_2:
+				latch_trains[instance.latch_train_index++] += (input << 8); // put high 8 bits and advance index
+
+				if(instance.latch_train_index >= instance.latch_train_length) // done with latch train
+				{
+					instance.state = SERIAL_COMPLETE;
+				}
+				else
+				{
+					instance.state = SERIAL_TRAIN_VAL_1;
+				}
+				break;
 			case SERIAL_CMD_Q_1:
 				if(input != 'A')
 				{
 					serial_interface_output((uint8_t*)"\xFE", 1); // run not supported
 					instance.tasrun = NULL;
 					instance.state = SERIAL_COMPLETE;
-				} else {
+				}
+				else
+				{
 					instance.state = SERIAL_CMD_Q_2;
 				}
 				break;
@@ -190,10 +239,12 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 				if (input == '1') // enter bulk transfer mode
 				{
 					bulk_mode = 1;
-				} else if (input == '0') // exit bulk transfer mode
+				}
+				else if (input == '0') // exit bulk transfer mode
 				{
 					bulk_mode = 0;
-				} else // should not reach this
+				}
+				else // should not reach this
 				{
 					serial_interface_output((uint8_t*) "\xFA", 1); // Error during bulk transfer toggle
 					instance.tasrun = NULL;
