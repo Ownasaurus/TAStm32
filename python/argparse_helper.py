@@ -17,6 +17,8 @@ def setup_parser_full():
     parser.add_argument('--players', help='Comma seperated list of players', default='0')
     parser.add_argument('--debug', help='Enable Debug Mode', action='store_true')
     parser.add_argument('--dpcm', help='Enable dpcm fix', action='store_true')
+    parser.add_argument('--hardreset', help='Perform a hard/slow reset before the run begins', action='store_true')
+    parser.add_argument('--softreset', help='Perform a quick/fast reset before the run begins', action='store_true')
     parser.add_argument('--clock', help='Enable clock filter. Value must be between 0 and 63. This number gets multiplied by 0.25us')
     parser.add_argument('--overread', help='Set overread value', action='store_true')
     parser.add_argument('--transition', help='Add a transition', nargs=2, action='append')

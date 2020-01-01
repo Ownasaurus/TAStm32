@@ -280,6 +280,11 @@ def main():
     parser = argparse_helper.setup_parser_full()
 
     args = parser.parse_args()
+    
+    if args.hardreset or args.softreset:
+        dev.power_off()
+        if args.hardreset:
+            time.sleep(2.0)
 
     if args.transition != None:
         for transition in args.transition:
