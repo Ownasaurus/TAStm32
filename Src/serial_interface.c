@@ -33,6 +33,7 @@ extern uint16_t current_train_index;
 extern uint16_t current_train_latch_count;
 extern uint8_t between_trains;
 extern uint16_t* latch_trains;
+extern uint8_t trains_enabled;
 
 // only instance of this, but make callers use access functions
 static serial_interface_state_t instance;
@@ -139,6 +140,7 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 						current_train_index = 0;
 						current_train_latch_count = 0;
 						between_trains = 1;
+						trains_enabled = 0;
 
 						if(latch_trains != NULL)
 						{
@@ -196,6 +198,7 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 				}
 				else
 				{
+					trains_enabled = 1;
 					instance.state = SERIAL_TRAIN_LEN_1;
 				}
 				break;

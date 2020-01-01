@@ -129,6 +129,7 @@ uint8_t before_trains = 1;
 uint16_t current_train_index = 0;
 uint16_t current_train_latch_count = 0;
 uint8_t between_trains = 1;
+uint8_t trains_enabled = 0;
 
 uint16_t* latch_trains = NULL;
 //{	0x0004, 0x0013, 0x0279, 0x007A, 0x004D, 0x004D, 0x0021, 0x0033, 0x025D, 0x00BA, 0x00D1, 0x0045, 0x0107, 0x00CC, 0x00E7, 0x004F, 0x0138, 0x00BF, 0x00C8, 0x0085, 0x0145, 0x00E5, 0x00E7, 0x0056, 0x00F9, 0x00CB, 0x00E3, 0x0053, 0x3F8E};
@@ -271,54 +272,61 @@ void EXTI1_IRQHandler(void)
 
 		static RunData (*dataptr)[MAX_CONTROLLERS][MAX_DATA_LANES];
 
-		if(before_trains) // initial setup should ignore latch train logic
+		if(trains_enabled)
 		{
-			dataptr = GetNextFrame(tasrun);
-			before_trains = 0;
-			between_trains = 0;
-		}
-		else
-		{
-			if(between_trains == 1) // at least one lag frame detected
+			if(before_trains) // initial setup should ignore latch train logic
 			{
-				// do what you gotta do
-				// adjust the frame of the run accordingly
-				int diff = latch_trains[current_train_index] - current_train_latch_count;
-
-				if(diff == 1) // we are one latch short
-				{
-					GetNextFrame(tasrun); // burn a frame of data
-					dataptr = GetNextFrame(tasrun); // use this frame instead
-					serial_interface_output((uint8_t*)"UB", 2);
-				}
-				else if(diff == -1) // we had one extra latch
-				{
-					// do NOT get next frame (yet). hold back for one
-					serial_interface_output((uint8_t*)"UA", 2);
-				}
-				else if(diff != 0) // large deviation
-				{
-					// AHHHH!!!!!! Give some sort of unrecoverable error?
-					serial_interface_output((uint8_t*)"UF", 2);
-				}
-				else // normalcy
-				{
-					dataptr = GetNextFrame(tasrun);
-					serial_interface_output((uint8_t*)"UC", 2);
-				}
-
-				current_train_index++; // we have begun the next train
-				current_train_latch_count = 1; // reset the latch count
-				between_trains = 0; // we are no longer between trains
+				dataptr = GetNextFrame(tasrun);
+				before_trains = 0;
+				between_trains = 0;
 			}
 			else
 			{
-				current_train_latch_count++;
-				dataptr = GetNextFrame(tasrun);
-			}
+				if(between_trains == 1) // at least one lag frame detected
+				{
+					// do what you gotta do
+					// adjust the frame of the run accordingly
+					int diff = latch_trains[current_train_index] - current_train_latch_count;
 
-			DisableTrainTimer(); // reset counters back to 0
-			ResetAndEnableTrainTimer();
+					if(diff == 1) // we are one latch short
+					{
+						GetNextFrame(tasrun); // burn a frame of data
+						dataptr = GetNextFrame(tasrun); // use this frame instead
+						serial_interface_output((uint8_t*)"UB", 2);
+					}
+					else if(diff == -1) // we had one extra latch
+					{
+						// do NOT get next frame (yet). hold back for one
+						serial_interface_output((uint8_t*)"UA", 2);
+					}
+					else if(diff != 0) // large deviation
+					{
+						// AHHHH!!!!!! Give some sort of unrecoverable error?
+						serial_interface_output((uint8_t*)"UF", 2);
+					}
+					else // normalcy
+					{
+						dataptr = GetNextFrame(tasrun);
+						serial_interface_output((uint8_t*)"UC", 2);
+					}
+
+					current_train_index++; // we have begun the next train
+					current_train_latch_count = 1; // reset the latch count
+					between_trains = 0; // we are no longer between trains
+				}
+				else
+				{
+					current_train_latch_count++;
+					dataptr = GetNextFrame(tasrun);
+				}
+
+				DisableTrainTimer(); // reset counters back to 0
+				ResetAndEnableTrainTimer();
+			}
+		}
+		else
+		{
+			dataptr = GetNextFrame(tasrun);
 		}
 
 		toggleNext = TASRunIncrementFrameCount(tasrun);
