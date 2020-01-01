@@ -360,7 +360,7 @@ def main():
     if args.transition != None:
         for transition in args.transition:
             dev.send_transition(run_id, *transition)
-    if args.latchtrain != None:
+    if args.latchtrain != '':
         dev.send_latchtrain(run_id, args.latchtrain)
     print('Main Loop Start')
     dev.power_on()

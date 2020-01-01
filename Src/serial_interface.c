@@ -28,7 +28,6 @@ extern const uint8_t SNES_RESET_LOW_A;
 extern uint8_t request_pending;
 extern uint8_t bulk_mode;
 
-extern uint8_t before_trains;
 extern uint16_t current_train_index;
 extern uint16_t current_train_latch_count;
 extern uint8_t between_trains;
@@ -136,10 +135,9 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 						clockFix = 0;
 						request_pending = 0;
 						bulk_mode = 0;
-						before_trains = 1;
 						current_train_index = 0;
 						current_train_latch_count = 0;
-						between_trains = 1;
+						between_trains = 0;
 						trains_enabled = 0;
 
 						if(latch_trains != NULL)
