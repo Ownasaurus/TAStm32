@@ -13,10 +13,10 @@ extern volatile uint8_t recentLatch;
 extern volatile uint8_t toggleNext;
 extern volatile uint8_t dpcmFix;
 extern volatile uint8_t clockFix;
-extern volatile uint32_t P1_GPIOC_current[32];
-extern volatile uint32_t P1_GPIOC_next[32];
-extern volatile uint32_t P2_GPIOC_current[32];
-extern volatile uint32_t P2_GPIOC_next[32];
+extern volatile uint32_t P1_GPIOC_current[17];
+extern volatile uint32_t P1_GPIOC_next[17];
+extern volatile uint32_t P2_GPIOC_current[17];
+extern volatile uint32_t P2_GPIOC_next[17];
 extern volatile uint32_t V1_GPIOB_current[16];
 extern volatile uint32_t V1_GPIOB_next[16];
 extern volatile uint32_t V2_GPIOC_current[16];
@@ -146,10 +146,10 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 							latch_trains = NULL;
 						}
 
-						memset((uint32_t*)&P1_GPIOC_current, 0, 128);
-						memset((uint32_t*)&P1_GPIOC_next, 0, 128);
-						memset((uint32_t*)&P2_GPIOC_current, 0, 128);
-						memset((uint32_t*)&P2_GPIOC_next, 0, 128);
+						memset((uint32_t*)&P1_GPIOC_current, 0, 68);
+						memset((uint32_t*)&P1_GPIOC_next, 0, 68);
+						memset((uint32_t*)&P2_GPIOC_current, 0, 68);
+						memset((uint32_t*)&P2_GPIOC_next, 0, 68);
 
 						memset((uint32_t*)&V1_GPIOB_current, 0, 64);
 						memset((uint32_t*)&V1_GPIOB_next, 0, 64);
