@@ -197,6 +197,7 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 				else
 				{
 					trains_enabled = 1;
+					instance.latch_train_index = 0;
 					instance.state = SERIAL_TRAIN_LEN_1;
 				}
 				break;
