@@ -266,7 +266,7 @@ void EXTI1_IRQHandler(void)
 			ResetAndEnable8msTimer(); // start timer and proceed as normal
 		}
 
-		static RunData (*dataptr)[MAX_CONTROLLERS][MAX_DATA_LANES];
+		static RunDataArray *dataptr;
 
 		if(trains_enabled)
 		{
@@ -486,7 +486,7 @@ void EXTI4_IRQHandler(void)
 
 	__disable_irq();
 	uint32_t cmd;
-	RunData (*frame)[MAX_CONTROLLERS][MAX_DATA_LANES] = NULL;
+	RunDataArray *frame = NULL;
 
 	cmd = readCommand();
 

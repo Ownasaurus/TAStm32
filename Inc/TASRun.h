@@ -45,15 +45,17 @@ typedef struct
 	uint32_t frameno;
 } Transition;
 
+typedef RunData RunDataArray[MAX_CONTROLLERS][MAX_DATA_LANES];
+
 typedef struct
 {
 	Console console;
 	uint8_t numControllers;
 	uint8_t numDataLanes;
-	RunData runData[MAX_SIZE][MAX_CONTROLLERS][MAX_DATA_LANES];
-	RunData (*buf)[MAX_CONTROLLERS][MAX_DATA_LANES]; // points to the next place the received serial data will be stored
-	RunData (*end)[MAX_CONTROLLERS][MAX_DATA_LANES]; // points to the end of the array for bounds checking
-	RunData (*current)[MAX_CONTROLLERS][MAX_DATA_LANES]; // points to what the console will read next
+	RunDataArray runData[MAX_SIZE];
+	RunDataArray *buf; // points to the next place the received serial data will be stored
+	RunDataArray *end; // points to the end of the array for bounds checking
+	RunDataArray *current; // points to what the console will read next
 	volatile uint16_t size;
 	uint8_t dpcmFix;
 	uint8_t clockFix;
@@ -173,9 +175,9 @@ void TASRunSetNumDataLanes(TASRun *tasrun, uint8_t numDataLanes);
 void TASRunSetConsole(TASRun *tasrun, Console console);
 
 uint8_t TASRunIncrementFrameCount(TASRun *tasrun);
-uint8_t AddFrame(TASRun *tasrun, RunData (frame)[MAX_CONTROLLERS][MAX_DATA_LANES]);
-void ExtractDataAndAdvance(RunData (rd)[MAX_CONTROLLERS][MAX_DATA_LANES], TASRun *tasrun, uint8_t* Buf, int *byteNum);
-RunData (*GetNextFrame(TASRun *tasrun))[MAX_CONTROLLERS][MAX_DATA_LANES];
+uint8_t AddFrame(TASRun *tasrun, RunDataArray frame);
+void ExtractDataAndAdvance(RunDataArray rd, TASRun *tasrun, uint8_t* Buf, int *byteNum);
+RunDataArray *GetNextFrame(TASRun *tasrun);
 int ExtractDataAndAddFrame(TASRun *tasrun, uint8_t *buffer, uint32_t n);
 
 void SetN64Mode();
