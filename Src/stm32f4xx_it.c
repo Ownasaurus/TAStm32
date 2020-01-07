@@ -88,7 +88,7 @@ const uint8_t V2_CLOCK_LOW_A = 31;
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-#define WAIT_4_CYCLES asm("ADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0")
+#define WAIT_4_CYCLES __asm("ADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0")
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
