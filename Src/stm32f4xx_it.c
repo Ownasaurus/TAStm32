@@ -101,10 +101,10 @@ volatile uint64_t p2_d1_next = 0;
 volatile uint64_t p2_d2_next = 0;
 
 // leave enough room for SNES + overread
-uint32_t P1_GPIOC_current[17];
+volatile uint32_t P1_GPIOC_current[17];
 volatile uint32_t P1_GPIOC_next[17];
 
-uint32_t P2_GPIOC_current[17];
+volatile uint32_t P2_GPIOC_current[17];
 volatile uint32_t P2_GPIOC_next[17];
 
 volatile uint32_t V1_GPIOB_current[16];
@@ -113,8 +113,8 @@ volatile uint32_t V1_GPIOB_next[16];
 volatile uint32_t V2_GPIOC_current[16];
 volatile uint32_t V2_GPIOC_next[16];
 
-uint8_t p1_current_bit = 0;
-uint8_t p2_current_bit = 0;
+volatile uint8_t p1_current_bit = 0;
+volatile uint8_t p2_current_bit = 0;
 
 volatile uint8_t recentLatch = 0;
 volatile uint8_t toggleNext = 0;
@@ -155,8 +155,6 @@ extern TIM_HandleTypeDef htim7;
 extern TIM_HandleTypeDef htim10;
 extern UART_HandleTypeDef huart2;
 /* USER CODE BEGIN EV */
-extern volatile uint8_t request_pending;
-extern volatile uint8_t bulk_mode;
 /* USER CODE END EV */
 
 /******************************************************************************/

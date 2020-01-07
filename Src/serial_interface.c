@@ -6,34 +6,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-// TODO: replace with atomics?
-extern volatile uint8_t p1_current_bit;
-extern volatile uint8_t p2_current_bit;
-extern volatile uint8_t recentLatch;
-extern volatile uint8_t toggleNext;
-extern volatile uint8_t dpcmFix;
-extern volatile uint8_t clockFix;
-extern volatile uint32_t P1_GPIOC_current[17];
-extern volatile uint32_t P1_GPIOC_next[17];
-extern volatile uint32_t P2_GPIOC_current[17];
-extern volatile uint32_t P2_GPIOC_next[17];
-extern volatile uint32_t V1_GPIOB_current[16];
-extern volatile uint32_t V1_GPIOB_next[16];
-extern volatile uint32_t V2_GPIOC_current[16];
-extern volatile uint32_t V2_GPIOC_next[16];
-extern volatile uint8_t jumpToDFU;
-extern const uint8_t SNES_RESET_HIGH_A;
-extern const uint8_t SNES_RESET_LOW_A;
-
-extern uint8_t request_pending;
-extern uint8_t bulk_mode;
-
-extern uint16_t current_train_index;
-extern uint16_t current_train_latch_count;
-extern uint8_t between_trains;
-extern uint16_t* latch_trains;
-extern uint8_t trains_enabled;
-
 // only instance of this, but make callers use access functions
 static serial_interface_state_t instance;
 
