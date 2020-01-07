@@ -138,8 +138,8 @@ Console c;
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN PFP */
 void my_wait_us_asm(int n);
-uint8_t UART2_OutputFunction(uint8_t *buffer, uint16_t n);
-HAL_StatusTypeDef Simple_Transmit(UART_HandleTypeDef *huart);
+static uint8_t UART2_OutputFunction(uint8_t *buffer, uint16_t n);
+static HAL_StatusTypeDef Simple_Transmit(UART_HandleTypeDef *huart);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -726,7 +726,7 @@ void OTG_FS_IRQHandler(void)
 }
 
 /* USER CODE BEGIN 1 */
-HAL_StatusTypeDef Simple_Transmit(UART_HandleTypeDef *huart)
+static HAL_StatusTypeDef Simple_Transmit(UART_HandleTypeDef *huart)
 {
   /* Check that a Tx process is ongoing */
   if (huart->gState == HAL_UART_STATE_BUSY_TX)
@@ -965,7 +965,7 @@ __attribute__((optimize("O0"))) inline void UpdateVisBoards()
 	GPIOC->BSRR = (1 << V2_LATCH_LOW_C);
 }
 
-uint8_t UART2_OutputFunction(uint8_t *buffer, uint16_t n)
+static uint8_t UART2_OutputFunction(uint8_t *buffer, uint16_t n)
 {
 	return HAL_UART_Transmit_IT(&huart2, buffer, n);
 }
