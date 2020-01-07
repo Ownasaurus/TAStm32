@@ -58,11 +58,9 @@ typedef struct __attribute__((packed))
 
 void initialize_n64_buffer();
 uint32_t readCommand();
-uint8_t GetMiddleOfPulse();
 void SendIdentityN64();
 void SendIdentityGC();
 void SendOriginGC();
-void SendByte(unsigned char b);
 void SendRunDataN64(N64ControllerData data);
 void SendControllerDataN64(unsigned long data);
 void SendRunDataGC(GCControllerData gcdata);
