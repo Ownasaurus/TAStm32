@@ -118,15 +118,15 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 							latch_trains = NULL;
 						}
 
-						memset((uint32_t*)&P1_GPIOC_current, 0, 68);
-						memset((uint32_t*)&P1_GPIOC_next, 0, 68);
-						memset((uint32_t*)&P2_GPIOC_current, 0, 68);
-						memset((uint32_t*)&P2_GPIOC_next, 0, 68);
+						memset((uint32_t*)&P1_GPIOC_current, 0, sizeof(P1_GPIOC_current));
+						memset((uint32_t*)&P1_GPIOC_next, 0, sizeof(P1_GPIOC_next));
+						memset((uint32_t*)&P2_GPIOC_current, 0, sizeof(P2_GPIOC_current));
+						memset((uint32_t*)&P2_GPIOC_next, 0, sizeof(P2_GPIOC_next));
 
-						memset((uint32_t*)&V1_GPIOB_current, 0, 64);
-						memset((uint32_t*)&V1_GPIOB_next, 0, 64);
-						memset((uint32_t*)&V2_GPIOC_current, 0, 64);
-						memset((uint32_t*)&V2_GPIOC_next, 0, 64);
+						memset((uint32_t*)&V1_GPIOB_current, 0, sizeof(V1_GPIOB_current));
+						memset((uint32_t*)&V1_GPIOB_next, 0, sizeof(V1_GPIOB_next));
+						memset((uint32_t*)&V2_GPIOC_current, 0, sizeof(V2_GPIOC_current));
+						memset((uint32_t*)&V2_GPIOC_next, 0, sizeof(V2_GPIOC_next));
 
 						ResetTASRuns();
 						serial_interface_output((uint8_t*)"\x01R", 2); // good response for reset
@@ -459,7 +459,7 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 				}
 
 				uint32_t tempVal;
-				memcpy(&tempVal, instance.controller_data_buffer, sizeof(uint32_t));
+				memcpy(&tempVal, instance.controller_data_buffer, sizeof(tempVal));
 
 				// now make a decision based off of the 3rd byte noted earlier
 				if(instance.transition_type == 'A') // transition to ACE
