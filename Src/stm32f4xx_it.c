@@ -93,12 +93,12 @@ const uint8_t V2_CLOCK_LOW_A = 31;
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
-volatile uint64_t p1_d0_next = 0;
-volatile uint64_t p1_d1_next = 0;
-volatile uint64_t p1_d2_next = 0;
-volatile uint64_t p2_d0_next = 0;
-volatile uint64_t p2_d1_next = 0;
-volatile uint64_t p2_d2_next = 0;
+volatile uint64_t p1_d0_next;
+volatile uint64_t p1_d1_next;
+volatile uint64_t p1_d2_next;
+volatile uint64_t p2_d0_next;
+volatile uint64_t p2_d1_next;
+volatile uint64_t p2_d2_next;
 
 // leave enough room for SNES + overread
 volatile uint32_t P1_GPIOC_current[17];
@@ -113,26 +113,26 @@ volatile uint32_t V1_GPIOB_next[16];
 volatile uint32_t V2_GPIOC_current[16];
 volatile uint32_t V2_GPIOC_next[16];
 
-volatile uint8_t p1_current_bit = 0;
-volatile uint8_t p2_current_bit = 0;
+volatile uint8_t p1_current_bit;
+volatile uint8_t p2_current_bit;
 
-volatile uint8_t recentLatch = 0;
-volatile uint8_t toggleNext = 0;
-volatile uint8_t dpcmFix = 0;
-volatile uint8_t clockFix = 0;
+volatile uint8_t recentLatch;
+volatile uint8_t toggleNext;
+volatile uint8_t dpcmFix;
+volatile uint8_t clockFix;
 
-volatile uint8_t p1_clock_filtered = 0;
-volatile uint8_t p2_clock_filtered = 0;
+volatile uint8_t p1_clock_filtered;
+volatile uint8_t p2_clock_filtered;
 
 // latch train vars
-uint16_t current_train_index = 0;
-uint16_t current_train_latch_count = 0;
+uint16_t current_train_index;
+uint16_t current_train_latch_count;
 uint8_t between_trains = 1;
-uint8_t trains_enabled = 0;
+uint8_t trains_enabled;
 
-uint16_t* latch_trains = NULL;
+uint16_t* latch_trains;
 
-Console c = 0;
+Console c;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
