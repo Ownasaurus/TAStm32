@@ -76,11 +76,7 @@ TIM_HandleTypeDef htim10;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
-extern volatile uint8_t toggleNext;
-extern volatile uint8_t clockFix;
-extern volatile uint8_t request_pending;
-
-uint8_t jumpToDFU;
+volatile uint8_t jumpToDFU;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/

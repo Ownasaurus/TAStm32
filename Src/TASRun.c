@@ -10,14 +10,14 @@ extern TIM_HandleTypeDef htim7;
 
 TASRun tasruns[MAX_NUM_RUNS];
 
-RunData (*GetNextFrame(TASRun *tasrun))[MAX_CONTROLLERS][MAX_DATA_LANES]
+RunDataArray *GetNextFrame(TASRun *tasrun)
 {
 	if(tasrun->size == 0) // in case of buffer underflow
 	{
 		return NULL; // buffer underflow
 	}
 
-	RunData (*retval)[MAX_CONTROLLERS][MAX_DATA_LANES] = tasrun->current;
+	RunDataArray *retval = tasrun->current;
 
 	// advance frame
 	if(tasrun->current != tasrun->end)
@@ -173,7 +173,7 @@ int ExtractDataAndAddFrame(TASRun *tasrun, uint8_t *buffer, uint32_t n)
 	uint8_t numControllers = tasrun->numControllers;
 	uint8_t numDataLanes = tasrun->numDataLanes;
 
-	RunData frame[MAX_CONTROLLERS][MAX_DATA_LANES];
+	RunDataArray frame;
 
 	//memset(frame, 0, sizeof(frame)); // prepare the data container
 
@@ -213,13 +213,13 @@ int ExtractDataAndAddFrame(TASRun *tasrun, uint8_t *buffer, uint32_t n)
 	return 1;
 }
 
-void ExtractDataAndAdvance(RunData (rd)[MAX_CONTROLLERS][MAX_DATA_LANES], TASRun *tasrun, uint8_t* Buf, int *byteNum)
+void ExtractDataAndAdvance(RunDataArray rd, TASRun *tasrun, uint8_t* Buf, int *byteNum)
 {
 	uint8_t bytesPerInput = 0;
 	uint8_t numControllers = tasrun->numControllers;
 	uint8_t numDataLanes = tasrun->numDataLanes;
 
-	memset(rd, 0, sizeof(RunData[MAX_CONTROLLERS][MAX_DATA_LANES])); // prepare the data container
+	memset(rd, 0, sizeof(RunDataArray)); // prepare the data container
 
 	switch(tasrun->console)
 	{
@@ -251,7 +251,7 @@ void ExtractDataAndAdvance(RunData (rd)[MAX_CONTROLLERS][MAX_DATA_LANES], TASRun
 	(*byteNum)--; // back up 1 since the main loop will advance it one
 }
 
-uint8_t AddFrame(TASRun *tasrun, RunData (frame)[MAX_CONTROLLERS][MAX_DATA_LANES])
+uint8_t AddFrame(TASRun *tasrun, RunDataArray frame)
 {
 	// first check buffer isn't full
 	if(tasrun->size == MAX_SIZE)
@@ -259,7 +259,7 @@ uint8_t AddFrame(TASRun *tasrun, RunData (frame)[MAX_CONTROLLERS][MAX_DATA_LANES
 		return 0;
 	}
 
-	memcpy((RunData*)tasrun->buf,frame,sizeof(RunData[MAX_CONTROLLERS][MAX_DATA_LANES]));
+	memcpy((RunData*)tasrun->buf,frame,sizeof(RunDataArray));
 
 	// NOTE: These two pointer modifications must occur in an atomic fashion
 	//       A poorly-timed interrupt could cause bad things.

@@ -6,6 +6,9 @@
 
 void my_wait_us_asm(int n);
 
+static uint8_t GetMiddleOfPulse();
+static void SendByte(unsigned char b);
+
 // N64 data pin is p1_d2
 #define N64_READ (P1_DATA_2_GPIO_Port->IDR & P1_DATA_2_Pin)
 
@@ -46,7 +49,7 @@ uint32_t readCommand()
     }
 }
 
-uint8_t GetMiddleOfPulse()
+static uint8_t GetMiddleOfPulse()
 {
 	uint8_t ct = 0;
     // wait for line to go high
@@ -112,7 +115,7 @@ void write_0()
 }
 
 // send a byte from LSB to MSB (proper serialization)
-void SendByte(unsigned char b)
+static void SendByte(unsigned char b)
 {
     for(int i = 0;i < 8;i++) // send all 8 bits, one at a time
     {
