@@ -23,7 +23,7 @@ clone this repo
 1. Install Atollic TrueStudio (not STM32CubeIDE).
 1. In the project properties, under C/C++ Build > Settings > Build Steps > Post-build steps, delete the ".exe" from arm-atollic-eabi-objcopy.exe. Then switch to the other configuration at the top (Debug/Release) and do the same there. Click Apply / OK.
 1. Right-click on the project > Build Configurations > Set Active > 2 Release.
-1. Open Src/usbd_desc.c and change USBD_MANUFACTURER_STRING to something unique (e.g. "Ownasaurus & <your name>"); this is so you can be sure that your modified firmware is running on the TAStm32.
+1. Open Src/usbd_desc.c and change USBD_MANUFACTURER_STRING to something unique (e.g. "Ownasaurus & your_name"); this is so you can be sure that your modified firmware is running on the TAStm32.
 1. Project > Build Project and check that the console shows no errors. The last line before "build finished" should be "arm-atollic-eabi-objcopy -O ihex TAStm32.elf TAStm32.hex".
 1. sudo apt install dfu-util (not STM32CubeProgrammer)
 1. Set your board into DFU mode (switch on) and plug it in.
