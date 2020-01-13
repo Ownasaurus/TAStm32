@@ -62,7 +62,7 @@ extern "C" {
 
 /* Exported constants --------------------------------------------------------*/
 /* USER CODE BEGIN EC */
-
+extern volatile uint8_t jumpToDFU;
 /* USER CODE END EC */
 
 /* Exported macro ------------------------------------------------------------*/

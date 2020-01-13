@@ -19,6 +19,13 @@ int_buffer = 1024 # internal buffer size on replay device
 latches_per_bulk_command = 28
 packets = 4
 
+VALID_PLAYERS = {
+    "n64": (1,),
+    "snes": (1,2,3,4,5,6,7,8,),
+    "nes": (1,5,),
+    "gc": (1,)
+}
+
 int_to_byte_struct = struct.Struct('B')
 def int_to_byte(interger):
     return int_to_byte_struct.pack(interger)
@@ -130,25 +137,26 @@ class TAStm32():
         prefix = self.get_run_prefix()
         if prefix == None:
             raise RuntimeError('No Free Run')
+        vp = VALID_PLAYERS.get(console, ())
         if console == 'n64':
             cbyte = b'M'
             pbyte = 0
             for player in players:
                 p = int(player)
-                if p < 0 or p > 1:
-                    raise RuntimeError('Invalid player for N64')
+                if p in vp:
+                    pbyte = pbyte ^ 2**(8-p)
                 else:
-                    pbyte = pbyte ^ 2**(7-p)
+                    raise RuntimeError('Invalid player for N64')
             sbyte = 0
         elif console == 'snes':
             cbyte = b'S'
             pbyte = 0
             for player in players:
                 p = int(player)
-                if p < 1 or p > 8:
-                    raise RuntimeError('Invalid player for SNES')
-                else:
+                if p in vp:
                     pbyte = pbyte ^ 2**(8-p)
+                else:
+                    raise RuntimeError('Invalid player for SNES')
             sbyte = 0
             if dpcm:
                 sbyte = sbyte ^ 0x80
@@ -161,10 +169,10 @@ class TAStm32():
             pbyte = 0
             for player in players:
                 p = int(player)
-                if p != 1 and p != 5:
-                    raise RuntimeError('Invalid player for NES')
-                else:
+                if p in vp:
                     pbyte = pbyte ^ 2**(8-p)
+                else:
+                    raise RuntimeError('Invalid player for NES')
             sbyte = 0
             if dpcm:
                 sbyte = sbyte ^ 0x80
@@ -177,10 +185,10 @@ class TAStm32():
             pbyte = 0
             for player in players:
                 p = int(player)
-                if p < 0 or p > 1:
-                    raise RuntimeError('Invalid player for GC')
-                else:
+                if p in vp:
                     pbyte = pbyte ^ 2**(8-p)
+                else:
+                    raise RuntimeError('Invalid player for GC')
             sbyte = 0
         command = b'S' + prefix + cbyte + int_to_byte(pbyte) + int_to_byte(sbyte)
         self.write(command)
