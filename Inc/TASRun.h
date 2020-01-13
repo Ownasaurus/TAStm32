@@ -1,11 +1,9 @@
 #ifndef __TASRUN__H
 #define __TASRUN__H
 
-#include <stdint.h>
+#include "main.h"
 #include "n64.h"
 #include "snes.h"
-#include "stm32f4xx_hal.h"
-#include "main.h"
 
 #define MAX_SIZE 1024
 #define MAX_CONTROLLERS 2
@@ -72,7 +70,6 @@ extern TASRun tasruns[MAX_NUM_RUNS];
 // This file includes a load of static functions with definitions to make
 // inlining easier
 
-#define maybe_unused  __attribute__((unused))
 
 maybe_unused static TASRun *TASRunGetByIndex(uint8_t runNum)
 {
@@ -138,25 +135,6 @@ maybe_unused static Console TASRunGetConsole(const TASRun *tasrun)
 maybe_unused static uint8_t GetSizeOfInputForRun(const TASRun *tasrun)
 {
 	return tasrun->input_data_size;
-}
-
-maybe_unused static void SetN64InputMode()
-{
-	// port C4 to input mode
-	const uint32_t MODER_SLOT = (P1_DATA_2_Pin*P1_DATA_2_Pin);
-	const uint32_t MODER_MASK = 0b11 * MODER_SLOT;
-	const uint32_t MODER_NEW_VALUE = GPIO_MODE_INPUT * MODER_SLOT;
-
-	P1_DATA_2_GPIO_Port->MODER = (P1_DATA_2_GPIO_Port->MODER & ~MODER_MASK) | MODER_NEW_VALUE;
-}
-
-maybe_unused static void SetN64OutputMode()
-{
-	// port C4 to output mode
-	const uint32_t MODER_SLOT = (P1_DATA_2_Pin*P1_DATA_2_Pin);
-	const uint32_t MODER_MASK = 0b11 * MODER_SLOT;
-	const uint32_t MODER_NEW_VALUE = GPIO_MODE_OUTPUT_PP * MODER_SLOT;
-	P1_DATA_2_GPIO_Port->MODER = (P1_DATA_2_GPIO_Port->MODER & ~MODER_MASK) | MODER_NEW_VALUE;
 }
 
 // Functions below here are complex enough to not try to inline

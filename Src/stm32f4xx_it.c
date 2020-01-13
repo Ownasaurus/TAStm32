@@ -490,47 +490,47 @@ void EXTI4_IRQHandler(void)
 	// Read 64 command
 	TASRun *tasrun = TASRunGetByIndex(RUN_A);
 	Console c = TASRunGetConsole(tasrun);
-	GCControllerData gc_data;
+	uint64_t temp = 0;
 
 	__disable_irq();
 	uint32_t cmd;
 	RunDataArray *frame = NULL;
 
-	cmd = readCommand();
+	cmd = GCN64_ReadCommand();
 
 	my_wait_us_asm(2); // wait a small amount of time before replying
 
 	//-------- SEND RESPONSE
-	SetN64OutputMode();
+	GCN64_SetPortOutput();
 
 	switch(cmd)
 	{
 	  case 0x00: // identity
 		  if(c == CONSOLE_N64)
 		  {
-			  SendIdentityN64();
+			  N64_SendIdentity();
 		  }
 		  else if(c == CONSOLE_GC)
 		  {
-			  SendIdentityGC();
+			  GCN_SendIdentity();
 		  }
 		  break;
 	  case 0xFF: // N64 reset
-		  SendIdentityN64();
+		  N64_SendIdentity();
 		  break;
 	  case 0x01: // poll for N64 state
 		  frame = GetNextFrame(tasrun);
 		  if(frame == NULL) // buffer underflow
 		  {
-			  SendControllerDataN64(0); // send blank controller data
+			  GCN64_SendData((uint8_t*)&temp, 4); // send blank controller data
 		  }
 		  else
 		  {
-			  SendRunDataN64(frame[0][0][0].n64_data);
+			  GCN64_SendData((uint8_t*)&frame[0][0][0].n64_data, 4);
 		  }
 		  break;
 	  case 0x41: //gamecube origin call
-		  SendOriginGC();
+		  GCN_SendOrigin();
 		  break;
 	  case 0x400302:
 	  case 0x400300:
@@ -538,20 +538,18 @@ void EXTI4_IRQHandler(void)
 		  frame = GetNextFrame(tasrun);
 		  if(frame == NULL) // buffer underflow
 		  {
-				memset(&gc_data, 0, sizeof(gc_data));
-
-				gc_data.a_x_axis = 128;
-				gc_data.a_y_axis = 128;
-				gc_data.c_x_axis = 128;
-				gc_data.c_y_axis = 128;
-				gc_data.beginning_one = 1;
-
-				SendRunDataGC(gc_data); // send blank controller data
+				GCControllerData *gc_data = (GCControllerData*)&temp;
+				gc_data->a_x_axis = 128;
+				gc_data->a_y_axis = 128;
+				gc_data->c_x_axis = 128;
+				gc_data->c_y_axis = 128;
+				gc_data->beginning_one = 1;
+				GCN64_SendData((uint8_t*)&temp, 8); // send blank controller data
 		  }
 		  else
 		  {
 			  frame[0][0][0].gc_data.beginning_one = 1;
-			  SendRunDataGC(frame[0][0][0].gc_data);
+			  GCN64_SendData((uint8_t*)&frame[0][0][0].gc_data, 8);
 		  }
 		  break;
 	  case 0x02:
@@ -562,7 +560,7 @@ void EXTI4_IRQHandler(void)
 	}
 	//-------- DONE SENDING RESPOSE
 
-	SetN64InputMode();
+	GCN64_SetPortInput();
 
 	__enable_irq();
 

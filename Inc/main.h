@@ -53,6 +53,8 @@ extern "C" {
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
+#include <stdint.h>
+
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -68,6 +70,8 @@ extern volatile uint8_t jumpToDFU;
 /* Exported macro ------------------------------------------------------------*/
 /* USER CODE BEGIN EM */
 
+#define maybe_unused  __attribute__((unused))
+
 /* USER CODE END EM */
 
 /* Exported functions prototypes ---------------------------------------------*/
@@ -76,6 +80,8 @@ void Error_Handler(void);
 /* USER CODE BEGIN EFP */
 void ReInitClockTimers(void);
 void JumpToBootLoader(void);
+
+void my_wait_us_asm(int n);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
