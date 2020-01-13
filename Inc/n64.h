@@ -1,7 +1,7 @@
 #ifndef __N64__H
 #define __N64__H
 
-#include <stdint.h>
+#include "main.h"
 
 typedef struct __attribute__((packed))
 {
@@ -56,16 +56,63 @@ typedef struct __attribute__((packed))
 
 } GCControllerData; // all bits are in the correct order... except for the analog
 
-void initialize_n64_buffer();
-uint32_t readCommand();
-uint8_t GetMiddleOfPulse();
-void SendIdentityN64();
-void SendIdentityGC();
-void SendOriginGC();
-void SendByte(unsigned char b);
-void SendRunDataN64(N64ControllerData data);
-void SendControllerDataN64(unsigned long data);
-void SendRunDataGC(GCControllerData gcdata);
-void SendControllerDataGC(uint64_t data);
+
+maybe_unused static void GCN64_SetPortInput()
+{
+	// port C4 to input mode
+	const uint32_t MODER_SLOT = (P1_DATA_2_Pin*P1_DATA_2_Pin);
+	const uint32_t MODER_MASK = 0b11 * MODER_SLOT;
+	const uint32_t MODER_NEW_VALUE = GPIO_MODE_INPUT * MODER_SLOT;
+
+	P1_DATA_2_GPIO_Port->MODER = (P1_DATA_2_GPIO_Port->MODER & ~MODER_MASK) | MODER_NEW_VALUE;
+}
+
+maybe_unused static void GCN64_SetPortOutput()
+{
+	// port C4 to output mode
+	const uint32_t MODER_SLOT = (P1_DATA_2_Pin*P1_DATA_2_Pin);
+	const uint32_t MODER_MASK = 0b11 * MODER_SLOT;
+	const uint32_t MODER_NEW_VALUE = GPIO_MODE_OUTPUT_PP * MODER_SLOT;
+	P1_DATA_2_GPIO_Port->MODER = (P1_DATA_2_GPIO_Port->MODER & ~MODER_MASK) | MODER_NEW_VALUE;
+}
+
+maybe_unused static void GCN64_Send0()
+{
+	P1_DATA_2_GPIO_Port->BSRR = P1_DATA_2_Pin<<16;
+	my_wait_us_asm(3);
+	P1_DATA_2_GPIO_Port->BSRR = P1_DATA_2_Pin;
+	my_wait_us_asm(1);
+}
+maybe_unused static void GCN64_Send1()
+{
+	P1_DATA_2_GPIO_Port->BSRR = P1_DATA_2_Pin<<16;
+	my_wait_us_asm(1);
+	P1_DATA_2_GPIO_Port->BSRR = P1_DATA_2_Pin;
+	my_wait_us_asm(3);
+}
+maybe_unused static void GCN64_SendStop()
+{
+	P1_DATA_2_GPIO_Port->BSRR = P1_DATA_2_Pin<<16;
+	my_wait_us_asm(1);
+	P1_DATA_2_GPIO_Port->BSRR = P1_DATA_2_Pin;
+}
+maybe_unused static void GCN64_SendData(uint8_t *data, uint8_t bytes)
+{
+	while(bytes){
+		uint8_t d = *data;
+		for(uint8_t b=0; b<8; ++b){
+			(d & 0x80) ? GCN64_Send1() : GCN64_Send0();
+			d <<= 1;
+		}
+		++data;
+		--bytes;
+	}
+	GCN64_SendStop();
+}
+
+uint32_t GCN64_ReadCommand();
+void N64_SendIdentity();
+void GCN_SendIdentity();
+void GCN_SendOrigin();
 
 #endif

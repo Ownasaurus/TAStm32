@@ -4,12 +4,43 @@
 #include "stm32f4xx_hal.h"
 #include "main.h"
 
-void my_wait_us_asm(int n);
-
 // N64 data pin is p1_d2
 #define N64_READ (P1_DATA_2_GPIO_Port->IDR & P1_DATA_2_Pin)
 
-uint32_t readCommand()
+static uint8_t GetMiddleOfPulse()
+{
+	uint8_t ct = 0;
+    // wait for line to go high
+    while(1)
+    {
+        if(N64_READ) break;
+
+        ct++;
+        if(ct == 200) // failsafe limit TBD
+        	return 5; // error code
+    }
+
+    ct = 0;
+
+    // wait for line to go low
+    while(1)
+    {
+        if(!N64_READ) break;
+
+        ct++;
+		if(ct == 200) // failsafe limit TBD
+			return 5; // error code
+    }
+
+    // now we have the falling edge
+
+    // wait 2 microseconds to be in the middle of the pulse, and read. high --> 1.  low --> 0.
+    my_wait_us_asm(2);
+
+    return N64_READ ? 1U : 0U;
+}
+
+uint32_t GCN64_ReadCommand()
 {
 	uint8_t retVal;
 
@@ -46,225 +77,31 @@ uint32_t readCommand()
     }
 }
 
-uint8_t GetMiddleOfPulse()
-{
-	uint8_t ct = 0;
-    // wait for line to go high
-    while(1)
-    {
-        if(N64_READ) break;
-
-        ct++;
-        if(ct == 200) // failsafe limit TBD
-        	return 5; // error code
-    }
-
-    ct = 0;
-
-    // wait for line to go low
-    while(1)
-    {
-        if(!N64_READ) break;
-
-        ct++;
-		if(ct == 200) // failsafe limit TBD
-			return 5; // error code
-    }
-
-    // now we have the falling edge
-
-    // wait 2 microseconds to be in the middle of the pulse, and read. high --> 1.  low --> 0.
-    my_wait_us_asm(2);
-
-    return N64_READ ? 1U : 0U;
-}
-
-void SendStop()
-{
-	P1_DATA_2_GPIO_Port->BSRR = P1_DATA_2_Pin<<16;
-	my_wait_us_asm(1);
-	P1_DATA_2_GPIO_Port->BSRR = P1_DATA_2_Pin;
-}
-
-void SendIdentityN64()
+void N64_SendIdentity()
 {
     // reply 0x05, 0x00, 0x02
-    SendByte(0x05);
-    SendByte(0x00);
-    SendByte(0x02);
-    SendStop();
+	uint32_t data = 0x00020005;
+	GCN64_SendData((uint8_t*)&data, 3);
 }
 
-void write_1()
+void GCN_SendIdentity()
 {
-	P1_DATA_2_GPIO_Port->BSRR = P1_DATA_2_Pin<<16;
-	my_wait_us_asm(1);
-	P1_DATA_2_GPIO_Port->BSRR = P1_DATA_2_Pin;
-    my_wait_us_asm(3);
+	// reply 0x90, 0x00, 0x0C
+	uint32_t data = 0x000C0090;
+	GCN64_SendData((uint8_t*)&data, 3);
 }
 
-void write_0()
+void GCN_SendOrigin()
 {
-	P1_DATA_2_GPIO_Port->BSRR = P1_DATA_2_Pin<<16;
-	my_wait_us_asm(3);
-	P1_DATA_2_GPIO_Port->BSRR = P1_DATA_2_Pin;
-    my_wait_us_asm(1);
-}
+	uint8_t buf[10];
+	memset(buf, 0, sizeof(buf));
+	GCControllerData *gc_data = (GCControllerData*)&buf[0];
 
-// send a byte from LSB to MSB (proper serialization)
-void SendByte(unsigned char b)
-{
-    for(int i = 0;i < 8;i++) // send all 8 bits, one at a time
-    {
-        if((b >> i) & 1)
-        {
-            write_1();
-        }
-        else
-        {
-            write_0();
-        }
-    }
-}
+	gc_data->a_x_axis = 128;
+	gc_data->a_y_axis = 128;
+	gc_data->c_x_axis = 128;
+	gc_data->c_y_axis = 128;
+	gc_data->beginning_one = 1;
 
-void SendRunDataN64(N64ControllerData n64data)
-{
-	unsigned long data = 0;
-	memcpy(&data,&n64data,sizeof(data));
-    // send one byte at a time from MSB to LSB
-	unsigned int size = sizeof(data); // should be 4 bytes
-
-    for(unsigned int i = 0;i < size;i++) // for each byte
-    {
-    	for(int b = 7;b >=0;b--) // for each bit in the byte
-    	{
-			if((data >> (b+(i*8)) & 1))
-			{
-				write_1();
-			}
-			else
-			{
-				write_0();
-			}
-    	}
-    }
-
-    SendStop();
-}
-
-void SendControllerDataN64(unsigned long data)
-{
-    // send one byte at a time from MSB to LSB
-	unsigned int size = sizeof(data); // should be 4 bytes
-
-    for(unsigned int i = 0;i < size;i++) // for each byte
-    {
-    	for(int b = 7;b >=0;b--) // for each bit in the byte
-    	{
-			if((data >> (b+(i*8)) & 1))
-			{
-				write_1();
-			}
-			else
-			{
-				write_0();
-			}
-    	}
-    }
-
-    SendStop();
-}
-
-void SendRunDataGC(GCControllerData gcdata)
-{
-	uint64_t data = 0;
-	memcpy(&data,&gcdata,sizeof(data));
-
-    unsigned int size = sizeof(data); // should be 8 bytes
-
-    for(unsigned int i = 0;i < size;i++) // for each byte
-	{
-		for(int b = 7;b >=0;b--) // for each bit in the byte
-		{
-			if((data >> (b+(i*8)) & 1))
-			{
-				write_1();
-			}
-			else
-			{
-				write_0();
-			}
-		}
-	}
-
-    SendStop();
-}
-
-void SendControllerDataGC(uint64_t data)
-{
-    unsigned int size = sizeof(data); // should be 8 bytes
-
-    for(unsigned int i = 0;i < size;i++) // for each byte
-	{
-		for(int b = 7;b >=0;b--) // for each bit in the byte
-		{
-			if((data >> (b+(i*8)) & 1))
-			{
-				write_1();
-			}
-			else
-			{
-				write_0();
-			}
-		}
-	}
-
-    SendStop();
-}
-
-void SendIdentityGC()
-{
-    SendByte(0x90);
-    SendByte(0x00);
-    SendByte(0x0C);
-    SendStop();
-}
-
-void SendOriginGC()
-{
-	GCControllerData gc_data;
-
-	memset(&gc_data, 0, sizeof(gc_data));
-
-	gc_data.a_x_axis = 128;
-	gc_data.a_y_axis = 128;
-	gc_data.c_x_axis = 128;
-	gc_data.c_y_axis = 128;
-	gc_data.beginning_one = 1;
-	gc_data.l_trigger = 0;
-	gc_data.r_trigger = 0;
-
-	uint64_t data = 0;
-	memcpy(&data,&gc_data,sizeof(data));
-
-	unsigned int size = sizeof(data); // should be 8 bytes
-
-	for(unsigned int i = 0;i < size;i++) // for each byte
-	{
-		for(int b = 7;b >=0;b--) // for each bit in the byte
-		{
-			if((data >> (b+(i*8)) & 1))
-			{
-				write_1();
-			}
-			else
-			{
-				write_0();
-			}
-		}
-	}
-
-	SendByte(0x00);
-	SendByte(0x00);
-	SendStop();
+	GCN64_SendData(buf, sizeof(buf));
 }
