@@ -229,6 +229,7 @@ class TAStm32():
                 trainfailed = c.count(b'UF')
                 if trainfailed != 0:
                     print(f'!!! Off by many frames. Run is probably broken. Good luck! x{trainfailed}')
+                    sys.exit(1)
 
                 for latch in range(latches):
                     try:
