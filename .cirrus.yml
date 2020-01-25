@@ -1,0 +1,21 @@
+env:
+  CIRRUS_CLONE_DEPTH: 1
+
+fbsd_task:
+  freebsd_instance:
+    image: freebsd-12-1-release-amd64
+  env:
+    PATH: /usr/local/gcc-arm-embedded/bin:${PATH}
+  install_script:
+    - pkg install -y gcc-arm-embedded gmake
+  build_script:
+    - gmake
+
+linux_task:
+  container:
+    image: gcc:latest
+  install_script:
+    - apt-get update
+    - apt-get install -y binutils-arm-none-eabi gcc-arm-none-eabi libnewlib-arm-none-eabi
+  build_script:
+    - make
