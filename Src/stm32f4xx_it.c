@@ -188,6 +188,7 @@ void EXTI0_IRQHandler(void)
 {
   /* USER CODE BEGIN EXTI0_IRQn 0 */
 	// P1_CLOCK
+
 	if(!p1_clock_filtered && p1_current_bit < 17) // sanity check... but 32 or more bits should never be read in a single latch!
 	{
 		if(clockFix)
@@ -225,8 +226,10 @@ void EXTI1_IRQHandler(void)
 	{
 		// quickly set first bit of data for the next frame
 		//GPIOC->BSRR = P1_GPIOC_next[0] | P2_GPIOC_next[0] | V2_GPIOC_next[0];
-		GPIOC->BSRR = (P1_GPIOC_next[0] & 0x00080008) | P2_GPIOC_next[0];
-		GPIOC->BSRR = (P1_GPIOC_next[0] & 0x00040004);
+		GPIOC->BSRR = (P1_GPIOC_next[0] & 0x00080008); // set p1d0
+		GPIOC->BSRR = (P1_GPIOC_next[0] & 0x00040004); // set p1d1
+		GPIOC->BSRR = (P1_GPIOC_next[0] & 0x01000100); // set p2d0
+		GPIOC->BSRR = (P1_GPIOC_next[0] & 0x00800080); // set p2d1
 
 		// copy the 2nd bit over too
 		__disable_irq();
@@ -236,8 +239,9 @@ void EXTI1_IRQHandler(void)
 		__enable_irq();
 
 		// copy the rest of the bits. do not copy the overread since it will never change
-		memcpy((uint32_t*)&P1_GPIOC_current, (uint32_t*)&P1_GPIOC_next, 64);
+		// P2 comes before P1 in NES, so copy P2 first
 		memcpy((uint32_t*)&P2_GPIOC_current, (uint32_t*)&P2_GPIOC_next, 64);
+		memcpy((uint32_t*)&P1_GPIOC_current, (uint32_t*)&P1_GPIOC_next, 64);
 
 		// now prepare for the next frame!
 
@@ -456,8 +460,10 @@ void EXTI1_IRQHandler(void)
 		__disable_irq();
 		// repeat the same frame of input
 		//GPIOC->BSRR = P1_GPIOC_current[0] | P2_GPIOC_current[0] | V2_GPIOC_current[0];
-		GPIOC->BSRR = (P1_GPIOC_current[0] & 0x00080008) | P2_GPIOC_current[0];
-		GPIOC->BSRR = (P1_GPIOC_current[0] & 0x00040004);
+		GPIOC->BSRR = (P1_GPIOC_current[0] & 0x00080008); // set p1d0
+		GPIOC->BSRR = (P1_GPIOC_current[0] & 0x00040004); // set p1d1
+		GPIOC->BSRR = (P2_GPIOC_current[0] & 0x01000100); // set p2d0
+		GPIOC->BSRR = (P2_GPIOC_current[0] & 0x00800080); // set p2d1
 
 		p1_current_bit = p2_current_bit = 1;
 		__enable_irq();
@@ -585,6 +591,7 @@ void EXTI9_5_IRQHandler(void)
 {
   /* USER CODE BEGIN EXTI9_5_IRQn 0 */
 	// P2_CLOCK
+
 	if(!p2_clock_filtered && p2_current_bit < 17) // sanity check... but 32 or more bits should never be read in a single latch!
 	{
 		if(clockFix)
@@ -592,7 +599,8 @@ void EXTI9_5_IRQHandler(void)
 			my_wait_us_asm(2); // necessary to prevent switching too fast in DPCM fix mode
 		}
 
-		GPIOC->BSRR = P2_GPIOC_current[p2_current_bit];
+		GPIOC->BSRR = (P2_GPIOC_current[p2_current_bit] & 0x01000100); // set p2d0
+		GPIOC->BSRR = (P2_GPIOC_current[p2_current_bit] & 0x00800080); // set p2d1
 
 		ResetAndEnableP2ClockTimer();
 		p2_current_bit++;
