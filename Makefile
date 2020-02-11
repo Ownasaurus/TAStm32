@@ -137,7 +137,7 @@ C_INCLUDES =  \
 ASFLAGS = $(MCU) $(AS_DEFS) $(AS_INCLUDES) $(OPT) -Wall -fdata-sections -ffunction-sections
 
 CFLAGS = $(MCU) $(C_DEFS) $(C_INCLUDES) $(OPT) -Wall -fdata-sections -ffunction-sections
-CFLAGS += -Werror -std=c99
+CFLAGS += -Werror -std=c11
 
 ifeq ($(DEBUG), 1)
 CFLAGS += -g -gdwarf-2
