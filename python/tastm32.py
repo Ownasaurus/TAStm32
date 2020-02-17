@@ -289,11 +289,6 @@ def main():
     parser = argparse_helper.setup_parser_full()
 
     args = parser.parse_args()
-    
-    if args.hardreset or args.softreset:
-        dev.power_off()
-        if args.hardreset:
-            time.sleep(2.0)
 
     if args.transition != None:
         for transition in args.transition:
@@ -320,7 +315,12 @@ def main():
         dev = TAStm32(serial_helper.select_serial_port())
     else:
         dev = TAStm32(args.serial)
-    
+
+    if args.hardreset or args.softreset:
+        dev.power_off()
+        if args.hardreset:
+            time.sleep(2.0)
+
     if args.clock != None:
         args.clock = int(args.clock)
         if args.clock < 0 or args.clock > 63:
