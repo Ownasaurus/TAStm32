@@ -225,11 +225,10 @@ void EXTI1_IRQHandler(void)
 	if(recentLatch == 0) // no recent latch
 	{
 		// quickly set first bit of data for the next frame
-		//GPIOC->BSRR = P1_GPIOC_next[0] | P2_GPIOC_next[0] | V2_GPIOC_next[0];
 		GPIOC->BSRR = (P1_GPIOC_next[0] & 0x00080008); // set p1d0
 		GPIOC->BSRR = (P1_GPIOC_next[0] & 0x00040004); // set p1d1
-		GPIOC->BSRR = (P1_GPIOC_next[0] & 0x01000100); // set p2d0
-		GPIOC->BSRR = (P1_GPIOC_next[0] & 0x00800080); // set p2d1
+		GPIOC->BSRR = (P2_GPIOC_next[0] & 0x01000100); // set p2d0
+		GPIOC->BSRR = (P2_GPIOC_next[0] & 0x00800080); // set p2d1
 
 		// copy the 2nd bit over too
 		__disable_irq();
