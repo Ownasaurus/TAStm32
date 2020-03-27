@@ -197,8 +197,9 @@ void EXTI0_IRQHandler(void)
 			my_wait_us_asm(2); // necessary to prevent switching too fast in DPCM fix mode
 		}
 
-		GPIOC->BSRR = (P1_GPIOC_current[p1_current_bit] & 0x00080008); // set d0
-		GPIOC->BSRR = (P1_GPIOC_current[p1_current_bit] & 0x00040004); // set d1
+		uint32_t p1_data = P1_GPIOC_current[p1_current_bit];
+		GPIOC->BSRR = (p1_data & 0x00080008); // set d0
+		GPIOC->BSRR = (p1_data & 0x00040004); // set d1
 		//TODO: Determine why setting these at the same time causes an interrupt to go to line 1 for some reason!!!!!
 		//GPIOC->BSRR = (P1_GPIOC_current[p1_current_bit] & 0x000C000C); // set d0 and d1 at the same time
 
@@ -226,10 +227,12 @@ void EXTI1_IRQHandler(void)
 	if(recentLatch == 0) // no recent latch
 	{
 		// quickly set first bit of data for the next frame
-		GPIOC->BSRR = (P1_GPIOC_next[0] & 0x00080008); // set p1d0
-		GPIOC->BSRR = (P1_GPIOC_next[0] & 0x00040004); // set p1d1
-		GPIOC->BSRR = (P2_GPIOC_next[0] & 0x01000100); // set p2d0
-		GPIOC->BSRR = (P2_GPIOC_next[0] & 0x00800080); // set p2d1
+		uint32_t p1_data = P1_GPIOC_next[0];
+		uint32_t p2_data = P2_GPIOC_next[0];
+		GPIOC->BSRR = (p1_data & 0x00080008); // set p1d0
+		GPIOC->BSRR = (p1_data & 0x00040004); // set p1d1
+		GPIOC->BSRR = (p2_data & 0x01000100); // set p2d0
+		GPIOC->BSRR = (p2_data & 0x00800080); // set p2d1
 
 		// copy the 2nd bit over too
 		__disable_irq();
@@ -460,10 +463,12 @@ void EXTI1_IRQHandler(void)
 		__disable_irq();
 		// repeat the same frame of input
 		//GPIOC->BSRR = P1_GPIOC_current[0] | P2_GPIOC_current[0] | V2_GPIOC_current[0];
-		GPIOC->BSRR = (P1_GPIOC_current[0] & 0x00080008); // set p1d0
-		GPIOC->BSRR = (P1_GPIOC_current[0] & 0x00040004); // set p1d1
-		GPIOC->BSRR = (P2_GPIOC_current[0] & 0x01000100); // set p2d0
-		GPIOC->BSRR = (P2_GPIOC_current[0] & 0x00800080); // set p2d1
+		uint32_t p1_data = P1_GPIOC_current[0];
+		uint32_t p2_data = P2_GPIOC_current[0];
+		GPIOC->BSRR = (p1_data & 0x00080008); // set p1d0
+		GPIOC->BSRR = (p1_data & 0x00040004); // set p1d1
+		GPIOC->BSRR = (p2_data & 0x01000100); // set p2d0
+		GPIOC->BSRR = (p2_data & 0x00800080); // set p2d1
 
 		p1_current_bit = p2_current_bit = 1;
 		__enable_irq();
@@ -599,8 +604,9 @@ void EXTI9_5_IRQHandler(void)
 			my_wait_us_asm(2); // necessary to prevent switching too fast in DPCM fix mode
 		}
 
-		GPIOC->BSRR = (P2_GPIOC_current[p2_current_bit] & 0x01000100); // set p2d0
-		GPIOC->BSRR = (P2_GPIOC_current[p2_current_bit] & 0x00800080); // set p2d1
+		uint32_t p2_data = P2_GPIOC_current[p2_current_bit];
+		GPIOC->BSRR = (p2_data & 0x01000100); // set p2d0
+		GPIOC->BSRR = (p2_data & 0x00800080); // set p2d1
 
 		ResetAndEnableP2ClockTimer();
 		p2_current_bit++;
