@@ -84,6 +84,11 @@ const uint8_t V2_LATCH_LOW_C = 26;
 const uint8_t V2_CLOCK_HIGH_A = 15;
 const uint8_t V2_CLOCK_LOW_A = 31;
 
+const uint32_t P1_D0_MASK = 0x00080008;
+const uint32_t P1_D1_MASK = 0x00040004;
+const uint32_t P2_D0_MASK = 0x01000100;
+const uint32_t P2_D1_MASK = 0x00800080;
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -198,11 +203,7 @@ void EXTI0_IRQHandler(void)
 		}
 
 		uint32_t p1_data = P1_GPIOC_current[p1_current_bit];
-		//uint32_t final_data = (p1_data & 0x000C000C);
-		//GPIOC->BSRR = final_data;
 		GPIOC->BSRR = p1_data;
-		//TODO: Determine why setting these at the same time causes an interrupt to go to line 1 for some reason!!!!!
-		//GPIOC->BSRR = (P1_GPIOC_current[p1_current_bit] & 0x000C000C); // set d0 and d1 at the same time
 
 		ResetAndEnableP1ClockTimer();
 		p1_current_bit++;
@@ -230,7 +231,6 @@ void EXTI1_IRQHandler(void)
 		// quickly set first bit of data for the next frame
 		uint32_t p1_data = P1_GPIOC_next[0];
 		uint32_t p2_data = P2_GPIOC_next[0];
-		//uint32_t all_data = (p1_data & 0x000C000C) | (p2_data & 0x01800180);
 		uint32_t all_data = (p1_data | p2_data);
 		GPIOC->BSRR = all_data;
 
@@ -364,11 +364,11 @@ void EXTI1_IRQHandler(void)
 				uint32_t temp;
 				temp = 					(uint32_t)(((p1_d0_next >> databit) & 1) << P1_D0_LOW_C) |
 										(uint32_t)(((p1_d1_next >> databit) & 1) << P1_D1_LOW_C);
-				P1_GPIOC_next[regbit] = temp | (((~temp) & 0x001C0000) >> 16);
+				P1_GPIOC_next[regbit] = temp | (((~temp) & (P1_D0_MASK | P1_D1_MASK)) >> 16);
 
 				temp = 					(uint32_t)(((p2_d0_next >> databit) & 1) << P2_D0_LOW_C) |
 										(uint32_t)(((p2_d1_next >> databit) & 1) << P2_D1_LOW_C);
-				P2_GPIOC_next[regbit] = temp | (((~temp) & 0x03800000) >> 16);
+				P2_GPIOC_next[regbit] = temp | (((~temp) & (P2_D0_MASK | P2_D1_MASK)) >> 16);
 
 				temp = 					(uint32_t)(((p1_d0_next >> databit) & 1) << V1_D0_HIGH_B) |
 										(uint32_t)(((p1_d1_next >> databit) & 1) << V1_D1_HIGH_B);
@@ -457,10 +457,8 @@ void EXTI1_IRQHandler(void)
 	{
 		__disable_irq();
 		// repeat the same frame of input
-		//GPIOC->BSRR = P1_GPIOC_current[0] | P2_GPIOC_current[0] | V2_GPIOC_current[0];
 		uint32_t p1_data = P1_GPIOC_current[0];
 		uint32_t p2_data = P2_GPIOC_current[0];
-		//uint32_t all_data = (p1_data & 0x000C000C) | (p2_data & 0x01800180);
 		uint32_t all_data = (p1_data | p2_data);
 		GPIOC->BSRR = all_data;
 
@@ -599,7 +597,6 @@ void EXTI9_5_IRQHandler(void)
 		}
 
 		uint32_t p2_data = P2_GPIOC_current[p2_current_bit];
-		//uint32_t all_data = (p2_data & 0x01800180);
 		GPIOC->BSRR = p2_data;
 
 		ResetAndEnableP2ClockTimer();
