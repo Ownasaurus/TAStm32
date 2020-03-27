@@ -352,6 +352,15 @@ def main():
         buffer = dtm.read_input(data)
         blankframe = b'\x00\x00\x00\x00\x00\x00\x00\x00' * len(args.players)
 
+    # Transitions
+    if args.transition != None:
+        for transition in args.transition:
+            dev.send_transition(run_id, *transition)
+    # Latch trains
+    if args.latchtrain != '':
+        dev.send_latchtrain(run_id, args.latchtrain)
+    dev.read(50)
+
     # Send Blank Frames
     for blank in range(args.blank):
         data = run_id + blankframe
@@ -371,11 +380,6 @@ def main():
     fn -= err.count(b'\xB0')
     if err.count(b'\xB0') != 0:
         print('Buffer Overflow x{}'.format(err.count(b'\xB0')))
-    if args.transition != None:
-        for transition in args.transition:
-            dev.send_transition(run_id, *transition)
-    if args.latchtrain != '':
-        dev.send_latchtrain(run_id, args.latchtrain)
     print('Main Loop Start')
     dev.power_on()
     dev.main_loop()

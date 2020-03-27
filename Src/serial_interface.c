@@ -452,9 +452,10 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 				instance.controller_data_bytes_read = 0;
 				instance.state = SERIAL_TRANSITION_3;  // intentional fall through
 			case SERIAL_TRANSITION_3:
-				if (instance.controller_data_bytes_read < sizeof(uint32_t))
+				instance.controller_data_buffer[instance.controller_data_bytes_read++] = input;
+
+				if(instance.controller_data_bytes_read < sizeof(uint32_t)) // only save 4 bytes
 				{
-					instance.controller_data_buffer[instance.controller_data_bytes_read++] = input;
 					break;
 				}
 

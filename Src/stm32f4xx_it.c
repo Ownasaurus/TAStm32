@@ -107,6 +107,7 @@ volatile uint32_t P1_GPIOC_next[17];
 volatile uint32_t P2_GPIOC_current[17];
 volatile uint32_t P2_GPIOC_next[17];
 
+// leave enough room for SNES only
 volatile uint32_t V1_GPIOB_current[16];
 volatile uint32_t V1_GPIOB_next[16];
 
