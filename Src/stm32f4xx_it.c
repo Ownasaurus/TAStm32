@@ -198,8 +198,7 @@ void EXTI0_IRQHandler(void)
 		}
 
 		uint32_t p1_data = P1_GPIOC_current[p1_current_bit];
-		GPIOC->BSRR = (p1_data & 0x00080008); // set d0
-		GPIOC->BSRR = (p1_data & 0x00040004); // set d1
+		GPIOC->BSRR = (p1_data & 0x000C000C); // set d0 and d1
 		//TODO: Determine why setting these at the same time causes an interrupt to go to line 1 for some reason!!!!!
 		//GPIOC->BSRR = (P1_GPIOC_current[p1_current_bit] & 0x000C000C); // set d0 and d1 at the same time
 
@@ -229,10 +228,8 @@ void EXTI1_IRQHandler(void)
 		// quickly set first bit of data for the next frame
 		uint32_t p1_data = P1_GPIOC_next[0];
 		uint32_t p2_data = P2_GPIOC_next[0];
-		GPIOC->BSRR = (p1_data & 0x00080008); // set p1d0
-		GPIOC->BSRR = (p1_data & 0x00040004); // set p1d1
-		GPIOC->BSRR = (p2_data & 0x01000100); // set p2d0
-		GPIOC->BSRR = (p2_data & 0x00800080); // set p2d1
+		GPIOC->BSRR = (p1_data & 0x000C000C); // set p1d0 and p1d1
+		GPIOC->BSRR = (p2_data & 0x01800180); // set p2d0 and p2d1
 
 		// copy the 2nd bit over too
 		__disable_irq();
@@ -365,23 +362,22 @@ void EXTI1_IRQHandler(void)
 			// fill the regular data
 			while(databit >= 0)
 			{
-				P1_GPIOC_next[regbit] = (uint32_t)(((p1_d0_next >> databit) & 1) << P1_D0_LOW_C) |
-										(uint32_t)(((p1_d1_next >> databit) & 1) << P1_D1_LOW_C) |
-										(uint32_t)(((p1_d2_next >> databit) & 1) << P1_D2_LOW_C);
-				P1_GPIOC_next[regbit] |= (((~P1_GPIOC_next[regbit]) & 0x001C0000) >> 16);
+				uint32_t temp;
+				temp = 					(uint32_t)(((p1_d0_next >> databit) & 1) << P1_D0_LOW_C) |
+										(uint32_t)(((p1_d1_next >> databit) & 1) << P1_D1_LOW_C);
+				P1_GPIOC_next[regbit] = temp | (((~temp) & 0x001C0000) >> 16);
 
-				P2_GPIOC_next[regbit] = (uint32_t)(((p2_d0_next >> databit) & 1) << P2_D0_LOW_C) |
-										(uint32_t)(((p2_d1_next >> databit) & 1) << P2_D1_LOW_C) |
-										(uint32_t)(((p2_d2_next >> databit) & 1) << P2_D2_LOW_C);
-				P2_GPIOC_next[regbit] |= (((~P2_GPIOC_next[regbit]) & 0x03800000) >> 16);
+				temp = 					(uint32_t)(((p2_d0_next >> databit) & 1) << P2_D0_LOW_C) |
+										(uint32_t)(((p2_d1_next >> databit) & 1) << P2_D1_LOW_C);
+				P2_GPIOC_next[regbit] = temp | (((~temp) & 0x03800000) >> 16);
 
-				V1_GPIOB_next[regbit] = (uint32_t)(((p1_d0_next >> databit) & 1) << V1_D0_HIGH_B) |
+				temp = 					(uint32_t)(((p1_d0_next >> databit) & 1) << V1_D0_HIGH_B) |
 										(uint32_t)(((p1_d1_next >> databit) & 1) << V1_D1_HIGH_B);
-				V1_GPIOB_next[regbit] |= (((~V1_GPIOB_next[regbit]) & 0x00C0) << 16);
+				V1_GPIOB_next[regbit] = temp | (((~temp) & 0x00C0) << 16);
 
-				V2_GPIOC_next[regbit] = (uint32_t)(((p2_d0_next >> databit) & 1) << V2_D0_HIGH_C) |
+				temp = (uint32_t)(((p2_d0_next >> databit) & 1) << V2_D0_HIGH_C) |
 										(uint32_t)(((p2_d1_next >> databit) & 1) << V2_D1_HIGH_C);
-				V2_GPIOC_next[regbit] |= (((~V2_GPIOC_next[regbit]) & 0x1800) << 16);
+				V2_GPIOC_next[regbit] = temp | (((~temp) & 0x1800) << 16);
 
 				regbit++;
 				databit--;
@@ -465,10 +461,8 @@ void EXTI1_IRQHandler(void)
 		//GPIOC->BSRR = P1_GPIOC_current[0] | P2_GPIOC_current[0] | V2_GPIOC_current[0];
 		uint32_t p1_data = P1_GPIOC_current[0];
 		uint32_t p2_data = P2_GPIOC_current[0];
-		GPIOC->BSRR = (p1_data & 0x00080008); // set p1d0
-		GPIOC->BSRR = (p1_data & 0x00040004); // set p1d1
-		GPIOC->BSRR = (p2_data & 0x01000100); // set p2d0
-		GPIOC->BSRR = (p2_data & 0x00800080); // set p2d1
+		GPIOC->BSRR = (p1_data & 0x000C000C); // set p1d0 and p1d1
+		GPIOC->BSRR = (p2_data & 0x01800180); // set p2d0 and p2d1
 
 		p1_current_bit = p2_current_bit = 1;
 		__enable_irq();
@@ -605,8 +599,7 @@ void EXTI9_5_IRQHandler(void)
 		}
 
 		uint32_t p2_data = P2_GPIOC_current[p2_current_bit];
-		GPIOC->BSRR = (p2_data & 0x01000100); // set p2d0
-		GPIOC->BSRR = (p2_data & 0x00800080); // set p2d1
+		GPIOC->BSRR = (p2_data & 0x01800180); // set p2d0 and p2d1
 
 		ResetAndEnableP2ClockTimer();
 		p2_current_bit++;
