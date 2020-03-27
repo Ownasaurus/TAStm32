@@ -198,12 +198,6 @@ void EXTI0_IRQHandler(void)
 		}
 
 		uint32_t p1_data = P1_GPIOC_current[p1_current_bit];
-
-		if(p1_data & 0xFFF3FFF3) // if any "unused" bit is somehow set....
-		{
-			// dummy volatile statement to break on
-			P1_GPIOC_current[p1_current_bit] = p1_data;
-		}
 		//uint32_t final_data = (p1_data & 0x000C000C);
 		//GPIOC->BSRR = final_data;
 		GPIOC->BSRR = p1_data;
@@ -370,11 +364,11 @@ void EXTI1_IRQHandler(void)
 				uint32_t temp;
 				temp = 					(uint32_t)(((p1_d0_next >> databit) & 1) << P1_D0_LOW_C) |
 										(uint32_t)(((p1_d1_next >> databit) & 1) << P1_D1_LOW_C);
-				P1_GPIOC_next[regbit] = temp | (((~temp) & 0x000C0000) >> 16);
+				P1_GPIOC_next[regbit] = temp | (((~temp) & 0x001C0000) >> 16);
 
 				temp = 					(uint32_t)(((p2_d0_next >> databit) & 1) << P2_D0_LOW_C) |
 										(uint32_t)(((p2_d1_next >> databit) & 1) << P2_D1_LOW_C);
-				P2_GPIOC_next[regbit] = temp | (((~temp) & 0x01800000) >> 16);
+				P2_GPIOC_next[regbit] = temp | (((~temp) & 0x03800000) >> 16);
 
 				temp = 					(uint32_t)(((p1_d0_next >> databit) & 1) << V1_D0_HIGH_B) |
 										(uint32_t)(((p1_d1_next >> databit) & 1) << V1_D1_HIGH_B);
@@ -605,13 +599,6 @@ void EXTI9_5_IRQHandler(void)
 		}
 
 		uint32_t p2_data = P2_GPIOC_current[p2_current_bit];
-
-		if(p2_data & ~0x01800180) // if any "unused" bit is somehow set....
-		{
-			// dummy volatile statement to break on
-			P2_GPIOC_current[p2_current_bit] = p2_data;
-		}
-
 		//uint32_t all_data = (p2_data & 0x01800180);
 		GPIOC->BSRR = p2_data;
 
