@@ -198,7 +198,8 @@ void EXTI0_IRQHandler(void)
 		}
 
 		uint32_t p1_data = P1_GPIOC_current[p1_current_bit];
-		GPIOC->BSRR = (p1_data & 0x000C000C); // set d0 and d1
+		uint32_t final_data = (p1_data & 0x000C000C);
+		GPIOC->BSRR = final_data;
 		//TODO: Determine why setting these at the same time causes an interrupt to go to line 1 for some reason!!!!!
 		//GPIOC->BSRR = (P1_GPIOC_current[p1_current_bit] & 0x000C000C); // set d0 and d1 at the same time
 
@@ -228,8 +229,8 @@ void EXTI1_IRQHandler(void)
 		// quickly set first bit of data for the next frame
 		uint32_t p1_data = P1_GPIOC_next[0];
 		uint32_t p2_data = P2_GPIOC_next[0];
-		GPIOC->BSRR = (p1_data & 0x000C000C); // set p1d0 and p1d1
-		GPIOC->BSRR = (p2_data & 0x01800180); // set p2d0 and p2d1
+		uint32_t all_data = (p1_data & 0x000C000C) | (p2_data & 0x01800180);
+		GPIOC->BSRR = all_data;
 
 		// copy the 2nd bit over too
 		__disable_irq();
@@ -333,10 +334,8 @@ void EXTI1_IRQHandler(void)
 
 				memcpy((uint8_t*)&p1_d0_next, &dataptr[0][0][0], sizeof(NESControllerData));
 				memcpy((uint8_t*)&p1_d1_next, &dataptr[0][0][1], sizeof(NESControllerData));
-				memcpy((uint8_t*)&p1_d2_next, &dataptr[0][0][2], sizeof(NESControllerData));
 				memcpy((uint8_t*)&p2_d0_next, &dataptr[0][1][0], sizeof(NESControllerData));
 				memcpy((uint8_t*)&p2_d1_next, &dataptr[0][1][1], sizeof(NESControllerData));
-				memcpy((uint8_t*)&p2_d2_next, &dataptr[0][1][2], sizeof(NESControllerData));
 			}
 			else
 			{
@@ -350,10 +349,8 @@ void EXTI1_IRQHandler(void)
 				// fix endianness
 				p1_d0_next = ((p1_d0_next >> 8) & 0xFF) | ((p1_d0_next << 8) & 0xFF00);
 				p1_d1_next = ((p1_d1_next >> 8) & 0xFF) | ((p1_d1_next << 8) & 0xFF00);
-				p1_d2_next = ((p1_d2_next >> 8) & 0xFF) | ((p1_d2_next << 8) & 0xFF00);
 				p2_d0_next = ((p2_d0_next >> 8) & 0xFF) | ((p2_d0_next << 8) & 0xFF00);
 				p2_d1_next = ((p2_d1_next >> 8) & 0xFF) | ((p2_d1_next << 8) & 0xFF00);
-				p2_d2_next = ((p2_d2_next >> 8) & 0xFF) | ((p2_d2_next << 8) & 0xFF00);
 			}
 
 
@@ -375,7 +372,7 @@ void EXTI1_IRQHandler(void)
 										(uint32_t)(((p1_d1_next >> databit) & 1) << V1_D1_HIGH_B);
 				V1_GPIOB_next[regbit] = temp | (((~temp) & 0x00C0) << 16);
 
-				temp = (uint32_t)(((p2_d0_next >> databit) & 1) << V2_D0_HIGH_C) |
+				temp = 					(uint32_t)(((p2_d0_next >> databit) & 1) << V2_D0_HIGH_C) |
 										(uint32_t)(((p2_d1_next >> databit) & 1) << V2_D1_HIGH_C);
 				V2_GPIOC_next[regbit] = temp | (((~temp) & 0x1800) << 16);
 
@@ -397,8 +394,8 @@ void EXTI1_IRQHandler(void)
 			// no controller data means all pins get set high for this protocol
 			for(uint8_t index = 0;index <= databit;index++)
 			{
-				P1_GPIOC_next[index] = (1 << P1_D0_HIGH_C) | (1 << P1_D1_HIGH_C) | (1 << P1_D2_HIGH_C);
-				P2_GPIOC_next[index] = (1 << P2_D0_HIGH_C) | (1 << P2_D1_HIGH_C) | (1 << P2_D2_HIGH_C);
+				P1_GPIOC_next[index] = (1 << P1_D0_HIGH_C) | (1 << P1_D1_HIGH_C);
+				P2_GPIOC_next[index] = (1 << P2_D0_HIGH_C) | (1 << P2_D1_HIGH_C);
 
 				V1_GPIOB_next[index] = (1 << V1_D0_LOW_B) | (1 << V1_D1_LOW_B);
 				V2_GPIOC_next[index] = (1 << V2_D0_LOW_C) | (1 << V2_D1_LOW_C);
@@ -435,16 +432,16 @@ void EXTI1_IRQHandler(void)
 				// so set logical LOW (NES/SNES button pressed)
 				for(uint8_t index = regbit;index < 17;index++)
 				{
-					P1_GPIOC_current[index] = P1_GPIOC_next[index] = (1 << P1_D0_LOW_C) | (1 << P1_D1_LOW_C) | (1 << P1_D2_LOW_C);
-					P2_GPIOC_current[index] = P2_GPIOC_next[index] = (1 << P2_D0_LOW_C) | (1 << P2_D1_LOW_C) | (1 << P2_D2_LOW_C);
+					P1_GPIOC_current[index] = P1_GPIOC_next[index] = (1 << P1_D0_LOW_C) | (1 << P1_D1_LOW_C);
+					P2_GPIOC_current[index] = P2_GPIOC_next[index] = (1 << P2_D0_LOW_C) | (1 << P2_D1_LOW_C);
 				}
 			}
 			else
 			{
 				for(uint8_t index = regbit;index < 17;index++)
 				{
-					P1_GPIOC_current[index] = P1_GPIOC_next[index] = (1 << P1_D0_HIGH_C) | (1 << P1_D1_HIGH_C) | (1 << P1_D2_HIGH_C);
-					P2_GPIOC_current[index] = P2_GPIOC_next[index] = (1 << P2_D0_HIGH_C) | (1 << P2_D1_HIGH_C) | (1 << P2_D2_HIGH_C);
+					P1_GPIOC_current[index] = P1_GPIOC_next[index] = (1 << P1_D0_HIGH_C) | (1 << P1_D1_HIGH_C);
+					P2_GPIOC_current[index] = P2_GPIOC_next[index] = (1 << P2_D0_HIGH_C) | (1 << P2_D1_HIGH_C);
 				}
 			}
 		}
@@ -461,8 +458,8 @@ void EXTI1_IRQHandler(void)
 		//GPIOC->BSRR = P1_GPIOC_current[0] | P2_GPIOC_current[0] | V2_GPIOC_current[0];
 		uint32_t p1_data = P1_GPIOC_current[0];
 		uint32_t p2_data = P2_GPIOC_current[0];
-		GPIOC->BSRR = (p1_data & 0x000C000C); // set p1d0 and p1d1
-		GPIOC->BSRR = (p2_data & 0x01800180); // set p2d0 and p2d1
+		uint32_t all_data = (p1_data & 0x000C000C) | (p2_data & 0x01800180);
+		GPIOC->BSRR = all_data;
 
 		p1_current_bit = p2_current_bit = 1;
 		__enable_irq();
@@ -599,7 +596,8 @@ void EXTI9_5_IRQHandler(void)
 		}
 
 		uint32_t p2_data = P2_GPIOC_current[p2_current_bit];
-		GPIOC->BSRR = (p2_data & 0x01800180); // set p2d0 and p2d1
+		uint32_t all_data = (p2_data & 0x01800180);
+		GPIOC->BSRR = all_data;
 
 		ResetAndEnableP2ClockTimer();
 		p2_current_bit++;
