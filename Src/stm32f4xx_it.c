@@ -93,7 +93,7 @@ const uint32_t P2_D1_MASK = 0x00800080;
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-#define WAIT_4_CYCLES __asm("ADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0\nADD     R1, R2, #0")
+#define WAIT_4_CYCLES __asm("ADD     R1, R1, #0\nADD     R1, R1, #0\nADD     R1, R1, #0\nADD     R1, R1, #0")
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
