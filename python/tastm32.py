@@ -200,13 +200,10 @@ class TAStm32():
             self.activeRuns[prefix] = False
             raise RuntimeError('Error during setup')
 
-    def main_loop(self):
+    def main_loop(self, run):
         global DEBUG
-        global buffer
-        global run_id
-        global fn
         frame = 0
-        frame_max = len(buffer)
+        frame_max = len(run.buffer)
         while True:
             try:
                 c = self.read(1)
@@ -217,11 +214,11 @@ class TAStm32():
                     c += self.read(numBytes)
                     if numBytes > int_buffer:
                         print ("WARNING: High latch rate detected: " + str(numBytes))
-                latches = c.count(run_id)
-                bulk = c.count(run_id.lower())
+                latches = c.count(run.run_id)
+                bulk = c.count(run.run_id.lower())
                 missed = c.count(b'\xB0')
                 if missed != 0:
-                    fn -= missed
+                    run.fn -= missed
                     print('Buffer Overflow x{}'.format(missed))
 
                 # Latch Trains
@@ -241,29 +238,30 @@ class TAStm32():
 
                 for latch in range(latches):
                     try:
-                        data = run_id + buffer[fn]
+                        data = run.run_id + run.buffer[run.fn]
                         self.write(data)
-                        if fn % 100 == 0:
-                            print('Sending Latch: {}'.format(fn))
+                        if run.fn % 100 == 0:
+                            print('Sending Latch: {}'.format(run.fn))
                     except IndexError:
                         pass
-                    fn += 1
+                    run.fn += 1
                     frame += 1
                 for cmd in range(bulk):
                     for packet in range(packets):
                         command = []
                         for latch in range(latches_per_bulk_command//packets):
                             try:
-                                command.append(run_id + buffer[fn])
-                                fn += 1
-                                frame += 1
-                                if fn % 100 == 0:
-                                    print('Sending Latch: {}'.format(fn))
+                                command.append(run.run_id + run.buffer[run.fn])
+                                run.fn += 1
+                                if run.fn % 100 == 0:
+                                    print('Sending Latch: {}'.format(run.fn))
                             except IndexError:
-                                pass
+                                command.append(run.run_id + run.blankframe)
+                                run.fn += 1
+                            frame += 1
                         data = b''.join(command)
                         self.write(data)
-                    self.write(run_id.lower())
+                    self.write(run.run_id.lower())
                 if frame > frame_max:
                     break
             except serial.SerialException:
@@ -272,6 +270,13 @@ class TAStm32():
             except KeyboardInterrupt:
                 print('^C Exiting')
                 break
+
+class RunObject:
+    def __init__(self, run_id, buffer, fn, blankframe):
+        self.run_id = run_id
+        self.buffer = buffer
+        self.fn = fn
+        self.blankframe = blankframe
 
 def main():
     global DEBUG
@@ -361,6 +366,9 @@ def main():
         dev.send_latchtrain(run_id, args.latchtrain)
     dev.read(50)
 
+    if not args.nobulk:
+        dev.set_bulk_data_mode(run_id, b"1")
+
     # Send Blank Frames
     for blank in range(args.blank):
         data = run_id + blankframe
@@ -380,9 +388,11 @@ def main():
     fn -= err.count(b'\xB0')
     if err.count(b'\xB0') != 0:
         print('Buffer Overflow x{}'.format(err.count(b'\xB0')))
+
+    run = RunObject(run_id, buffer, fn, blankframe)
     print('Main Loop Start')
     dev.power_on()
-    dev.main_loop()
+    dev.main_loop(run)
     print('Exiting')
     dev.ser.close()
     sys.exit(0)
