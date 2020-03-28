@@ -98,37 +98,37 @@ const uint32_t P2_D1_MASK = 0x00800080;
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
-volatile uint64_t p1_d0_next;
-volatile uint64_t p1_d1_next;
-volatile uint64_t p1_d2_next;
-volatile uint64_t p2_d0_next;
-volatile uint64_t p2_d1_next;
-volatile uint64_t p2_d2_next;
-
-// leave enough room for SNES + overread
-volatile uint32_t P1_GPIOC_current[17];
-volatile uint32_t P1_GPIOC_next[17];
-
-volatile uint32_t P2_GPIOC_current[17];
-volatile uint32_t P2_GPIOC_next[17];
-
-// leave enough room for SNES only
-volatile uint32_t V1_GPIOB_current[16];
-volatile uint32_t V1_GPIOB_next[16];
-
-volatile uint32_t V2_GPIOC_current[16];
-volatile uint32_t V2_GPIOC_next[16];
-
-volatile uint8_t p1_current_bit;
-volatile uint8_t p2_current_bit;
-
-volatile uint8_t recentLatch;
-volatile uint8_t toggleNext;
-volatile uint8_t dpcmFix;
-volatile uint8_t clockFix;
-
+// variables that could change due to higher-priority interrupts
 volatile uint8_t p1_clock_filtered;
 volatile uint8_t p2_clock_filtered;
+
+volatile uint8_t recentLatch;
+
+// leave enough room for SNES + overread
+uint32_t P1_GPIOC_current[17];
+uint32_t P1_GPIOC_next[17];
+
+uint32_t P2_GPIOC_current[17];
+uint32_t P2_GPIOC_next[17];
+
+// leave enough room for SNES only
+uint32_t V1_GPIOB_current[16];
+uint32_t V1_GPIOB_next[16];
+
+uint32_t V2_GPIOC_current[16];
+uint32_t V2_GPIOC_next[16];
+
+uint8_t p1_current_bit;
+uint8_t p2_current_bit;
+
+uint8_t toggleNext;
+uint8_t dpcmFix;
+uint8_t clockFix;
+
+uint16_t p1_d0_next;
+uint16_t p1_d1_next;
+uint16_t p2_d0_next;
+uint16_t p2_d1_next;
 
 // latch train vars
 uint16_t current_train_index;
@@ -354,7 +354,6 @@ void EXTI1_IRQHandler(void)
 				p2_d0_next = ((p2_d0_next >> 8) & 0xFF) | ((p2_d0_next << 8) & 0xFF00);
 				p2_d1_next = ((p2_d1_next >> 8) & 0xFF) | ((p2_d1_next << 8) & 0xFF00);
 			}
-
 
 			regbit = 0;
 
