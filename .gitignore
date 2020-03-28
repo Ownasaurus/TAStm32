@@ -1,5 +1,6 @@
 /Debug/
 /Release/
+!/Release/TAStm32.binary
 *.r08
 *.r16m
 *.dtm
