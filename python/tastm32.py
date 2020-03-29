@@ -366,9 +366,6 @@ def main():
         dev.send_latchtrain(run_id, args.latchtrain)
     dev.read(50)
 
-    if not args.nobulk:
-        dev.set_bulk_data_mode(run_id, b"1")
-
     # Send Blank Frames
     for blank in range(args.blank):
         data = run_id + blankframe
@@ -391,6 +388,8 @@ def main():
 
     run = RunObject(run_id, buffer, fn, blankframe)
     print('Main Loop Start')
+    if not args.nobulk:
+        dev.set_bulk_data_mode(run_id, b"1")
     dev.power_on()
     dev.main_loop(run)
     print('Exiting')
