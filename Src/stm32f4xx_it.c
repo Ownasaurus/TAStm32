@@ -130,6 +130,9 @@ uint16_t p1_d1_next;
 uint16_t p2_d0_next;
 uint16_t p2_d1_next;
 
+uint8_t request_pending = 0;
+uint8_t bulk_mode = 0;
+
 // latch train vars
 uint16_t current_train_index;
 uint16_t current_train_latch_count;
@@ -195,7 +198,7 @@ void EXTI0_IRQHandler(void)
   /* USER CODE BEGIN EXTI0_IRQn 0 */
 	// P1_CLOCK
 
-	if(!p1_clock_filtered && p1_current_bit < 17) // sanity check... but 32 or more bits should never be read in a single latch!
+	if(!p1_clock_filtered)
 	{
 		if(clockFix)
 		{
@@ -206,7 +209,10 @@ void EXTI0_IRQHandler(void)
 		GPIOC->BSRR = p1_data;
 
 		ResetAndEnableP1ClockTimer();
-		p1_current_bit++;
+		if(p1_current_bit < 16)
+		{
+			p1_current_bit++;
+		}
 	}
   /* USER CODE END EXTI0_IRQn 0 */
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_0);
@@ -243,8 +249,8 @@ void EXTI1_IRQHandler(void)
 
 		// copy the rest of the bits. do not copy the overread since it will never change
 		// P2 comes before P1 in NES, so copy P2 first
-		memcpy((uint32_t*)&P2_GPIOC_current, (uint32_t*)&P2_GPIOC_next, 64);
-		memcpy((uint32_t*)&P1_GPIOC_current, (uint32_t*)&P1_GPIOC_next, 64);
+		memcpy(P2_GPIOC_current, P2_GPIOC_next, 64);
+		memcpy(P1_GPIOC_current, P1_GPIOC_next, 64);
 
 		// now prepare for the next frame!
 
@@ -323,10 +329,9 @@ void EXTI1_IRQHandler(void)
 			dataptr = GetNextFrame(tasrun);
 		}
 
-		toggleNext = TASRunIncrementFrameCount(tasrun);
-
 		if(dataptr)
 		{
+			toggleNext = TASRunIncrementFrameCount(tasrun);
 			c = TASRunGetConsole(tasrun);
 
 			databit = 0;
@@ -392,7 +397,8 @@ void EXTI1_IRQHandler(void)
 				databit = 15; // number of bits of SNES - 1
 			}
 
-			// no controller data means all pins get set high for this protocol
+			// no controller data means all SNES pins get set high for this protocol to indicate no buttons are pressed
+			// vis pins get all set low to indicate no buttons are pressed
 			for(uint8_t index = 0;index <= databit;index++)
 			{
 				P1_GPIOC_next[index] = (1 << P1_D0_HIGH_C) | (1 << P1_D1_HIGH_C);
@@ -448,8 +454,8 @@ void EXTI1_IRQHandler(void)
 		}
 
 		// vis board code = 16 clock pulses followed by a latch pulse
-		memcpy((uint32_t*)&V1_GPIOB_current, (uint32_t*)&V1_GPIOB_next, 64);
-		memcpy((uint32_t*)&V2_GPIOC_current, (uint32_t*)&V2_GPIOC_next, 64);
+		memcpy(V1_GPIOB_current, V1_GPIOB_next, 64);
+		memcpy(V2_GPIOC_current, V2_GPIOC_next, 64);
 		UpdateVisBoards();
 	}
 	else if(recentLatch == 1) // multiple close latches and DPCM fix is enabled
@@ -588,7 +594,7 @@ void EXTI9_5_IRQHandler(void)
   /* USER CODE BEGIN EXTI9_5_IRQn 0 */
 	// P2_CLOCK
 
-	if(!p2_clock_filtered && p2_current_bit < 17) // sanity check... but 32 or more bits should never be read in a single latch!
+	if(!p2_clock_filtered)
 	{
 		if(clockFix)
 		{
@@ -599,7 +605,10 @@ void EXTI9_5_IRQHandler(void)
 		GPIOC->BSRR = p2_data;
 
 		ResetAndEnableP2ClockTimer();
-		p2_current_bit++;
+		if(p2_current_bit < 16)
+		{
+			p2_current_bit++;
+		}
 	}
   /* USER CODE END EXTI9_5_IRQn 0 */
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_5);

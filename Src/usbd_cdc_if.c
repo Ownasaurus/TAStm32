@@ -103,9 +103,6 @@ uint8_t UserTxBufferFS[APP_TX_DATA_SIZE];
 
 /* USER CODE BEGIN PRIVATE_VARIABLES */
 
-uint8_t request_pending = 0;
-uint8_t bulk_mode = 0;
-
 /* USER CODE END PRIVATE_VARIABLES */
 
 /**
