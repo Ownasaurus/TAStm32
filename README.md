@@ -38,6 +38,9 @@ OR the equivalent in your distribution
 ### Flashing the firmware
 
 #### Linux
+    apt install dfu-util
+OR the equivalent in your distribution
+
     make flash
 
 #### Windows
