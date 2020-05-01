@@ -13,14 +13,14 @@
 ######################################
 # target
 ######################################
-TARGET = TAStm32
+TARGET = tastm32-$(shell git rev-parse --short HEAD)
 
 
 ######################################
 # building variables
 ######################################
 # debug build?
-DEBUG = 1
+DEBUG = 0
 # optimization
 OPT = -O3
 
@@ -196,6 +196,14 @@ $(BUILD_DIR)/%.bin: $(BUILD_DIR)/%.elf | $(BUILD_DIR)
 	
 $(BUILD_DIR):
 	mkdir $@		
+    
+#######################################
+# flash firmware
+#######################################
+flash:
+    ./python/tastm32-dfu.py
+    sleep 1
+    dfu-util -a 0 -s 0x08000000:leave -D $(BUILD_DIR)/$(TARGET).bin
 
 #######################################
 # clean up
