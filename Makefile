@@ -201,9 +201,9 @@ $(BUILD_DIR):
 # flash firmware
 #######################################
 flash:
-    ./python/tastm32-dfu.py
-    sleep 1
-    dfu-util -a 0 -s 0x08000000:leave -D $(BUILD_DIR)/$(TARGET).bin
+	./python/tastm32-dfu.py
+	sleep 1
+	dfu-util -a 0 -s 0x08000000:leave -D $(BUILD_DIR)/$(TARGET).bin
 
 #######################################
 # clean up
