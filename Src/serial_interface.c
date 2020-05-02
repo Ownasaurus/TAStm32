@@ -118,15 +118,15 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 							latch_trains = NULL;
 						}
 
-						memset((uint32_t*)&P1_GPIOC_current, 0, sizeof(P1_GPIOC_current));
-						memset((uint32_t*)&P1_GPIOC_next, 0, sizeof(P1_GPIOC_next));
-						memset((uint32_t*)&P2_GPIOC_current, 0, sizeof(P2_GPIOC_current));
-						memset((uint32_t*)&P2_GPIOC_next, 0, sizeof(P2_GPIOC_next));
+						memset(P1_GPIOC_current, 0, sizeof(P1_GPIOC_current));
+						memset(P1_GPIOC_next, 0, sizeof(P1_GPIOC_next));
+						memset(P2_GPIOC_current, 0, sizeof(P2_GPIOC_current));
+						memset(P2_GPIOC_next, 0, sizeof(P2_GPIOC_next));
 
-						memset((uint32_t*)&V1_GPIOB_current, 0, sizeof(V1_GPIOB_current));
-						memset((uint32_t*)&V1_GPIOB_next, 0, sizeof(V1_GPIOB_next));
-						memset((uint32_t*)&V2_GPIOC_current, 0, sizeof(V2_GPIOC_current));
-						memset((uint32_t*)&V2_GPIOC_next, 0, sizeof(V2_GPIOC_next));
+						memset(V1_GPIOB_current, 0, sizeof(V1_GPIOB_current));
+						memset(V1_GPIOB_next, 0, sizeof(V1_GPIOB_next));
+						memset(V2_GPIOC_current, 0, sizeof(V2_GPIOC_current));
+						memset(V2_GPIOC_next, 0, sizeof(V2_GPIOC_next));
 
 						ResetTASRuns();
 						serial_interface_output((uint8_t*)"\x01R", 2); // good response for reset
@@ -307,9 +307,12 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 
 					if(c == CONSOLE_NES || c == CONSOLE_SNES)
 					{
+						// enable these interrupts atomically
+						__disable_irq();
 						HAL_NVIC_EnableIRQ(EXTI0_IRQn);
 						HAL_NVIC_EnableIRQ(EXTI1_IRQn);
 						HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
+						__enable_irq();
 					}
 					else if(c == CONSOLE_N64 || c == CONSOLE_GC)
 					{

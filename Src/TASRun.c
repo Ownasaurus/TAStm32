@@ -192,7 +192,7 @@ int ExtractDataAndAddFrame(TASRun *tasrun, uint8_t *buffer, uint32_t n)
 		return 0;
 	}
 
-	memcpy((RunData*)tasrun->buf,frame,sizeof(frame));
+	memcpy(tasrun->buf,frame,sizeof(*(tasrun->buf)));
 
 	// NOTE: These two pointer modifications must occur in an atomic fashion
 	//       A poorly-timed interrupt could cause bad things.
