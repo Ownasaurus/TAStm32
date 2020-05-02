@@ -8,3 +8,14 @@
 *.bak
 *.m64
 python/__pycache__/
+python/*.py
+!python/argparse_helper.py
+!python/dtm.py
+!python/m64.py
+!python/r08.py
+!python/r16m.py
+!python/run-n64.py
+!python/run-nes.py
+!python/run-snes.py
+!python/serial_helper.py
+!python/tastm32*.py
