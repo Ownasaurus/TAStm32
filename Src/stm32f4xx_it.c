@@ -819,7 +819,7 @@ void ResetAndEnableP2ClockTimer()
 	HAL_TIM_Base_Start_IT(&htim7);
 }
 
-__attribute__((optimize("O0"))) inline void UpdateVisBoards()
+inline void UpdateVisBoards()
 {
 	if(c == CONSOLE_NES)
 	{
