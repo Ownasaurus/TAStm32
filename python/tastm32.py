@@ -361,11 +361,6 @@ def main():
     if args.transition != None:
         for transition in args.transition:
             dev.send_transition(run_id, *transition)
-    # Latch trains
-    if args.latchtrain != '':
-        dev.send_latchtrain(run_id, args.latchtrain)
-    dev.read(50)
-
     # Send Blank Frames
     for blank in range(args.blank):
         data = run_id + blankframe
@@ -385,7 +380,10 @@ def main():
     fn -= err.count(b'\xB0')
     if err.count(b'\xB0') != 0:
         print('Buffer Overflow x{}'.format(err.count(b'\xB0')))
-
+    # Latch trains
+    if args.latchtrain != '':
+        dev.send_latchtrain(run_id, args.latchtrain)
+    
     run = RunObject(run_id, buffer, fn, blankframe)
     print('Main Loop Start')
     if not args.nobulk:
