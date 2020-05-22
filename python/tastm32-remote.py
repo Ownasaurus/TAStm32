@@ -4,6 +4,7 @@ import serial_helper
 import argparse_helper
 import tastm32
 import psutil
+import struct
 
 if(os.name == 'nt'):
     psutil.Process().nice(psutil.REALTIME_PRIORITY_CLASS)
