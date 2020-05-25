@@ -84,7 +84,7 @@ def main():
     try:
         file = sys.argv[1]
     except:
-        print('Usage {} <movie file>')
+        print(f'Usage {sys.argv[0]} <movie file>')
         sys.exit()
     with open(file, 'rb') as f:
         data = f.read()
