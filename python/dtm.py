@@ -53,7 +53,6 @@ def _process_input(data):
 def read_input(data, header=None):
     if header == None:
         header = read_header(data)
-    print(header)
     controllerCount = 0
     if header['Controllers'] & 0x1 != 0:
         controllerCount += 1
