@@ -359,7 +359,7 @@ def main():
     dev.reset()
     if args.console == 'genesis':
         header = gmv.read_header(data)
-        args.players = (header.p1, header.p2, header.3player)
+        args.players = (header.get("p1"), header.get("p2"), header.get("3players"))
     run_id = dev.setup_run(args.console, args.players, args.dpcm, args.overread, args.clock)
     if run_id == None:
         raise RuntimeError('ERROR')
