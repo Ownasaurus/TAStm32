@@ -348,7 +348,7 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 						break;
 					default: // Error: console type not understood
 						instance.state = SERIAL_COMPLETE;
-						instance.tasrun = NULL;;
+						instance.tasrun = NULL;
 						serial_interface_output((uint8_t*)"\xFC", 1);
 						break;
 				}

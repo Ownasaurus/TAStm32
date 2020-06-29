@@ -142,9 +142,6 @@ int main(void)
   HAL_NVIC_DisableIRQ(EXTI9_5_IRQn);
   jumpToDFU = 0;
 
-  // ensure no buttons are pressed initially
-  HAL_GPIO_WritePin(GPIOC, P1_DATA_1_Pin|P1_DATA_0_Pin|P2_DATA_2_Pin|P2_DATA_1_Pin|P2_DATA_0_Pin, GPIO_PIN_SET);
-
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -443,9 +440,8 @@ static void MX_GPIO_Init(void)
                            P2_DATA_2_Pin */
   GPIO_InitStruct.Pin = P1_DATA_1_Pin|P1_DATA_0_Pin|P2_DATA_1_Pin|P2_DATA_0_Pin 
                           |P2_DATA_2_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PA0 PA1 PA4 PA6 
