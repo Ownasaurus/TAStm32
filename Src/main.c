@@ -133,9 +133,6 @@ int main(void)
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
 
-  // all of the interrupts should be disabled before reaching this point
-  // they will be re-enabled based on the console and number of controllers being utilized
-
   jumpToDFU = 0;
 
   /* USER CODE END 2 */
