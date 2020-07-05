@@ -98,6 +98,10 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 							HAL_NVIC_ClearPendingIRQ(TIM1_UP_TIM10_IRQn);
 						}
 
+						// set all lines low to avoid conflicting with NES poweron
+						HAL_GPIO_WritePin(GPIOC, P1_DATA_1_Pin|P1_DATA_0_Pin|P2_DATA_1_Pin|P2_DATA_0_Pin
+						                          |P2_DATA_2_Pin|P1_DATA_2_Pin, GPIO_PIN_RESET);
+
 						// important to reset our state
 						recentLatch = 0;
 						toggleNext = 0;
@@ -348,7 +352,7 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 						break;
 					default: // Error: console type not understood
 						instance.state = SERIAL_COMPLETE;
-						instance.tasrun = NULL;;
+						instance.tasrun = NULL;
 						serial_interface_output((uint8_t*)"\xFC", 1);
 						break;
 				}

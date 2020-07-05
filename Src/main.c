@@ -133,17 +133,7 @@ int main(void)
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
 
-  // all of the interrupts should be disabled before reaching this point
-  // they will be re-enabled based on the console and number of controllers being utilized
-
-  HAL_NVIC_DisableIRQ(EXTI0_IRQn);
-  HAL_NVIC_DisableIRQ(EXTI1_IRQn);
-  HAL_NVIC_DisableIRQ(EXTI4_IRQn);
-  HAL_NVIC_DisableIRQ(EXTI9_5_IRQn);
   jumpToDFU = 0;
-
-  // ensure no buttons are pressed initially
-  HAL_GPIO_WritePin(GPIOC, P1_DATA_1_Pin|P1_DATA_0_Pin|P2_DATA_2_Pin|P2_DATA_1_Pin|P2_DATA_0_Pin, GPIO_PIN_SET);
 
   /* USER CODE END 2 */
 
@@ -443,9 +433,8 @@ static void MX_GPIO_Init(void)
                            P2_DATA_2_Pin */
   GPIO_InitStruct.Pin = P1_DATA_1_Pin|P1_DATA_0_Pin|P2_DATA_1_Pin|P2_DATA_0_Pin 
                           |P2_DATA_2_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PA0 PA1 PA4 PA6 
@@ -521,16 +510,16 @@ static void MX_GPIO_Init(void)
 
   /* EXTI interrupt init*/
   HAL_NVIC_SetPriority(EXTI0_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(EXTI0_IRQn);
+  //HAL_NVIC_EnableIRQ(EXTI0_IRQn);
 
   HAL_NVIC_SetPriority(EXTI1_IRQn, 1, 0);
-  HAL_NVIC_EnableIRQ(EXTI1_IRQn);
+  //HAL_NVIC_EnableIRQ(EXTI1_IRQn);
 
   HAL_NVIC_SetPriority(EXTI4_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(EXTI4_IRQn);
+  //HAL_NVIC_EnableIRQ(EXTI4_IRQn);
 
   HAL_NVIC_SetPriority(EXTI9_5_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
+  //HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
 
 }
 
@@ -580,12 +569,14 @@ void JumpToBootLoader(void) {
 	HAL_NVIC_DisableIRQ(TIM3_IRQn);
 	HAL_NVIC_DisableIRQ(TIM6_DAC_IRQn);
 	HAL_NVIC_DisableIRQ(TIM7_IRQn);
+	HAL_NVIC_DisableIRQ(TIM1_UP_TIM10_IRQn);
 	HAL_NVIC_DisableIRQ(SysTick_IRQn);
 
 	// De-init timers
 	HAL_TIM_Base_DeInit(&htim3);
 	HAL_TIM_Base_DeInit(&htim6);
 	HAL_TIM_Base_DeInit(&htim7);
+	HAL_TIM_Base_DeInit(&htim10);
 
 	// clear all interrupts
 	while (HAL_NVIC_GetPendingIRQ(EXTI0_IRQn))
@@ -623,6 +614,10 @@ void JumpToBootLoader(void) {
 	while (HAL_NVIC_GetPendingIRQ(TIM7_IRQn))
 	{
 		HAL_NVIC_ClearPendingIRQ(TIM7_IRQn);
+	}
+	while (HAL_NVIC_GetPendingIRQ(TIM1_UP_TIM10_IRQn))
+	{
+		HAL_NVIC_ClearPendingIRQ(TIM1_UP_TIM10_IRQn);
 	}
 	while (HAL_NVIC_GetPendingIRQ(OTG_FS_IRQn))
 	{
