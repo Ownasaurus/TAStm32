@@ -982,7 +982,9 @@ inline void UpdateVisBoards()
 
 inline void UpdateN64VisBoards(N64ControllerData n64data)
 {
-	// set up V1_GPIOB_current accordingly
+	// use the variable V1_GPIOB_current, which already exists, to store if a button should be pressed or not
+	// NOTE: this is not how the variable is used in other functions
+
 	V1_GPIOB_current[0] = n64data.a; // snes vis b
 	V1_GPIOB_current[1] = 0; // snes vis a
 	V1_GPIOB_current[2] = n64data.l; // snes vis select
@@ -1059,8 +1061,15 @@ inline void UpdateN64VisBoards(N64ControllerData n64data)
 	// each bit pulse should be at least 10ns in width
 	for(int x = 0;x < 16;x++)
 	{
-		//set vis data
-		GPIOB->BSRR = V1_GPIOB_current[x];
+		//set vis d0 line appropriately
+		if(V1_GPIOB_current[x] == 1)
+		{
+			GPIOB->BSRR = 1 << V1_D0_HIGH_B;
+		}
+		else
+		{
+			GPIOB->BSRR = 1 << V1_D0_LOW_B;
+		}
 
 		// give time to it to register
 		WAIT_4_CYCLES;
