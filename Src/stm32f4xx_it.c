@@ -991,10 +991,10 @@ inline void UpdateN64VisBoards(N64ControllerData n64data)
 	V1_GPIOB_current[9] = 0; // snes vis x
 	V1_GPIOB_current[10] = n64data.z; // snes vis l
 	V1_GPIOB_current[11] = n64data.r; // snes vis r
-	V1_GPIOB_current[12] = n64data.c_left; // snes vis 1
-	V1_GPIOB_current[13] = n64data.c_right; // snes vis 2
+	V1_GPIOB_current[12] = n64data.c_right; // snes vis 1
+	V1_GPIOB_current[13] = n64data.c_down; // snes vis 2
 	V1_GPIOB_current[14] = n64data.c_up; // snes vis 3
-	V1_GPIOB_current[15] = n64data.c_down; // snes vis 4
+	V1_GPIOB_current[15] = n64data.c_left; // snes vis 4
 
 	const int8_t ANALOG_THRESHOLD = 40;
 
