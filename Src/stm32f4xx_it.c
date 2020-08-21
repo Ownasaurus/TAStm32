@@ -569,10 +569,12 @@ void EXTI4_IRQHandler(void)
 	switch(cmd)
 	{
 		case 0x01: // N64 poll
+			UpdateN64VisBoards(frame[0][0][0].n64_data);
 		case 0x400302: // GC poll
 		case 0x400300: // GC poll
 		case 0x400301: // GC poll
 			serial_interface_output((uint8_t*)"A", 1);
+
 
 			if(frame == NULL) // there was a buffer underflow
 				serial_interface_output((uint8_t*)"\xB2", 1);
@@ -976,6 +978,144 @@ inline void UpdateVisBoards()
 	WAIT_4_CYCLES;
 	GPIOB->BSRR = (1 << V1_LATCH_LOW_B);
 	GPIOC->BSRR = (1 << V2_LATCH_LOW_C);
+}
+
+inline void UpdateN64VisBoards(N64ControllerData n64data)
+{
+	// set up V1_GPIOB_current accordingly
+	V1_GPIOB_current[0] = n64data.a; // snes vis b
+	V1_GPIOB_current[1] = 0; // snes vis a
+	V1_GPIOB_current[2] = n64data.l; // snes vis select
+	V1_GPIOB_current[3] = n64data.start; // snes vis start
+	V1_GPIOB_current[8] = n64data.b; // snes vis y
+	V1_GPIOB_current[9] = 0; // snes vis x
+	V1_GPIOB_current[10] = n64data.z; // snes vis l
+	V1_GPIOB_current[11] = n64data.r; // snes vis r
+	V1_GPIOB_current[12] = n64data.c_left; // snes vis 1
+	V1_GPIOB_current[13] = n64data.c_right; // snes vis 2
+	V1_GPIOB_current[14] = n64data.c_up; // snes vis 3
+	V1_GPIOB_current[15] = n64data.c_down; // snes vis 4
+
+	const int8_t ANALOG_THRESHOLD = 40;
+
+	int8_t converted_y = (int8_t)(n64data.y_axis);
+	int8_t converted_x = (int8_t)(n64data.x_axis);
+
+	if(converted_x >= 0)
+	{
+		V1_GPIOB_current[6] = 0; // snes vis left
+
+		if(converted_x >= ANALOG_THRESHOLD)
+		{
+			V1_GPIOB_current[7] = 1; // snes vis right
+		}
+		else
+		{
+			V1_GPIOB_current[7] = 0; // snes vis right
+		}
+	}
+	else
+	{
+		V1_GPIOB_current[7] = 0; // snes vis right
+
+		if(converted_x <= (-ANALOG_THRESHOLD))
+		{
+			V1_GPIOB_current[6] = 1; // snes vis left
+		}
+		else
+		{
+			V1_GPIOB_current[6] = 0; // snes vis left
+		}
+	}
+
+	if(converted_y >= 0)
+	{
+		V1_GPIOB_current[5] = 0; // snes vis down
+
+		if(converted_y >= ANALOG_THRESHOLD)
+		{
+			V1_GPIOB_current[4] = 1; // snes vis up
+		}
+		else
+		{
+			V1_GPIOB_current[4] = 0; // snes vis up
+		}
+	}
+	else
+	{
+		V1_GPIOB_current[4] = 0; // snes vis up
+
+		if(converted_y <= (-ANALOG_THRESHOLD))
+		{
+			V1_GPIOB_current[5] = 1; // snes vis down
+		}
+		else
+		{
+			V1_GPIOB_current[5] = 0; // snes vis down
+		}
+	}
+
+	// at least 10ns in width
+	for(int x = 0;x < 16;x++)
+	{
+		//set vis data
+		GPIOB->BSRR = V1_GPIOB_current[x];
+
+		// give time to it to register
+		WAIT_4_CYCLES;
+
+		GPIOB->BSRR = (1 << V1_CLOCK_HIGH_B);
+		// wait 4 cycles which should be well over the minimum required 10ns but still relatively quick
+		WAIT_4_CYCLES;
+		GPIOB->BSRR = (1 << V1_CLOCK_LOW_B);
+		WAIT_4_CYCLES;
+	}
+
+	GPIOB->BSRR = V1_GPIOB_current[9];
+
+	// give time to it to register
+	WAIT_4_CYCLES;
+
+	GPIOB->BSRR = (1 << V1_CLOCK_HIGH_B);
+	// wait 4 cycles which should be well over the minimum required 10ns but still relatively quick
+	WAIT_4_CYCLES;
+	GPIOB->BSRR = (1 << V1_CLOCK_LOW_B);
+	WAIT_4_CYCLES;
+
+	GPIOB->BSRR = V1_GPIOB_current[1];
+
+	// give time to it to register
+	WAIT_4_CYCLES;
+
+	GPIOB->BSRR = (1 << V1_CLOCK_HIGH_B);
+	// wait 4 cycles which should be well over the minimum required 10ns but still relatively quick
+	WAIT_4_CYCLES;
+	GPIOB->BSRR = (1 << V1_CLOCK_LOW_B);
+	WAIT_4_CYCLES;
+
+	// at least 10ns in width
+	for(int x = 10;x < 16;x++)
+	{
+		//set vis data
+		GPIOB->BSRR = V1_GPIOB_current[x];
+
+		// give time to it to register
+		WAIT_4_CYCLES;
+
+		GPIOB->BSRR = (1 << V1_CLOCK_HIGH_B);
+		// wait 4 cycles which should be well over the minimum required 10ns but still relatively quick
+		WAIT_4_CYCLES;
+		GPIOB->BSRR = (1 << V1_CLOCK_LOW_B);
+		WAIT_4_CYCLES;
+	}
+
+	WAIT_4_CYCLES;
+
+	// create at least a 20ns latch pulse (this should be about 40ns)
+	GPIOB->BSRR = (1 << V1_LATCH_HIGH_B);
+	WAIT_4_CYCLES;
+	WAIT_4_CYCLES;
+	GPIOB->BSRR = (1 << V1_LATCH_LOW_B);
 }
 
 static uint8_t UART2_OutputFunction(uint8_t *buffer, uint16_t n)
