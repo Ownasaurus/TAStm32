@@ -996,6 +996,7 @@ inline void UpdateN64VisBoards(N64ControllerData n64data)
 	V1_GPIOB_current[14] = n64data.c_up; // snes vis 3
 	V1_GPIOB_current[15] = n64data.c_left; // snes vis 4
 
+	// handle the analog stick to d-pad conversion
 	const int8_t ANALOG_THRESHOLD = 40;
 
 	int8_t converted_y = (int8_t)(n64data.y_axis);
@@ -1055,7 +1056,7 @@ inline void UpdateN64VisBoards(N64ControllerData n64data)
 		}
 	}
 
-	// at least 10ns in width
+	// each bit pulse should be at least 10ns in width
 	for(int x = 0;x < 16;x++)
 	{
 		//set vis data
@@ -1064,44 +1065,7 @@ inline void UpdateN64VisBoards(N64ControllerData n64data)
 		// give time to it to register
 		WAIT_4_CYCLES;
 
-		GPIOB->BSRR = (1 << V1_CLOCK_HIGH_B);
-		// wait 4 cycles which should be well over the minimum required 10ns but still relatively quick
-		WAIT_4_CYCLES;
-		GPIOB->BSRR = (1 << V1_CLOCK_LOW_B);
-		WAIT_4_CYCLES;
-	}
-
-	GPIOB->BSRR = V1_GPIOB_current[9];
-
-	// give time to it to register
-	WAIT_4_CYCLES;
-
-	GPIOB->BSRR = (1 << V1_CLOCK_HIGH_B);
-	// wait 4 cycles which should be well over the minimum required 10ns but still relatively quick
-	WAIT_4_CYCLES;
-	GPIOB->BSRR = (1 << V1_CLOCK_LOW_B);
-	WAIT_4_CYCLES;
-
-	GPIOB->BSRR = V1_GPIOB_current[1];
-
-	// give time to it to register
-	WAIT_4_CYCLES;
-
-	GPIOB->BSRR = (1 << V1_CLOCK_HIGH_B);
-	// wait 4 cycles which should be well over the minimum required 10ns but still relatively quick
-	WAIT_4_CYCLES;
-	GPIOB->BSRR = (1 << V1_CLOCK_LOW_B);
-	WAIT_4_CYCLES;
-
-	// at least 10ns in width
-	for(int x = 10;x < 16;x++)
-	{
-		//set vis data
-		GPIOB->BSRR = V1_GPIOB_current[x];
-
-		// give time to it to register
-		WAIT_4_CYCLES;
-
+		// clock it
 		GPIOB->BSRR = (1 << V1_CLOCK_HIGH_B);
 		// wait 4 cycles which should be well over the minimum required 10ns but still relatively quick
 		WAIT_4_CYCLES;
