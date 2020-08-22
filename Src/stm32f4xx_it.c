@@ -985,12 +985,12 @@ inline void UpdateN64VisBoards(N64ControllerData n64data)
 	// use the variable V1_GPIOB_current, which already exists, to store if a button should be pressed or not
 	// NOTE: this is not how the variable is used in other functions
 
-	V1_GPIOB_current[0] = n64data.a; // snes vis b
-	V1_GPIOB_current[1] = 0; // snes vis a
+	V1_GPIOB_current[0] = 0; // snes vis a
+	V1_GPIOB_current[1] = n64data.a; // snes vis b
 	V1_GPIOB_current[2] = n64data.l; // snes vis select
 	V1_GPIOB_current[3] = n64data.start; // snes vis start
-	V1_GPIOB_current[8] = n64data.b; // snes vis y
-	V1_GPIOB_current[9] = 0; // snes vis x
+	V1_GPIOB_current[8] = 0; // snes vis x
+	V1_GPIOB_current[9] = n64data.b; // snes vis y
 	V1_GPIOB_current[10] = n64data.z; // snes vis l
 	V1_GPIOB_current[11] = n64data.r; // snes vis r
 	V1_GPIOB_current[12] = n64data.c_right; // snes vis 1
