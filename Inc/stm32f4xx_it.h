@@ -37,6 +37,8 @@
 #ifndef __STM32F4xx_IT_H
 #define __STM32F4xx_IT_H
 
+#include "n64.h"
+
 #ifdef __cplusplus
  extern "C" {
 #endif 
@@ -108,6 +110,7 @@ void ResetAndEnable8msTimer();
 void ResetAndEnableP1ClockTimer();
 void ResetAndEnableP2ClockTimer();
 void UpdateVisBoards();
+void UpdateN64VisBoards(N64ControllerData n64data);
 /* USER CODE END EFP */
 
 #ifdef __cplusplus
