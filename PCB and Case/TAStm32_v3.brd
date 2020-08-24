@@ -2376,7 +2376,7 @@ These design rules represent that absolute minimums possible for CircuitHub. If 
 <attribute name="POPULARITY" value="52" x="17.09" y="39.9316" size="1.778" layer="27" rot="R270" display="off"/>
 <attribute name="SPICEPREFIX" value="C" x="17.09" y="39.9316" size="1.778" layer="27" rot="R270" display="off"/>
 </element>
-<element name="C7" library="rcl" library_urn="urn:adsk.eagle:library:334" package="C0805K" package3d_urn="urn:adsk.eagle:package:23681/2" value="100nF" x="14.04" y="45.0916" smashed="yes">
+<element name="C7" library="rcl" library_urn="urn:adsk.eagle:library:334" package="C0805K" package3d_urn="urn:adsk.eagle:package:23681/2" value="4.7uF" x="14.04" y="45.0916" smashed="yes">
 <attribute name="NAME" x="10.89" y="45.6016" size="0.6096" layer="25" font="vector" ratio="15" rot="R270"/>
 <attribute name="POPULARITY" value="52" x="14.04" y="45.0916" size="1.778" layer="27" display="off"/>
 <attribute name="SPICEPREFIX" value="C" x="14.04" y="45.0916" size="1.778" layer="27" display="off"/>
