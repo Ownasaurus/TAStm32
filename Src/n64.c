@@ -117,7 +117,7 @@ void write_0()
 // send a byte from LSB to MSB (proper serialization)
 static void SendByte(unsigned char b)
 {
-    for(int i = 0;i < 8;i++) // send all 8 bits, one at a time
+    for(int i = 7;i >= 0;i--) // send all 8 bits, one at a time
     {
         if((b >> i) & 1)
         {
