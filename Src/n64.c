@@ -227,9 +227,9 @@ void SendControllerDataGC(uint64_t data)
 
 void SendIdentityGC()
 {
-    SendByte(0x90);
+    SendByte(0x09);
     SendByte(0x00);
-    SendByte(0x0C);
+    SendByte(0x30);
     SendStop();
 }
 
