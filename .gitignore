@@ -7,6 +7,8 @@
 *.sav
 *.bak
 *.m64
+*.gmv
+*.rgen
 python/__pycache__/
 python/*.py
 !python/argparse_helper.py
