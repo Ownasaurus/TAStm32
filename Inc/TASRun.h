@@ -9,10 +9,10 @@
 
 #define MAX_SIZE 1024
 #define MAX_CONTROLLERS 2
-#define MAX_DATA_LANES 3
+#define MAX_DATA_LANES 4
 #define MAX_TRANSITIONS 5
 
-#define MAX_NUM_RUNS 2
+#define MAX_NUM_RUNS 1
 
 typedef enum
 {
@@ -45,6 +45,14 @@ typedef struct
 	uint32_t frameno;
 } Transition;
 
+typedef enum
+{
+	RUNSTATE_IDLE,
+	RUNSTATE_RUNNING,
+	RUNSTATE_STOPPING,
+	RUNSTATE_STOPPED
+} PlaybackState;
+
 typedef RunData RunDataArray[MAX_CONTROLLERS][MAX_DATA_LANES];
 
 typedef struct
@@ -65,6 +73,12 @@ typedef struct
 	Transition transitions_dpcm[MAX_TRANSITIONS];
 	uint8_t console_data_size;
 	uint8_t input_data_size;
+
+	PlaybackState USBPlaybackState;
+	uint32_t blank;
+	char inputFile[256];
+	char inputBuffer[512];
+	uint32_t inputBufferSize;
 } TASRun;
 
 extern TASRun tasruns[MAX_NUM_RUNS];
@@ -182,4 +196,5 @@ int ExtractDataAndAddFrame(TASRun *tasrun, uint8_t *buffer, uint32_t n);
 
 void SetN64Mode();
 void SetSNESMode();
+void ResetRuns();
 #endif

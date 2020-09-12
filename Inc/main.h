@@ -79,6 +79,10 @@ void JumpToBootLoader(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define SWITCH4_Pin GPIO_PIN_13
+#define SWITCH4_GPIO_Port GPIOC
+#define SWITCH3_Pin GPIO_PIN_14
+#define SWITCH3_GPIO_Port GPIOC
 #define P1_CLOCK_Pin GPIO_PIN_0
 #define P1_CLOCK_GPIO_Port GPIOC
 #define P1_CLOCK_EXTI_IRQn EXTI0_IRQn
@@ -91,6 +95,10 @@ void JumpToBootLoader(void);
 #define P1_DATA_0_GPIO_Port GPIOC
 #define LD2_Pin GPIO_PIN_5
 #define LD2_GPIO_Port GPIOA
+#define SWITCH1_Pin GPIO_PIN_6
+#define SWITCH1_GPIO_Port GPIOA
+#define SWITCH2_Pin GPIO_PIN_7
+#define SWITCH2_GPIO_Port GPIOA
 #define P1_DATA_2_Pin GPIO_PIN_4
 #define P1_DATA_2_GPIO_Port GPIOC
 #define P1_DATA_2_EXTI_IRQn EXTI4_IRQn

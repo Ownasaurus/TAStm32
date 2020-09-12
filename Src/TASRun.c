@@ -3,6 +3,7 @@
 #include "snes.h"
 #include "TASRun.h"
 #include "stm32f4xx_hal.h"
+#include "stm32f4xx_it.h"
 #include "main.h"
 
 extern TIM_HandleTypeDef htim6;
@@ -110,15 +111,82 @@ uint8_t TASRunGetClockFix(const TASRun *tasrun)
 	return (tasrun->clockFix != 0) ? 1 : 0;
 }
 
-void ResetTASRuns()
-{
-	memset(tasruns,0,sizeof(tasruns));
-	for(int x = 0;x < MAX_NUM_RUNS;x++)
-	{
+void ClearRunData() {
+	memset(tasruns, 0, sizeof(tasruns));
+	for (int x = 0; x < MAX_NUM_RUNS; x++) {
 		tasruns[x].buf = tasruns[x].runData;
 		tasruns[x].current = tasruns[x].runData;
-		tasruns[x].end = &(tasruns[x].runData[MAX_SIZE-1]);
+		tasruns[x].end = &(tasruns[x].runData[MAX_SIZE - 1]);
 	}
+}
+
+void ResetRun() {
+	// disable interrupts on latch/clock/data for now
+	HAL_NVIC_DisableIRQ(EXTI0_IRQn);
+	HAL_NVIC_DisableIRQ(EXTI1_IRQn);
+	HAL_NVIC_DisableIRQ(EXTI4_IRQn);
+	HAL_NVIC_DisableIRQ(EXTI9_5_IRQn);
+	Disable8msTimer();
+	DisableP1ClockTimer();
+	DisableP2ClockTimer();
+	DisableTrainTimer();
+	// clear all interrupts
+	while (HAL_NVIC_GetPendingIRQ(EXTI0_IRQn)) {
+		__HAL_GPIO_EXTI_CLEAR_IT(P1_CLOCK_Pin);
+		HAL_NVIC_ClearPendingIRQ(EXTI0_IRQn);
+	}
+	while (HAL_NVIC_GetPendingIRQ(EXTI1_IRQn)) {
+		__HAL_GPIO_EXTI_CLEAR_IT(P1_LATCH_Pin);
+		HAL_NVIC_ClearPendingIRQ(EXTI1_IRQn);
+	}
+	while (HAL_NVIC_GetPendingIRQ(EXTI4_IRQn)) {
+		__HAL_GPIO_EXTI_CLEAR_IT(P1_DATA_2_Pin);
+		HAL_NVIC_ClearPendingIRQ(EXTI4_IRQn);
+	}
+	while (HAL_NVIC_GetPendingIRQ(EXTI9_5_IRQn)) {
+		__HAL_GPIO_EXTI_CLEAR_IT(P2_CLOCK_Pin);
+		HAL_NVIC_ClearPendingIRQ(EXTI9_5_IRQn);
+	}
+	while (HAL_NVIC_GetPendingIRQ(TIM3_IRQn)) {
+		HAL_NVIC_ClearPendingIRQ(TIM3_IRQn);
+	}
+	while (HAL_NVIC_GetPendingIRQ(TIM6_DAC_IRQn)) {
+		HAL_NVIC_ClearPendingIRQ(TIM6_DAC_IRQn);
+	}
+	while (HAL_NVIC_GetPendingIRQ(TIM7_IRQn)) {
+		HAL_NVIC_ClearPendingIRQ(TIM7_IRQn);
+	}
+	while (HAL_NVIC_GetPendingIRQ(TIM1_UP_TIM10_IRQn)) {
+		HAL_NVIC_ClearPendingIRQ(TIM1_UP_TIM10_IRQn);
+	}
+	// set all lines low to avoid conflicting with NES poweron
+	HAL_GPIO_WritePin(GPIOC, P1_DATA_1_Pin | P1_DATA_0_Pin | P2_DATA_1_Pin | P2_DATA_0_Pin | P2_DATA_2_Pin | P1_DATA_2_Pin, GPIO_PIN_RESET);
+	// important to reset our state
+	recentLatch = 0;
+	toggleNext = 0;
+	p1_current_bit = 0;
+	p2_current_bit = 0;
+	dpcmFix = 0;
+	clockFix = 0;
+	request_pending = 0;
+	bulk_mode = 0;
+	current_train_index = 0;
+	current_train_latch_count = 0;
+	between_trains = 0;
+	trains_enabled = 0;
+	if (latch_trains != NULL) {
+		free(latch_trains);
+		latch_trains = NULL;
+	}
+	memset(P1_GPIOC_current, 0, sizeof(P1_GPIOC_current));
+	memset(P1_GPIOC_next, 0, sizeof(P1_GPIOC_next));
+	memset(P2_GPIOC_current, 0, sizeof(P2_GPIOC_current));
+	memset(P2_GPIOC_next, 0, sizeof(P2_GPIOC_next));
+	memset(V1_GPIOB_current, 0, sizeof(V1_GPIOB_current));
+	memset(V1_GPIOB_next, 0, sizeof(V1_GPIOB_next));
+	memset(V2_GPIOC_current, 0, sizeof(V2_GPIOC_current));
+	memset(V2_GPIOC_next, 0, sizeof(V2_GPIOC_next));
+	ClearRunData();
 }
 
 
