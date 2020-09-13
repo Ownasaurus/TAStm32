@@ -20,6 +20,7 @@ struct parser_state {
 // state machine to do parsing
 
 int do_parse_event(struct parser_state *s, yaml_event_t *event) {
+	Transition tempTrans;
 	s->accepted = 0;
 	if (event->type == YAML_STREAM_END_EVENT) {
 		s->state = STOP;
@@ -111,7 +112,7 @@ int do_parse_event(struct parser_state *s, yaml_event_t *event) {
 			break;
 
 		case YAML_SEQUENCE_END_EVENT:
-			s->collection_index++;
+			//s->collection_index++;
 			s->state = ACCEPT_KEY;
 			printf("End collection\n");
 			break;
@@ -128,10 +129,18 @@ int do_parse_event(struct parser_state *s, yaml_event_t *event) {
 		case YAML_SCALAR_EVENT:
 			strcpy(s->value, (char *) event->data.scalar.value);
 			if (strcmp(s->collection, "transitions") == 0) {
-				if (strcmp(s->key, "type") == 0)
-					printf("%s %d type is %s\n", s->collection, s->collection_index, s->value);
-				else if (strcmp(s->key, "frameno") == 0)
-					printf("%s %d frameno %d\n", s->collection, s->collection_index, atoi(s->value));
+				if (strcmp(s->key, "type") == 0) {
+					//printf("%s %d type is %s\n", s->collection, s->collection_index, s->value);
+					if (strcmp(s->value, "normal") == 0)
+						s->run->transitions_dpcm[s->collection_index].type = TRANSITION_NORMAL;
+					if (strcmp(s->value, "ace") == 0)
+						s->run->transitions_dpcm[s->collection_index].type = TRANSITION_ACE;
+					if (strcmp(s->value, "resetsoft") == 0)
+						s->run->transitions_dpcm[s->collection_index].type = TRANSITION_RESET_SOFT;
+					if (strcmp(s->value, "resethard") == 0)
+						s->run->transitions_dpcm[s->collection_index].type = TRANSITION_RESET_HARD;
+				} else if (strcmp(s->key, "frameno") == 0)
+					s->run->transitions_dpcm[s->collection_index].frameno = atoi(s->value);//printf("%s %d frameno %d\n", s->collection, s->collection_index, atoi(s->value));
 				else {
 					fprintf(stderr, "Ignoring unknown key: %s\n", s->key);
 				}
@@ -190,8 +199,8 @@ int load_tcf(TASRun *run, char *filename) {
 		f_close(&tcf);
 		return 1;
 
-	}
-	else return 0;
+	} else
+		return 0;
 
 	error: yaml_parser_delete(&parser);
 	f_close(&tcf);

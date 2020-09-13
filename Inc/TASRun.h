@@ -45,14 +45,6 @@ typedef struct
 	uint32_t frameno;
 } Transition;
 
-typedef enum
-{
-	RUNSTATE_IDLE,
-	RUNSTATE_RUNNING,
-	RUNSTATE_STOPPING,
-	RUNSTATE_STOPPED
-} PlaybackState;
-
 typedef RunData RunDataArray[MAX_CONTROLLERS][MAX_DATA_LANES];
 
 typedef struct
@@ -73,12 +65,8 @@ typedef struct
 	Transition transitions_dpcm[MAX_TRANSITIONS];
 	uint8_t console_data_size;
 	uint8_t input_data_size;
-
-	PlaybackState USBPlaybackState;
 	uint32_t blank;
 	char inputFile[256];
-	char inputBuffer[512];
-	uint32_t inputBufferSize;
 } TASRun;
 
 extern TASRun tasruns[MAX_NUM_RUNS];

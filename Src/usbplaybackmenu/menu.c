@@ -5,6 +5,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include "usbplayback/menu.h"
+#include "usbplayback/usbplayback.h"
 #include "main.h"
 #include "fatfs.h"
 #include "ssd1306/ssd1306.h"
@@ -286,7 +287,7 @@ void Menu_Display() {
 
 		ssd1306_UpdateScreen();
 
-		if (tasrun->USBPlaybackState == RUNSTATE_STOPPED){
+		if (USBPlaybackState == RUNSTATE_STOPPED){
 			CurrentMenu = &MenuBrowser;
 		}
 	}

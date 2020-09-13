@@ -5,6 +5,7 @@
 #include "main.h"
 #include "fatfs.h"
 #include "ssd1306/ssd1306.h"
+#include "usbplayback/usbplayback.h"
 #include "usbd_cdc_if.h"
 #include "n64.h"
 #include "TASRun.h"
@@ -30,7 +31,11 @@
 uint32_t readcount = 0;
 uint32_t latchCount;
 FIL TasFile;
-extern uint32_t fuckedLatches;
+
+PlaybackState USBPlaybackState;
+
+char inputBuffer[512];
+uint32_t inputBufferSize;
 
 // Set up menus etc
 void USB_Playback_Init() {
@@ -41,7 +46,8 @@ void USB_Playback_Init() {
 
 void USB_Stop_TAS() {
 	TASRun *tasrun = TASRunGetByIndex(RUN_A);
-	tasrun->USBPlaybackState = RUNSTATE_STOPPED;
+	USBPlaybackState = RUNSTATE_STOPPED;
+	f_close(&TasFile);
 	ResetRun();
 }
 
@@ -86,12 +92,12 @@ void USB_Start_Tas(char *file) {
 	}
 
 	// clamp the input buffer size to the nearest integer multiple of the input data to 512
-	tasrun->inputBufferSize = (512 / tasrun->input_data_size) * tasrun->input_data_size;
+	inputBufferSize = (512 / tasrun->input_data_size) * tasrun->input_data_size;
 
 	if (tasfile != NULL) {
 		res = f_open(&TasFile, tasfile, FA_READ);
 		if (res == FR_OK) {
-			tasrun->USBPlaybackState = RUNSTATE_RUNNING;
+			USBPlaybackState = RUNSTATE_RUNNING;
 			while (tasrun->blank--) {
 				ExtractDataAndAddFrame(tasrun, &blankframe, tasrun->input_data_size);
 			}
@@ -107,39 +113,35 @@ void USB_Playback_Task() {
 	static FRESULT res;
 	TASRun *tasrun = TASRunGetByIndex(RUN_A);
 
-	switch (tasrun->USBPlaybackState) {
+	switch (USBPlaybackState) {
 	case RUNSTATE_RUNNING:
 
 		// Fill buffer up to the last inputBufferSize
-		while (TASRunGetSize(tasrun) * tasrun->input_data_size < (1024 * tasrun->input_data_size) - tasrun->inputBufferSize) {
-			res = f_read(&TasFile, buffer, tasrun->inputBufferSize, &br);
+		while (TASRunGetSize(tasrun) * tasrun->input_data_size < (1024 * tasrun->input_data_size) - inputBufferSize) {
+			res = f_read(&TasFile, buffer, inputBufferSize, &br);
 			if (res == FR_OK && br >= tasrun->input_data_size) {
 				readcount += br;
 				for (int k = 0; k < br; k += tasrun->input_data_size) {
 					ExtractDataAndAddFrame(tasrun, &buffer[k], tasrun->input_data_size);
 				}
 			} else { // we ran out of data
-				tasrun->USBPlaybackState = RUNSTATE_STOPPING;
+				USBPlaybackState = RUNSTATE_STOPPING;
 				break;
 			}
 		}
 
 		if (!TASRunIsInitialized(tasrun) && TASRunGetSize(tasrun) > 0) { // this should only run once per run to set up the 1st frame of data
 
-			if(tasrun->console == CONSOLE_NES || tasrun->console == CONSOLE_SNES)
-			{
-				if(TASRunGetDPCMFix(tasrun))
-				{
+			if (tasrun->console == CONSOLE_NES || tasrun->console == CONSOLE_SNES) {
+				if (TASRunGetDPCMFix(tasrun)) {
 					toggleNext = 1;
 				}
-				if(TASRunGetClockFix(tasrun))
-				{
+				if (TASRunGetClockFix(tasrun)) {
 					clockFix = 1;
 				}
 
 				EXTI1_IRQHandler();
 			}
-
 
 			TASRunSetInitialized(tasrun, 1);
 
@@ -153,7 +155,7 @@ void USB_Playback_Task() {
 
 	case RUNSTATE_STOPPING:
 		if (TASRunGetSize(tasrun) == 0) {
-			tasrun->USBPlaybackState = RUNSTATE_STOPPED;
+			USB_Stop_TAS();
 		}
 		break;
 

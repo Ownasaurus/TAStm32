@@ -53,6 +53,8 @@ uint8_t AddTransition(TASRun *tasrun, TransitionType type, uint32_t frameNumber)
 	return 0; // failure: no room to add transition
 }
 
+
+
 uint8_t TASRunIncrementFrameCount(TASRun *tasrun)
 {
 	tasrun->frameCount++;
@@ -366,8 +368,15 @@ void SetSNESMode()
 	GPIO_InitStruct.Pin = P1_DATA_0_Pin|P1_DATA_1_Pin|P2_DATA_0_Pin|P2_DATA_1_Pin;
 	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
 	GPIO_InitStruct.Pull = GPIO_PULLUP;
-	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
 
 	HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+	memset(&GPIO_InitStruct, 0, sizeof(GPIO_InitTypeDef));
+
+	GPIO_InitStruct.Pin = P1_DATA_2_Pin|P2_DATA_2_Pin;
+	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+	HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
 }
 
