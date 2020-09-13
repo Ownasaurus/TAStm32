@@ -9,6 +9,7 @@
 *.m64
 *.gmv
 *.rgen
+*.sfc
 python/__pycache__/
 python/*.py
 !python/argparse_helper.py
@@ -21,3 +22,4 @@ python/*.py
 !python/run-snes.py
 !python/serial_helper.py
 !python/tastm32*.py
+.code_review_properties
