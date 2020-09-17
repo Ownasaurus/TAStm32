@@ -75,6 +75,13 @@ void Menu_HoldDown() {
 	}
 }
 
+void Menu_Settings(){
+	if (CurrentMenu == MENUTYPE_TASINPUTS)
+		CurrentMenu = MENUTYPE_TASSTATS;
+	else if (CurrentMenu == MENUTYPE_TASSTATS)
+		CurrentMenu = MENUTYPE_TASINPUTS;
+}
+
 void Menu_Display() {
 	static char temp[23];
 	static FRESULT res;
@@ -86,6 +93,13 @@ void Menu_Display() {
 
 	switch (CurrentMenu) {
 	case MENUTYPE_BROWSER:
+
+		// if USB host initiated run, switch menu
+		if (tasrun->initialized){
+			CurrentMenu = MENUTYPE_TASINPUTS;
+			break;
+		}
+
 		if (USBok) {
 			res = f_opendir(&dir, &path[0]);
 
@@ -102,6 +116,8 @@ void Menu_Display() {
 				for (uint16_t cnt = 0; cnt < displayPos + DISPLAYLINES; cnt++) {
 
 					res = f_readdir(&dir, &fno);
+
+					// Scroll backwards if we've reached the end of the folder
 					if (res != FR_OK || fno.fname[0] == 0) {
 						if (displayPos > 0) {
 							displayPos--;
@@ -111,6 +127,12 @@ void Menu_Display() {
 							cursorPos = cnt - 1;
 
 						break;
+					}
+
+					// Skip directories
+					if (fno.fattrib & AM_DIR){
+						cnt--;
+						continue;
 					}
 					if (cnt >= displayPos) {
 						SSD1306_COLOR textColor = White;
@@ -142,7 +164,7 @@ void Menu_Display() {
 
 	case MENUTYPE_TASINPUTS:
 
-		if (USBPlaybackState == RUNSTATE_STOPPED) {
+		if (!tasrun->initialized) {
 			CurrentMenu = MENUTYPE_BROWSER;
 			break;
 		}
@@ -210,6 +232,7 @@ void Menu_Display() {
 		break;
 
 	case MENUTYPE_TASSTATS:
+		ssd1306_Fill(Black);
 		sprintf(temp, "Latch: %ld", tasrun->frameCount);
 		ssd1306_SetCursor(0, 0);
 		ssd1306_WriteString(temp, Font_6x8, White);

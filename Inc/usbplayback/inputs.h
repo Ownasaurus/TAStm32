@@ -4,7 +4,7 @@
 #define DEBOUNCETIME 1
 
 // How long a button has to be pressed before it's considered held
-#define HOLDTIME 20
+#define HOLDTIME 14
 
 
 typedef enum {

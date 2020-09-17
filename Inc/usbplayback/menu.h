@@ -16,6 +16,7 @@ void Menu_HoldUp(void);
 void Menu_Down(void);
 void Menu_HoldDown(void);
 void Menu_Enter(void);
+void Menu_Settings(void);
 
 void Menu_Init(void);
 void Menu_Display(void);

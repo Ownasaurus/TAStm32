@@ -13,8 +13,8 @@ static void IOevent(ButtonType pin, IOEvent eventType) {
 			Menu_Down();
 		else if (pin == BUTTON_ENTER)
 			Menu_Enter();
-		//else if (pin == INPUT_HOME)
-		//	Menu_Home();
+		else if (pin == BUTTON_SETTINGS)
+			Menu_Settings();
 		Menu_Display();
 	} else if (eventType == IOEVENT_RELEASE) {
 		Menu_Display();
