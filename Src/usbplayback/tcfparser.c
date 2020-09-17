@@ -20,7 +20,6 @@ struct parser_state {
 // state machine to do parsing
 
 int do_parse_event(struct parser_state *s, yaml_event_t *event) {
-	Transition tempTrans;
 	s->accepted = 0;
 	if (event->type == YAML_STREAM_END_EVENT) {
 		s->state = STOP;
@@ -140,7 +139,7 @@ int do_parse_event(struct parser_state *s, yaml_event_t *event) {
 					if (strcmp(s->value, "resethard") == 0)
 						s->run->transitions_dpcm[s->collection_index].type = TRANSITION_RESET_HARD;
 				} else if (strcmp(s->key, "frameno") == 0)
-					s->run->transitions_dpcm[s->collection_index].frameno = atoi(s->value);//printf("%s %d frameno %d\n", s->collection, s->collection_index, atoi(s->value));
+					s->run->transitions_dpcm[s->collection_index].frameno = atoi(s->value); //printf("%s %d frameno %d\n", s->collection, s->collection_index, atoi(s->value));
 				else {
 					fprintf(stderr, "Ignoring unknown key: %s\n", s->key);
 				}
@@ -153,6 +152,8 @@ int do_parse_event(struct parser_state *s, yaml_event_t *event) {
 			return 0;
 			break;
 		}
+		break;
+	default:
 		break;
 	}
 	return 1;

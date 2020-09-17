@@ -1,29 +1,30 @@
-/*
- * inputs.h
- *
- *  Created on: 7 Sep 2020
- *      Author: user
- */
-
 #ifndef INPUTS_H_
 #define INPUTS_H_
 
-#define INPUT_UP 0
-#define INPUT_DOWN 1
-#define INPUT_ENTER 2
-#define INPUT_HOME 3
+#define DEBOUNCETIME 1
+
+// How long a button has to be pressed before it's considered held
+#define HOLDTIME 20
+
+
+typedef enum {
+	BUTTON_UP,
+	BUTTON_DOWN,
+	BUTTON_ENTER,
+	BUTTON_SETTINGS
+} ButtonType;
 
 #define NUMINPUTS 4
 
-#define IOEVENT_RELEASE 0
-#define IOEVENT_PRESS 1
-#define IOEVENT_HELD 2
-#define IOEVENT_HOLDING 3
-#define IOEVENT_HOLDRELEASE 4
 
-#define HOLDTIME 400
-#define DEBOUNCETIME 2
+typedef enum {
+	IOEVENT_RELEASE,
+	IOEVENT_PRESS,
+	IOEVENT_HELD,
+	IOEVENT_HOLDING,
+	IOEVENT_HOLDRELEASE
+} IOEvent;
 
-void inputProcess(void);
+void inputProcess();
 
-#endif /* INPUTS_H_ */
+#endif

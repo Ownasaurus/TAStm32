@@ -52,6 +52,7 @@
 #include "TASRun.h"
 #include "stm32f4xx_it.h"
 #include "serial_interface.h"
+#include "usbplayback/usbplayback.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/

@@ -5,15 +5,13 @@
 #include "usbplayback/inputs.h"
 #include "main.h"
 
-
-
-static void IOevent(unsigned char pin, unsigned char eventType) {
+static void IOevent(ButtonType pin, IOEvent eventType) {
 	if (eventType == IOEVENT_PRESS) {
-		if (pin == INPUT_UP)
+		if (pin == BUTTON_UP)
 			Menu_Up();
-		else if (pin == INPUT_DOWN)
+		else if (pin == BUTTON_DOWN)
 			Menu_Down();
-		else if (pin == INPUT_ENTER)
+		else if (pin == BUTTON_ENTER)
 			Menu_Enter();
 		//else if (pin == INPUT_HOME)
 		//	Menu_Home();
@@ -21,9 +19,9 @@ static void IOevent(unsigned char pin, unsigned char eventType) {
 	} else if (eventType == IOEVENT_RELEASE) {
 		Menu_Display();
 	} else if (eventType == IOEVENT_HOLDING) {
-		if (pin == INPUT_UP)
+		if (pin == BUTTON_UP)
 			Menu_HoldUp();
-		else if (pin == INPUT_DOWN)
+		else if (pin == BUTTON_DOWN)
 			Menu_HoldDown();
 		Menu_Display();
 	} else if (eventType == IOEVENT_HOLDRELEASE) {
@@ -36,11 +34,12 @@ unsigned long inputNextThink = 0;
 
 int gpiodebounce[4] = { 0, 0, 0, 0 };
 
+
 void inputProcess(void) {
 
 	GPIO_PinState butstate;
 
-	unsigned char i = 0;
+	ButtonType i;
 
 	if (uwTick < inputNextThink)
 		return;
@@ -49,24 +48,24 @@ void inputProcess(void) {
 
 	for (i = 0; i < NUMINPUTS; i++) {
 
-		if (i == INPUT_UP)
+		if (i == BUTTON_UP)
 			butstate = !HAL_GPIO_ReadPin (SWITCH1_GPIO_Port, SWITCH1_Pin);
-		else if (i == INPUT_DOWN)
+		else if (i == BUTTON_DOWN)
 			butstate = !HAL_GPIO_ReadPin (SWITCH2_GPIO_Port, SWITCH2_Pin);
-		else if (i == INPUT_HOME)
+		else if (i == BUTTON_SETTINGS)
 			butstate = !HAL_GPIO_ReadPin (SWITCH3_GPIO_Port, SWITCH3_Pin);
-		else if (i == INPUT_ENTER)
+		else if (i == BUTTON_ENTER)
 			butstate = !HAL_GPIO_ReadPin (SWITCH4_GPIO_Port, SWITCH4_Pin);
 
 		else
 			butstate = 0;
 
-		// gpiodebounce = 0 when button not pressed,
-		// > 0 and < scsettings.debouncetime when debouncing positive edge
-		// > scsettings.debouncetime and < scsettings.holdtime when holding
-		// = scsettings.holdtime when continuing to hold
-		// > scsettings.holdtime when waiting for release
-		// > -scsettings.debouncetime and < 0 when debouncing negative edge
+		// gpiodebounce = 0 when button not pressed
+		// > 0 and < DEBOUNCETIME when debouncing positive edge
+		// >= DEBOUNCETIME and < HOLDTIME when waiting for release or hold action
+		// = HOLDTIME when we register it as a hold action
+		// > HOLDTIME when waiting for release
+		// > -DEBOUNCETIME and < 0 when debouncing negative edge
 
 		// Button not pressed, check for button
 		if (gpiodebounce[i] == 0) {
@@ -104,7 +103,7 @@ void inputProcess(void) {
 		else if (gpiodebounce[i] > HOLDTIME) {
 			// Still pressing, do action repeatedly
 			if (butstate) {
-				if (i == INPUT_UP || i == INPUT_DOWN) // only for up/down buttons
+				if (i == BUTTON_UP || i == BUTTON_DOWN) // only for up/down buttons
 					IOevent(i, IOEVENT_HOLDING);
 			}
 			// not still pressing, debounce release

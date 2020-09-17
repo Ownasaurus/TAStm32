@@ -184,5 +184,5 @@ int ExtractDataAndAddFrame(TASRun *tasrun, uint8_t *buffer, uint32_t n);
 
 void SetN64Mode();
 void SetSNESMode();
-void ResetRuns();
+void ResetRun();
 #endif
