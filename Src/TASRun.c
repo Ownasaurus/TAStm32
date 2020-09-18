@@ -328,7 +328,7 @@ void SetSNESMode() {
 	GPIO_InitStruct.Pin = P1_DATA_0_Pin | P1_DATA_1_Pin | P2_DATA_0_Pin | P2_DATA_1_Pin;
 	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
 	GPIO_InitStruct.Pull = GPIO_PULLUP;
-	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
 
 	HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
