@@ -65,7 +65,9 @@ typedef struct
 	Transition transitions_dpcm[MAX_TRANSITIONS];
 	uint8_t console_data_size;
 	uint8_t input_data_size;
-	uint32_t blank;
+
+	uint8_t multitap;
+	int32_t blank;
 	char inputFile[256];
 } TASRun;
 

@@ -328,14 +328,29 @@ void SetSNESMode() {
 	GPIO_InitStruct.Pin = P1_DATA_0_Pin | P1_DATA_1_Pin | P2_DATA_0_Pin | P2_DATA_1_Pin;
 	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
 	GPIO_InitStruct.Pull = GPIO_PULLUP;
-	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
 
 	HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
 	memset(&GPIO_InitStruct, 0, sizeof(GPIO_InitTypeDef));
 
+
+	// Tristate the d2 pins, otherwise NES PCM player gets confused
+	// This should be removed if the d2 line gets implemented
 	GPIO_InitStruct.Pin = P1_DATA_2_Pin | P2_DATA_2_Pin;
 	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
 	HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+}
+
+void SetMultitapMode(){
+
+	GPIO_InitTypeDef GPIO_InitStruct = { 0 };
+
+	GPIO_InitStruct.Pin = P1_DATA_2_Pin;
+	GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+
+	HAL_GPIO_Init(P1_DATA_2_GPIO_Port, &GPIO_InitStruct);
 
 }

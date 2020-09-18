@@ -234,6 +234,8 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 						HAL_NVIC_EnableIRQ(EXTI0_IRQn);
 						HAL_NVIC_EnableIRQ(EXTI1_IRQn);
 						HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
+						if (instance.tasrun->multitap)
+							HAL_NVIC_EnableIRQ(EXTI4_IRQn);
 						__enable_irq();
 					}
 					else if(c == CONSOLE_N64 || c == CONSOLE_GC)
@@ -301,6 +303,11 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 					p1_lanes = 2;
 				else if(p1 == 0xE)
 					p1_lanes = 3;
+				else if(p1 == 0xF){
+					p1_lanes = 4;
+					if (instance.tasrun->console == CONSOLE_SNES)
+						instance.tasrun->multitap = 1;
+				}
 
 				if(p2 == 0x8)
 					p2_lanes = 1;
@@ -308,6 +315,14 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 					p2_lanes = 2;
 				else if(p2 == 0xE)
 					p2_lanes = 3;
+				else if(p2 == 0xF){
+					p2_lanes = 4;
+					if (instance.tasrun->console == CONSOLE_SNES)
+						instance.tasrun->multitap = 1;
+				}
+
+				if (instance.tasrun->multitap)
+					SetMultitapMode();
 
 				if(p1 != 0) // player 1 better have some kind of data!
 				{
