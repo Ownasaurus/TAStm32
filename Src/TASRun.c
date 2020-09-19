@@ -147,6 +147,7 @@ void ResetRun() {
 	// set all lines low to avoid conflicting with NES poweron
 	HAL_GPIO_WritePin(GPIOC, P1_DATA_1_Pin | P1_DATA_0_Pin | P2_DATA_1_Pin | P2_DATA_0_Pin | P2_DATA_2_Pin | P1_DATA_2_Pin, GPIO_PIN_RESET);
 	// important to reset our state
+	multitapSel = 1;
 	recentLatch = 0;
 	toggleNext = 0;
 	p1_current_bit = 0;

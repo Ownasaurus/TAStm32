@@ -72,6 +72,7 @@ extern uint32_t V2_GPIOC_current[16];
 extern uint32_t V2_GPIOC_next[16];
 extern const uint8_t SNES_RESET_HIGH_A;
 extern const uint8_t SNES_RESET_LOW_A;
+extern uint8_t multitapSel;
 
 extern uint8_t request_pending;
 extern uint8_t bulk_mode;
