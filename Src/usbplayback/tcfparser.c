@@ -66,6 +66,8 @@ int do_parse_event(struct parser_state *s, yaml_event_t *event) {
 				s->run->overread = atoi(s->value);
 			else if (strcmp(s->key, "blank") == 0)
 				s->run->blank = atoi(s->value);
+			else if (strcmp(s->key, "multitap") == 0)
+				s->run->multitap = atoi(s->value);
 			else if (strcmp(s->key, "console") == 0) {
 				if (strcmp(s->value, "snes") == 0) {
 					TASRunSetConsole(s->run, CONSOLE_SNES);
