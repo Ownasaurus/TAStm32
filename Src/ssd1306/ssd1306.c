@@ -10,8 +10,8 @@ void ssd1306_Reset(void) {
 }
 
 // Send a byte to the command register
-void ssd1306_WriteCommand(uint8_t byte) {
-	HAL_I2C_Mem_Write(&SSD1306_I2C_PORT, SSD1306_I2C_ADDR, 0x00, 1, &byte, 1, HAL_MAX_DELAY);
+HAL_StatusTypeDef ssd1306_WriteCommand(uint8_t byte) {
+	return HAL_I2C_Mem_Write(&SSD1306_I2C_PORT, SSD1306_I2C_ADDR, 0x00, 1, &byte, 1, HAL_MAX_DELAY);
 }
 
 // Send data
@@ -70,7 +70,7 @@ SSD1306_Error_t ssd1306_FillBuffer(uint8_t* buf, uint32_t len) {
 }
 
 // Initialize the oled screen
-void ssd1306_Init(void) {
+uint8_t ssd1306_Init(void) {
 	// Reset OLED
 	ssd1306_Reset();
 
@@ -78,7 +78,8 @@ void ssd1306_Init(void) {
     HAL_Delay(100);
     
     // Init OLED
-    ssd1306_WriteCommand(0xAE); //display off
+    if (ssd1306_WriteCommand(0xAE) != HAL_OK)
+    	return 0;//display off
 
     ssd1306_WriteCommand(0x20); //Set Memory Addressing Mode   
     ssd1306_WriteCommand(0x00); // 00b,Horizontal Addressing Mode; 01b,Vertical Addressing Mode;
@@ -157,7 +158,8 @@ void ssd1306_Init(void) {
 
     ssd1306_WriteCommand(0x8D); //--set DC-DC enable
     ssd1306_WriteCommand(0x14); //
-    ssd1306_WriteCommand(0xAF); //--turn on SSD1306 panel
+    if (ssd1306_WriteCommand(0xAF) != HAL_OK)//--turn on SSD1306 panel
+    	return 0;
 
     // Clear screen
     ssd1306_Fill(Black);
@@ -170,6 +172,7 @@ void ssd1306_Init(void) {
     SSD1306.CurrentY = 0;
     
     SSD1306.Initialized = 1;
+    return 1;
 }
 
 // Fill the whole screen with the given color

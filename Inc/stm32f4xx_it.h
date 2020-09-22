@@ -37,15 +37,13 @@
 #ifndef __STM32F4xx_IT_H
 #define __STM32F4xx_IT_H
 
-#include "n64.h"
-
 #ifdef __cplusplus
  extern "C" {
 #endif
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "n64.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -82,6 +80,7 @@ extern uint16_t current_train_latch_count;
 extern uint8_t between_trains;
 extern uint16_t* latch_trains;
 extern uint8_t trains_enabled;
+extern uint8_t firstLatch;
 /* USER CODE END EC */
 
 /* Exported macro ------------------------------------------------------------*/

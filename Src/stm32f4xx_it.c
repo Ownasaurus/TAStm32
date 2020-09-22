@@ -89,6 +89,9 @@ const uint32_t P1_D1_MASK = 0x00040004;
 const uint32_t P2_D0_MASK = 0x01000100;
 const uint32_t P2_D1_MASK = 0x00800080;
 
+
+#define MODER_DATA_MASK 0xFFF03C0F
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -151,6 +154,7 @@ uint16_t current_train_index;
 uint16_t current_train_latch_count;
 uint8_t between_trains = 1;
 uint8_t trains_enabled;
+uint8_t firstLatch = 0;
 
 uint16_t* latch_trains;
 
@@ -245,6 +249,13 @@ void EXTI1_IRQHandler(void)
 	// P1_LATCH
 	int8_t regbit = 50, databit = -1; // random initial values
 	TASRun *tasrun = TASRunGetByIndex(RUN_A);
+
+	// set relevant data ports as output if this is the first latch
+	if(firstLatch && (EXTI->PR & P1_LATCH_Pin))
+	{
+		GPIOC->MODER = (GPIOC->MODER & MODER_DATA_MASK) | tasrun->moder_firstLatch;
+		firstLatch = 0;
+	}
 
 	if(recentLatch == 0) // no recent latch
 	{

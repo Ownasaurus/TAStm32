@@ -111,7 +111,7 @@ void MX_USB_HOST_Process(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
+	uint8_t screenOK = 0;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -145,7 +145,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   jumpToDFU = 0;
-  USB_Playback_Init();
+  screenOK = USB_Playback_Init();
 
   /* USER CODE END 2 */
 
@@ -156,14 +156,14 @@ int main(void)
     /* USER CODE END WHILE */
     MX_USB_HOST_Process();
 
-
     /* USER CODE BEGIN 3 */
 	  if(jumpToDFU == 1)
 	  {
 		  JumpToBootLoader();
 	  }
 
-	  USB_Playback_Task();
+	  if (screenOK)
+		  USB_Playback_Task();
 
   }
   /* USER CODE END 3 */
@@ -456,14 +456,13 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, P1_DATA_1_Pin|P1_DATA_0_Pin|P2_DATA_1_Pin|P2_DATA_0_Pin
-                          |P2_DATA_2_Pin|V2_LATCH_Pin|V2_DATA_1_Pin|V2_DATA_0_Pin, GPIO_PIN_RESET);
-
-  /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOA, LD2_Pin|V2_CLOCK_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(SNES_RESET_GPIO_Port, SNES_RESET_Pin, GPIO_PIN_SET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOC, V2_LATCH_Pin|V2_DATA_1_Pin|V2_DATA_0_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, V1_CLOCK_Pin|V1_LATCH_Pin|V1_DATA_1_Pin|V1_DATA_0_Pin, GPIO_PIN_RESET);
@@ -486,13 +485,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : P1_DATA_1_Pin P1_DATA_0_Pin P2_DATA_1_Pin P2_DATA_0_Pin
-                           P2_DATA_2_Pin */
-  GPIO_InitStruct.Pin = P1_DATA_1_Pin|P1_DATA_0_Pin|P2_DATA_1_Pin|P2_DATA_0_Pin
-                          |P2_DATA_2_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+  /*Configure GPIO pins : P1_DATA_1_Pin P1_DATA_0_Pin P2_LATCH_Pin P2_DATA_1_Pin
+                           P2_DATA_0_Pin P2_DATA_2_Pin */
+  GPIO_InitStruct.Pin = P1_DATA_1_Pin|P1_DATA_0_Pin|P2_LATCH_Pin|P2_DATA_1_Pin
+                          |P2_DATA_0_Pin|P2_DATA_2_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PA0 PA1 PA4 PA8
@@ -529,12 +527,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : P2_LATCH_Pin */
-  GPIO_InitStruct.Pin = P2_LATCH_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(P2_LATCH_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : SNES_RESET_Pin */
   GPIO_InitStruct.Pin = SNES_RESET_Pin;

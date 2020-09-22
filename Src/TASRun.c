@@ -12,18 +12,21 @@ extern TIM_HandleTypeDef htim7;
 
 TASRun tasruns[MAX_NUM_RUNS];
 
-RunDataArray *GetNextFrame(TASRun *tasrun) {
+RunDataArray *GetNextFrame(TASRun *tasrun)
+{
 	if (tasrun->size == 0) // in case of buffer underflow
-			{
+	{
 		return NULL; // buffer underflow
 	}
 
 	RunDataArray *retval = tasrun->current;
 
 	// advance frame
-	if (tasrun->current != tasrun->end) {
+	if (tasrun->current != tasrun->end)
+	{
 		(tasrun->current)++;
-	} else {
+	} else
+	{
 		tasrun->current = tasrun->runData;
 	}
 
@@ -32,11 +35,13 @@ RunDataArray *GetNextFrame(TASRun *tasrun) {
 	return retval;
 }
 
-uint8_t AddTransition(TASRun *tasrun, TransitionType type, uint32_t frameNumber) {
+uint8_t AddTransition(TASRun *tasrun, TransitionType type, uint32_t frameNumber)
+{
 	int x = 0;
-	while (x < MAX_TRANSITIONS) {
+	while (x < MAX_TRANSITIONS)
+	{
 		if (tasrun->transitions_dpcm[x].frameno == 0) // first blank transition slot found
-				{
+		{
 			tasrun->transitions_dpcm[x].frameno = frameNumber;
 			tasrun->transitions_dpcm[x].type = type;
 			return 1;
@@ -48,18 +53,22 @@ uint8_t AddTransition(TASRun *tasrun, TransitionType type, uint32_t frameNumber)
 	return 0; // failure: no room to add transition
 }
 
-uint8_t TASRunIncrementFrameCount(TASRun *tasrun) {
+uint8_t TASRunIncrementFrameCount(TASRun *tasrun)
+{
 	tasrun->frameCount++;
 
 	int x = 0;
-	while (x < MAX_TRANSITIONS) {
+	while (x < MAX_TRANSITIONS)
+	{
 		if (tasrun->transitions_dpcm[x].frameno == 0) // out of transitions to search for
-				{
+		{
 			break;
 		}
 
-		if (tasrun->transitions_dpcm[x].frameno == tasrun->frameCount) {
-			switch (tasrun->transitions_dpcm[x].type) {
+		if (tasrun->transitions_dpcm[x].frameno == tasrun->frameCount)
+		{
+			switch (tasrun->transitions_dpcm[x].type)
+			{
 			case TRANSITION_ACE:
 				tasrun->dpcmFix = 0;
 				return 1;
@@ -83,29 +92,36 @@ uint8_t TASRunIncrementFrameCount(TASRun *tasrun) {
 	return 0;
 }
 
-void TASRunSetClockFix(TASRun *tasrun, uint8_t cf) {
-	if (cf > 1) {
+void TASRunSetClockFix(TASRun *tasrun, uint8_t cf)
+{
+	if (cf > 1)
+	{
 		tasrun->clockFix = cf;
 		htim6.Init.Period = htim7.Init.Period = cf - 1;
-	} else {
+	} else
+	{
 		tasrun->clockFix = 0;
 	}
 }
 
-uint8_t TASRunGetClockFix(const TASRun *tasrun) {
+uint8_t TASRunGetClockFix(const TASRun *tasrun)
+{
 	return (tasrun->clockFix != 0) ? 1 : 0;
 }
 
-void ClearRunData() {
+void ClearRunData()
+{
 	memset(tasruns, 0, sizeof(tasruns));
-	for (int x = 0; x < MAX_NUM_RUNS; x++) {
+	for (int x = 0; x < MAX_NUM_RUNS; x++)
+	{
 		tasruns[x].buf = tasruns[x].runData;
 		tasruns[x].current = tasruns[x].runData;
 		tasruns[x].end = &(tasruns[x].runData[MAX_SIZE - 1]);
 	}
 }
 
-void ResetRun() {
+void ResetRun()
+{
 	// disable interrupts on latch/clock/data for now
 	HAL_NVIC_DisableIRQ(EXTI0_IRQn);
 	HAL_NVIC_DisableIRQ(EXTI1_IRQn);
@@ -116,36 +132,43 @@ void ResetRun() {
 	DisableP2ClockTimer();
 	DisableTrainTimer();
 	// clear all interrupts
-	while (HAL_NVIC_GetPendingIRQ(EXTI0_IRQn)) {
+	while (HAL_NVIC_GetPendingIRQ(EXTI0_IRQn))
+	{
 		__HAL_GPIO_EXTI_CLEAR_IT(P1_CLOCK_Pin);
 		HAL_NVIC_ClearPendingIRQ(EXTI0_IRQn);
 	}
-	while (HAL_NVIC_GetPendingIRQ(EXTI1_IRQn)) {
+	while (HAL_NVIC_GetPendingIRQ(EXTI1_IRQn))
+	{
 		__HAL_GPIO_EXTI_CLEAR_IT(P1_LATCH_Pin);
 		HAL_NVIC_ClearPendingIRQ(EXTI1_IRQn);
 	}
-	while (HAL_NVIC_GetPendingIRQ(EXTI4_IRQn)) {
+	while (HAL_NVIC_GetPendingIRQ(EXTI4_IRQn))
+	{
 		__HAL_GPIO_EXTI_CLEAR_IT(P1_DATA_2_Pin);
 		HAL_NVIC_ClearPendingIRQ(EXTI4_IRQn);
 	}
-	while (HAL_NVIC_GetPendingIRQ(EXTI9_5_IRQn)) {
+	while (HAL_NVIC_GetPendingIRQ(EXTI9_5_IRQn))
+	{
 		__HAL_GPIO_EXTI_CLEAR_IT(P2_CLOCK_Pin);
 		HAL_NVIC_ClearPendingIRQ(EXTI9_5_IRQn);
 	}
-	while (HAL_NVIC_GetPendingIRQ(TIM3_IRQn)) {
+	while (HAL_NVIC_GetPendingIRQ(TIM3_IRQn))
+	{
 		HAL_NVIC_ClearPendingIRQ(TIM3_IRQn);
 	}
-	while (HAL_NVIC_GetPendingIRQ(TIM6_DAC_IRQn)) {
+	while (HAL_NVIC_GetPendingIRQ(TIM6_DAC_IRQn))
+	{
 		HAL_NVIC_ClearPendingIRQ(TIM6_DAC_IRQn);
 	}
-	while (HAL_NVIC_GetPendingIRQ(TIM7_IRQn)) {
+	while (HAL_NVIC_GetPendingIRQ(TIM7_IRQn))
+	{
 		HAL_NVIC_ClearPendingIRQ(TIM7_IRQn);
 	}
-	while (HAL_NVIC_GetPendingIRQ(TIM1_UP_TIM10_IRQn)) {
+	while (HAL_NVIC_GetPendingIRQ(TIM1_UP_TIM10_IRQn))
+	{
 		HAL_NVIC_ClearPendingIRQ(TIM1_UP_TIM10_IRQn);
 	}
-	// set all lines low to avoid conflicting with NES poweron
-	HAL_GPIO_WritePin(GPIOC, P1_DATA_1_Pin | P1_DATA_0_Pin | P2_DATA_1_Pin | P2_DATA_0_Pin | P2_DATA_2_Pin | P1_DATA_2_Pin, GPIO_PIN_RESET);
+
 	// important to reset our state
 	multitapSel = 1;
 	recentLatch = 0;
@@ -160,7 +183,9 @@ void ResetRun() {
 	current_train_latch_count = 0;
 	between_trains = 0;
 	trains_enabled = 0;
-	if (latch_trains != NULL) {
+	firstLatch = 1;
+	if (latch_trains != NULL)
+	{
 		free(latch_trains);
 		latch_trains = NULL;
 	}
@@ -175,24 +200,42 @@ void ResetRun() {
 	ClearRunData();
 }
 
-static void UpdateSizeOfInputForRun(TASRun *tasrun) {
+static void UpdateSizeOfInputForRun(TASRun *tasrun)
+{
 	tasrun->input_data_size = tasrun->numControllers * tasrun->numDataLanes * tasrun->console_data_size;
+
+	tasrun->moder_firstLatch = 0;
+
+	// Calculate MODER register for first latch, set appropriate D pins to output
+	tasrun->moder_firstLatch |= P1_DATA_0_Pin * P1_DATA_0_Pin; // D0 is always output
+	if (tasrun->numDataLanes >= 2) tasrun->moder_firstLatch |= P1_DATA_1_Pin * P1_DATA_1_Pin;
+	if (tasrun->numDataLanes == 3 && tasrun->console == CONSOLE_NES) tasrun->moder_firstLatch |= P1_DATA_2_Pin * P1_DATA_2_Pin; // Only for NES, SNES' 3rd data lane is for multitap
+
+	if (tasrun->numControllers == 2){
+		tasrun->moder_firstLatch |= P2_DATA_0_Pin * P2_DATA_0_Pin; // D0 is always output
+		if (tasrun->numDataLanes >= 2) tasrun->moder_firstLatch |= P2_DATA_1_Pin * P2_DATA_1_Pin;
+		if (tasrun->numDataLanes == 3 && tasrun->console == CONSOLE_NES) tasrun->moder_firstLatch |= P2_DATA_2_Pin * P2_DATA_2_Pin; // Only for NES, SNES' 3rd data lane is for multitap
+	}
 }
 
-void TASRunSetNumControllers(TASRun *tasrun, uint8_t numControllers) {
+void TASRunSetNumControllers(TASRun *tasrun, uint8_t numControllers)
+{
 	tasrun->numControllers = numControllers;
 	UpdateSizeOfInputForRun(tasrun);
 }
 
-void TASRunSetNumDataLanes(TASRun *tasrun, uint8_t numDataLanes) {
+void TASRunSetNumDataLanes(TASRun *tasrun, uint8_t numDataLanes)
+{
 	tasrun->numDataLanes = numDataLanes;
 	UpdateSizeOfInputForRun(tasrun);
 }
 
-void TASRunSetConsole(TASRun *tasrun, Console console) {
+void TASRunSetConsole(TASRun *tasrun, Console console)
+{
 	tasrun->console = console;
 
-	switch (console) {
+	switch (console)
+	{
 	case CONSOLE_N64:
 		tasrun->console_data_size = sizeof(N64ControllerData);
 		break;
@@ -209,7 +252,8 @@ void TASRunSetConsole(TASRun *tasrun, Console console) {
 	UpdateSizeOfInputForRun(tasrun);
 }
 
-int ExtractDataAndAddFrame(TASRun *tasrun, uint8_t *buffer, uint32_t n) {
+int ExtractDataAndAddFrame(TASRun *tasrun, uint8_t *buffer, uint32_t n)
+{
 	size_t bytesPerInput = tasrun->console_data_size;
 	uint8_t numControllers = tasrun->numControllers;
 	uint8_t numDataLanes = tasrun->numDataLanes;
@@ -219,19 +263,24 @@ int ExtractDataAndAddFrame(TASRun *tasrun, uint8_t *buffer, uint32_t n) {
 	memset(frame, 0, sizeof(frame)); // prepare the data container
 
 	uint8_t *buffer_position = buffer;
-	for (int x = 0; x < numControllers; x++) {
-		for (int y = 0; y < numDataLanes; y++) {
+	for (int x = 0; x < numControllers; x++)
+	{
+		for (int y = 0; y < numDataLanes; y++)
+		{
 			// Null values mean blank frame
-			if (buffer_position == NULL) {
+			if (buffer_position == NULL)
+			{
 				memset(&frame[x][y], 0x00, bytesPerInput);
-			} else {
+			} else
+			{
 				memcpy(&frame[x][y], buffer_position, bytesPerInput); // copy only what is necessary
 				buffer_position += bytesPerInput; // advance the index only what is necessary
 			}
 		}
 	}
 
-	if (tasrun->size == MAX_SIZE) {
+	if (tasrun->size == MAX_SIZE)
+	{
 		return 0;
 	}
 
@@ -241,7 +290,8 @@ int ExtractDataAndAddFrame(TASRun *tasrun, uint8_t *buffer, uint32_t n) {
 	//       A poorly-timed interrupt could cause bad things.
 	__disable_irq();
 	// loop around if necessary
-	if (tasrun->buf != tasrun->end) {
+	if (tasrun->buf != tasrun->end)
+	{
 		(tasrun->buf)++;
 	} else // buf is at end, so wrap around to beginning
 	{
@@ -254,14 +304,16 @@ int ExtractDataAndAddFrame(TASRun *tasrun, uint8_t *buffer, uint32_t n) {
 	return 1;
 }
 
-void ExtractDataAndAdvance(RunDataArray rd, TASRun *tasrun, uint8_t* Buf, int *byteNum) {
+void ExtractDataAndAdvance(RunDataArray rd, TASRun *tasrun, uint8_t* Buf, int *byteNum)
+{
 	uint8_t bytesPerInput = 0;
 	uint8_t numControllers = tasrun->numControllers;
 	uint8_t numDataLanes = tasrun->numDataLanes;
 
 	memset(rd, 0, sizeof(RunDataArray)); // prepare the data container
 
-	switch (tasrun->console) {
+	switch (tasrun->console)
+	{
 	case CONSOLE_N64:
 		bytesPerInput = sizeof(N64ControllerData);
 		break;
@@ -278,8 +330,10 @@ void ExtractDataAndAdvance(RunDataArray rd, TASRun *tasrun, uint8_t* Buf, int *b
 		break;
 	}
 
-	for (int x = 0; x < numControllers; x++) {
-		for (int y = 0; y < numDataLanes; y++) {
+	for (int x = 0; x < numControllers; x++)
+	{
+		for (int y = 0; y < numDataLanes; y++)
+		{
 			memcpy(&rd[x][y], &(Buf[(*byteNum)]), bytesPerInput); // copy only what is necessary
 			(*byteNum) += bytesPerInput; // advance the index only what is necessary
 		}
@@ -288,9 +342,11 @@ void ExtractDataAndAdvance(RunDataArray rd, TASRun *tasrun, uint8_t* Buf, int *b
 	(*byteNum)--; // back up 1 since the main loop will advance it one
 }
 
-uint8_t AddFrame(TASRun *tasrun, RunDataArray frame) {
+uint8_t AddFrame(TASRun *tasrun, RunDataArray frame)
+{
 	// first check buffer isn't full
-	if (tasrun->size == MAX_SIZE) {
+	if (tasrun->size == MAX_SIZE)
+	{
 		return 0;
 	}
 
@@ -300,7 +356,8 @@ uint8_t AddFrame(TASRun *tasrun, RunDataArray frame) {
 	//       A poorly-timed interrupt could cause bad things.
 	__disable_irq();
 	// loop around if necessary
-	if (tasrun->buf != tasrun->end) {
+	if (tasrun->buf != tasrun->end)
+	{
 		(tasrun->buf)++;
 	} else // buf is at end, so wrap around to beginning
 	{
@@ -313,7 +370,8 @@ uint8_t AddFrame(TASRun *tasrun, RunDataArray frame) {
 	return 1;
 }
 
-void SetN64Mode() {
+void SetN64Mode()
+{
 	GPIO_InitTypeDef GPIO_InitStruct = { 0 };
 
 	GPIO_InitStruct.Pin = P1_DATA_2_Pin;
@@ -323,28 +381,18 @@ void SetN64Mode() {
 	HAL_GPIO_Init(P1_DATA_2_GPIO_Port, &GPIO_InitStruct);
 }
 
-void SetSNESMode() {
+void SetSNESMode()
+{
 	GPIO_InitTypeDef GPIO_InitStruct = { 0 };
 
-	GPIO_InitStruct.Pin = P1_DATA_0_Pin | P1_DATA_1_Pin | P2_DATA_0_Pin | P2_DATA_1_Pin;
-	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-	GPIO_InitStruct.Pull = GPIO_PULLUP;
-	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-
-	HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-
-	memset(&GPIO_InitStruct, 0, sizeof(GPIO_InitTypeDef));
-
-
-	// Tristate the d2 pins, otherwise NES PCM player gets confused
-	// This should be removed if the d2 line gets implemented
-	GPIO_InitStruct.Pin = P1_DATA_2_Pin | P2_DATA_2_Pin;
+	// Tristate the data pins until the first latch
+	GPIO_InitStruct.Pin = P1_DATA_0_Pin | P1_DATA_1_Pin | P1_DATA_2_Pin  | P2_DATA_0_Pin | P2_DATA_1_Pin | P2_DATA_2_Pin;
 	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
 	HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-
 }
 
-void SetMultitapMode(){
+void SetMultitapMode()
+{
 
 	GPIO_InitTypeDef GPIO_InitStruct = { 0 };
 

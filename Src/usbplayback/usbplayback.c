@@ -24,10 +24,12 @@ char inputBuffer[512];
 uint32_t inputBufferSize;
 
 // Set up screen, menus etc
-void USB_Playback_Init() {
-	ssd1306_Init();
+uint8_t USB_Playback_Init() {
+	if (!ssd1306_Init())
+		return 0;
 	//ssd1306_TestAll();
 	Menu_Init();
+	return 1;
 }
 
 void USB_Stop_TAS() {
@@ -132,6 +134,8 @@ void USB_Playback_Task() {
 			HAL_NVIC_EnableIRQ(EXTI0_IRQn);
 			HAL_NVIC_EnableIRQ(EXTI1_IRQn);
 			HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
+			if (tasrun->multitap)
+				HAL_NVIC_EnableIRQ(EXTI4_IRQn);
 			__enable_irq();
 		}
 		break;

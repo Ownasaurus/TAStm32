@@ -19,7 +19,7 @@ typedef enum
 
 extern PlaybackState USBPlaybackState;
 
-void USB_Playback_Init();
+uint8_t USB_Playback_Init();
 void USB_Playback_Task();
 void USB_Start_Tas(char *file);
 void USB_Stop_TAS();
