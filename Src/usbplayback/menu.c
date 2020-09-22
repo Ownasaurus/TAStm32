@@ -88,7 +88,6 @@ void Menu_Display() {
 	static FILINFO fno;
 
 	unsigned char lineNo = 0;
-	TASRun *tasrun = TASRunGetByIndex(RUN_A);
 
 	switch (CurrentMenu) {
 	case MENUTYPE_BROWSER:

@@ -25,6 +25,6 @@ void USB_Playback_Task();
 void USB_Start_Tas(char *file);
 void USB_Stop_TAS();
 void USB_Playback_Task();
-int load_tcf(TASRun *run, char *filename);
+int load_tcf(char *filename);
 
 #endif /* USBPLAYBACK_USBPLAYBACK_H_ */

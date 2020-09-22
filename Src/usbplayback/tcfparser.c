@@ -55,9 +55,9 @@ int do_parse_event(struct parser_state *s, yaml_event_t *event) {
 			if (strcmp(s->key, "inputFile") == 0)
 				strcpy(s->run->inputFile, s->value);
 			else if (strcmp(s->key, "numControllers") == 0)
-				TASRunSetNumControllers(s->run, atoi(s->value));
+				TASRunSetNumControllers(atoi(s->value));
 			else if (strcmp(s->key, "numDataLanes") == 0)
-				TASRunSetNumDataLanes(s->run, atoi(s->value));
+				TASRunSetNumDataLanes(atoi(s->value));
 			else if (strcmp(s->key, "dpcmFix") == 0)
 				s->run->dpcmFix = atoi(s->value);
 			else if (strcmp(s->key, "clockFix") == 0)
@@ -70,20 +70,20 @@ int do_parse_event(struct parser_state *s, yaml_event_t *event) {
 				s->run->multitap = atoi(s->value);
 			else if (strcmp(s->key, "console") == 0) {
 				if (strcmp(s->value, "snes") == 0) {
-					TASRunSetConsole(s->run, CONSOLE_SNES);
+					TASRunSetConsole(CONSOLE_SNES);
 					SetSNESMode();
-					TASRunSetNumControllers(s->run, 2);
-					TASRunSetNumDataLanes(s->run, 4);
+					TASRunSetNumControllers(2);
+					TASRunSetNumDataLanes(4);
 				} else if (strcmp(s->value, "nes") == 0) {
-					TASRunSetConsole(s->run, CONSOLE_NES);
+					TASRunSetConsole(CONSOLE_NES);
 					SetSNESMode();
-					TASRunSetNumControllers(s->run, 2);
-					TASRunSetNumDataLanes(s->run, 1);
+					TASRunSetNumControllers(2);
+					TASRunSetNumDataLanes(1);
 				} else if (strcmp(s->value, "n64") == 0) {
-					TASRunSetConsole(s->run, CONSOLE_N64);
+					TASRunSetConsole(CONSOLE_N64);
 					SetN64Mode();
 				} else if (strcmp(s->value, "gc") == 0) {
-					TASRunSetConsole(s->run, CONSOLE_GC);
+					TASRunSetConsole(CONSOLE_GC);
 					SetN64Mode();
 				} else {
 					//??
@@ -171,12 +171,12 @@ int read_handler(void *ext, unsigned char *buffer, size_t size, size_t *length) 
 	return res == FR_OK ? 1 : 0;
 }
 
-int load_tcf(TASRun *run, char *filename) {
+int load_tcf(char *filename) {
 	FIL tcf;
 	static FRESULT res;
 	yaml_parser_t parser;
 	yaml_event_t event; /* New variable */
-	struct parser_state state = { .state = ACCEPT_KEY, .accepted = 0, .error = 0, .collection_index = 0, .run = run };
+	struct parser_state state = { .state = ACCEPT_KEY, .accepted = 0, .error = 0, .collection_index = 0, .run = tasrun };
 
 	res = f_open(&tcf, filename, FA_READ);
 	if (res == FR_OK) {

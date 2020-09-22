@@ -43,7 +43,6 @@ void USB_Stop_TAS() {
 // Start a TAS with the specified filename
 void USB_Start_Tas(char *file) {
 	FRESULT res;
-	TASRun *tasrun = TASRunGetByIndex(RUN_A);
 	char *tasfile = NULL;
 	char *extension = strrchr(file, '.');
 	readcount = 0;
@@ -51,7 +50,7 @@ void USB_Start_Tas(char *file) {
 
 	// Extension is tcf, grab parameters from it
 	if (strcmp(extension, ".tcf") == 0) {
-		if (load_tcf(tasrun, file)) {
+		if (load_tcf( file)) {
 			tasfile = tasrun->inputFile;
 		}
 	}
@@ -59,19 +58,19 @@ void USB_Start_Tas(char *file) {
 	// Failing that, guess at some default parameters by the extension name. TODO maybe try and find an associated tcf?
 	else if (strcmp(extension, ".r08") == 0) {
 
-		TASRunSetConsole(tasrun, CONSOLE_NES);
+		TASRunSetConsole( CONSOLE_NES);
 		tasfile = file;
 		SetSNESMode();
-		TASRunSetNumControllers(tasrun, 2);
-		TASRunSetNumDataLanes(tasrun, 1);
+		TASRunSetNumControllers(2);
+		TASRunSetNumDataLanes(1);
 
 	} else if (strcmp(extension, ".r16m") == 0) {
 
-		TASRunSetConsole(tasrun, CONSOLE_SNES);
+		TASRunSetConsole(CONSOLE_SNES);
 		tasfile = file;
 		SetSNESMode();
-		TASRunSetNumControllers(tasrun, 2);
-		TASRunSetNumDataLanes(tasrun, 4);
+		TASRunSetNumControllers(2);
+		TASRunSetNumDataLanes(4);
 
 	}
 
@@ -84,7 +83,7 @@ void USB_Start_Tas(char *file) {
 		if (res == FR_OK) {
 			// Add blank frames
 			while (tasrun->blank--) {
-				ExtractDataAndAddFrame(tasrun, NULL, tasrun->input_data_size);
+				ExtractDataAndAddFrame(NULL, tasrun->input_data_size);
 			}
 
 			USBPlaybackState = RUNSTATE_RUNNING;
@@ -97,19 +96,18 @@ void USB_Playback_Task() {
 	static UINT br;
 	static uint8_t buffer[512];
 	static FRESULT res;
-	TASRun *tasrun = TASRunGetByIndex(RUN_A);
 
 	switch (USBPlaybackState) {
 
 	case RUNSTATE_RUNNING:
 
 		// Fill buffer up to the last inputBufferSize
-		while (TASRunGetSize(tasrun) * tasrun->input_data_size < (1024 * tasrun->input_data_size) - inputBufferSize) {
+		while ( tasrun->size * tasrun->input_data_size < (1024 * tasrun->input_data_size) - inputBufferSize) {
 			res = f_read(&TasFile, buffer, inputBufferSize, &br);
 			if (res == FR_OK && br >= tasrun->input_data_size) {
 				readcount += br;
 				for (int k = 0; k < br; k += tasrun->input_data_size) {
-					ExtractDataAndAddFrame(tasrun, &buffer[k], tasrun->input_data_size);
+					ExtractDataAndAddFrame(&buffer[k], tasrun->input_data_size);
 				}
 			} else { // we ran out of data
 				USBPlaybackState = RUNSTATE_FINISHING;
@@ -117,10 +115,10 @@ void USB_Playback_Task() {
 			}
 		}
 
-		if (!TASRunIsInitialized(tasrun) && TASRunGetSize(tasrun) > 0) { // this should only run once per run to set up the 1st frame of data
+		if (!tasrun->initialized && tasrun->size > 0) { // this should only run once per run to set up the 1st frame of data
 
 			if (tasrun->console == CONSOLE_NES || tasrun->console == CONSOLE_SNES) {
-				if (TASRunGetDPCMFix(tasrun)) {
+				if (tasrun->dpcmFix) {
 					toggleNext = 1;
 				}
 				if (TASRunGetClockFix(tasrun)) {
@@ -130,7 +128,7 @@ void USB_Playback_Task() {
 				EXTI1_IRQHandler();
 			}
 
-			TASRunSetInitialized(tasrun, 1);
+			tasrun->initialized = 1;
 
 			__disable_irq();
 			HAL_NVIC_EnableIRQ(EXTI0_IRQn);
@@ -143,7 +141,7 @@ void USB_Playback_Task() {
 		break;
 
 	case RUNSTATE_FINISHING:
-		if (TASRunGetSize(tasrun) == 0) {
+		if (tasrun->size == 0) {
 			USBPlaybackState = RUNSTATE_STOPPING;
 		}
 		else break;

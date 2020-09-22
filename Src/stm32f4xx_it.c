@@ -250,7 +250,6 @@ void EXTI1_IRQHandler(void)
 
 	// P1_LATCH
 	int8_t regbit = 50, databit = -1; // random initial values
-	TASRun *tasrun = TASRunGetByIndex(RUN_A);
 
 	// set relevant data ports as output if this is the first latch
 	if(firstLatch && (EXTI->PR & P1_LATCH_Pin))
@@ -367,7 +366,7 @@ void EXTI1_IRQHandler(void)
 		if(dataptr)
 		{
 			toggleNext = TASRunIncrementFrameCount(tasrun);
-			c = TASRunGetConsole(tasrun);
+			c = tasrun->console;
 
 			databit = 0;
 			if(c == CONSOLE_NES)
@@ -475,11 +474,11 @@ void EXTI1_IRQHandler(void)
 			}
 		}
 
-		if(TASRunIsInitialized(tasrun))
+		if(tasrun->initialized)
 		{
 			if(bulk_mode)
 			{
-				if(!request_pending && TASRunGetSize(tasrun) <= (MAX_SIZE-28)) // not full enough
+				if(!request_pending && tasrun->size <= (MAX_SIZE-28)) // not full enough
 				{
 					if(serial_interface_output((uint8_t*)"a", 1) == USBD_OK) // notify that we latched and want more
 					{
@@ -500,7 +499,7 @@ void EXTI1_IRQHandler(void)
 				regbit = 16;
 
 			// fill the overread
-			if(TASRunGetOverread(tasrun)) // overread is 1/HIGH
+			if(tasrun->overread) // overread is 1/HIGH
 			{
 				// so set logical LOW (NES/SNES button pressed)
 				for(uint8_t index = regbit;index < 17;index++)
@@ -554,12 +553,10 @@ void EXTI4_IRQHandler(void)
   /* USER CODE BEGIN EXTI4_IRQn 0 */
 	// P1_DATA_2 == N64_DATA
 	// Read 64 command
-	TASRun *tasrun = TASRunGetByIndex(RUN_A);
-	Console c = TASRunGetConsole(tasrun);
 
 	// If this is a SNES run, this means SEL is going LOW so tell clock interrupts
 	// to start using the second words of multitap frame
-	if (c == CONSOLE_SNES) {
+	if (tasrun->console == CONSOLE_SNES) {
 		if (tasrun->multitap){
 			multitapSel = 0;
 			p1_current_bit = p2_current_bit = 1;

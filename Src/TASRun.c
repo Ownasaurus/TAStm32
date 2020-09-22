@@ -10,9 +10,13 @@
 extern TIM_HandleTypeDef htim6;
 extern TIM_HandleTypeDef htim7;
 
-TASRun tasruns[MAX_NUM_RUNS];
+// local definition of tasrun
+static TASRun tasruns;
 
-RunDataArray *GetNextFrame(TASRun *tasrun)
+// global pointer to it
+TASRun *tasrun = &tasruns;
+
+RunDataArray *GetNextFrame()
 {
 	if (tasrun->size == 0) // in case of buffer underflow
 	{
@@ -35,7 +39,7 @@ RunDataArray *GetNextFrame(TASRun *tasrun)
 	return retval;
 }
 
-uint8_t AddTransition(TASRun *tasrun, TransitionType type, uint32_t frameNumber)
+uint8_t AddTransition(TransitionType type, uint32_t frameNumber)
 {
 	int x = 0;
 	while (x < MAX_TRANSITIONS)
@@ -53,7 +57,7 @@ uint8_t AddTransition(TASRun *tasrun, TransitionType type, uint32_t frameNumber)
 	return 0; // failure: no room to add transition
 }
 
-uint8_t TASRunIncrementFrameCount(TASRun *tasrun)
+uint8_t TASRunIncrementFrameCount()
 {
 	tasrun->frameCount++;
 
@@ -92,7 +96,7 @@ uint8_t TASRunIncrementFrameCount(TASRun *tasrun)
 	return 0;
 }
 
-void TASRunSetClockFix(TASRun *tasrun, uint8_t cf)
+void TASRunSetClockFix(uint8_t cf)
 {
 	if (cf > 1)
 	{
@@ -104,20 +108,17 @@ void TASRunSetClockFix(TASRun *tasrun, uint8_t cf)
 	}
 }
 
-uint8_t TASRunGetClockFix(const TASRun *tasrun)
+uint8_t TASRunGetClockFix()
 {
 	return (tasrun->clockFix != 0) ? 1 : 0;
 }
 
 void ClearRunData()
 {
-	memset(tasruns, 0, sizeof(tasruns));
-	for (int x = 0; x < MAX_NUM_RUNS; x++)
-	{
-		tasruns[x].buf = tasruns[x].runData;
-		tasruns[x].current = tasruns[x].runData;
-		tasruns[x].end = &(tasruns[x].runData[MAX_SIZE - 1]);
-	}
+	memset(&tasruns, 0, sizeof(tasruns));
+	tasruns.buf = tasruns.runData;
+	tasruns.current = tasruns.runData;
+	tasruns.end = &(tasruns.runData[MAX_SIZE - 1]);
 }
 
 void ResetRun()
@@ -206,7 +207,7 @@ void ResetRun()
 	ClearRunData();
 }
 
-static void UpdateSizeOfInputForRun(TASRun *tasrun)
+static void UpdateRunConfig()
 {
 	tasrun->input_data_size = tasrun->numControllers * tasrun->numDataLanes * tasrun->console_data_size;
 
@@ -224,19 +225,19 @@ static void UpdateSizeOfInputForRun(TASRun *tasrun)
 	}
 }
 
-void TASRunSetNumControllers(TASRun *tasrun, uint8_t numControllers)
+void TASRunSetNumControllers(uint8_t numControllers)
 {
 	tasrun->numControllers = numControllers;
-	UpdateSizeOfInputForRun(tasrun);
+	UpdateRunConfig(tasrun);
 }
 
-void TASRunSetNumDataLanes(TASRun *tasrun, uint8_t numDataLanes)
+void TASRunSetNumDataLanes(uint8_t numDataLanes)
 {
 	tasrun->numDataLanes = numDataLanes;
-	UpdateSizeOfInputForRun(tasrun);
+	UpdateRunConfig(tasrun);
 }
 
-void TASRunSetConsole(TASRun *tasrun, Console console)
+void TASRunSetConsole(Console console)
 {
 	tasrun->console = console;
 
@@ -255,10 +256,10 @@ void TASRunSetConsole(TASRun *tasrun, Console console)
 		tasrun->console_data_size = sizeof(GCControllerData);
 		break;
 	}
-	UpdateSizeOfInputForRun(tasrun);
+	UpdateRunConfig(tasrun);
 }
 
-int ExtractDataAndAddFrame(TASRun *tasrun, uint8_t *buffer, uint32_t n)
+int ExtractDataAndAddFrame(uint8_t *buffer, uint32_t n)
 {
 	size_t bytesPerInput = tasrun->console_data_size;
 	uint8_t numControllers = tasrun->numControllers;
@@ -310,7 +311,7 @@ int ExtractDataAndAddFrame(TASRun *tasrun, uint8_t *buffer, uint32_t n)
 	return 1;
 }
 
-void ExtractDataAndAdvance(RunDataArray rd, TASRun *tasrun, uint8_t* Buf, int *byteNum)
+void ExtractDataAndAdvance(RunDataArray rd, uint8_t* Buf, int *byteNum)
 {
 	uint8_t bytesPerInput = 0;
 	uint8_t numControllers = tasrun->numControllers;
@@ -348,7 +349,7 @@ void ExtractDataAndAdvance(RunDataArray rd, TASRun *tasrun, uint8_t* Buf, int *b
 	(*byteNum)--; // back up 1 since the main loop will advance it one
 }
 
-uint8_t AddFrame(TASRun *tasrun, RunDataArray frame)
+uint8_t AddFrame(RunDataArray frame)
 {
 	// first check buffer isn't full
 	if (tasrun->size == MAX_SIZE)
