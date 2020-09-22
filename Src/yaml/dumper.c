@@ -1,5 +1,5 @@
 
-#include "yaml_private.h"
+#include "yaml/yaml_private.h"
 
 /*
  * API functions.

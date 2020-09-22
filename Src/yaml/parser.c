@@ -39,7 +39,7 @@
  * flow_mapping_entry   ::= flow_node | KEY flow_node? (VALUE flow_node?)?
  */
 
-#include "yaml_private.h"
+#include "yaml/yaml_private.h"
 
 /*
  * Peek the next token in the token queue.
