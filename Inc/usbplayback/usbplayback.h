@@ -14,7 +14,8 @@ typedef enum
 {
 	RUNSTATE_STOPPED,
 	RUNSTATE_RUNNING,
-	RUNSTATE_STOPPING,
+	RUNSTATE_FINISHING, // File has ended and we're just waiting for the buffer to run out
+	RUNSTATE_STOPPING, // Playback is finished and state should reset
 } PlaybackState;
 
 extern PlaybackState USBPlaybackState;

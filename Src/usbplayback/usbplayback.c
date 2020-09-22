@@ -35,19 +35,18 @@ uint8_t USB_Playback_Init() {
 	return 1;
 }
 
+// Stop the currently running TAS
 void USB_Stop_TAS() {
-	USBPlaybackState = RUNSTATE_STOPPED;
-	f_close(&TasFile);
-	ResetRun();
+	USBPlaybackState = RUNSTATE_STOPPING;
 }
 
-
+// Start a TAS with the specified filename
 void USB_Start_Tas(char *file) {
 	FRESULT res;
 	TASRun *tasrun = TASRunGetByIndex(RUN_A);
 	char *tasfile = NULL;
 	char *extension = strrchr(file, '.');
-
+	readcount = 0;
 	ResetRun();
 
 	// Extension is tcf, grab parameters from it
@@ -143,10 +142,16 @@ void USB_Playback_Task() {
 		}
 		break;
 
-	case RUNSTATE_STOPPING:
+	case RUNSTATE_FINISHING:
 		if (TASRunGetSize(tasrun) == 0) {
-			USB_Stop_TAS();
+			USBPlaybackState = RUNSTATE_STOPPING;
 		}
+		else break;
+
+	case RUNSTATE_STOPPING:
+		f_close(&TasFile);
+		ResetRun();
+		USBPlaybackState = RUNSTATE_STOPPED;
 		break;
 
 	default:

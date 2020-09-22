@@ -3,7 +3,7 @@
 #define MENU_H_
 
 // How quickly the cursor moves when up/down buttons are held (repeat time in milliseconds)
-#define HOLDDELAY 25
+#define HOLDDELAY 45
 
 // How often to update the display in milliseconds (if there has not been a recent input event)
 #define DISPLAYUPDATEFREQ 75
