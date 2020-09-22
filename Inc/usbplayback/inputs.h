@@ -1,10 +1,13 @@
 #ifndef INPUTS_H_
 #define INPUTS_H_
 
-#define DEBOUNCETIME 1
+// How long to wait in ms before input event can be triggered again
+#define DEBOUNCETIME 25
 
-// How long a button has to be pressed before it's considered held
-#define HOLDTIME 14
+// How long in ms a button has to be pressed before it's considered held
+#define HOLDTIME 500
+
+extern uint8_t menuNeedsUpdating;
 
 
 typedef enum {

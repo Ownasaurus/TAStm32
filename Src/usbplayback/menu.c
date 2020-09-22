@@ -19,8 +19,6 @@ extern uint32_t readcount;
 
 MenuType CurrentMenu;
 
-#define DISPLAYLINES 8
-
 int16_t cursorPos = 0;
 int16_t displayPos = 0;
 bool USBok = 0;
@@ -88,6 +86,7 @@ void Menu_Display() {
 	static DIR dir;
 	static char path[2] = "/";
 	static FILINFO fno;
+
 	unsigned char lineNo = 0;
 	TASRun *tasrun = TASRunGetByIndex(RUN_A);
 
@@ -248,6 +247,7 @@ void Menu_Display() {
 		ssd1306_UpdateScreen();
 		break;
 	}
+
 }
 
 void Menu_Init() {

@@ -23,6 +23,9 @@ PlaybackState USBPlaybackState = RUNSTATE_STOPPED;
 char inputBuffer[512];
 uint32_t inputBufferSize;
 
+uint8_t menuNeedsUpdating = 1;
+uint32_t menuNextThink = 0;
+
 // Set up screen, menus etc
 uint8_t USB_Playback_Init() {
 	if (!ssd1306_Init())
@@ -150,7 +153,10 @@ void USB_Playback_Task() {
 		break;
 
 	}
+	if (menuNeedsUpdating || uwTick >= menuNextThink){
+		menuNextThink = uwTick + DISPLAYUPDATEFREQ;
+		Menu_Display();
+	}
 
-	inputProcess();
 }
 

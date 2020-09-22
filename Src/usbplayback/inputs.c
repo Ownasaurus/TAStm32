@@ -15,36 +15,25 @@ static void IOevent(ButtonType pin, IOEvent eventType) {
 			Menu_Enter();
 		else if (pin == BUTTON_SETTINGS)
 			Menu_Settings();
-		Menu_Display();
 	} else if (eventType == IOEVENT_RELEASE) {
-		Menu_Display();
 	} else if (eventType == IOEVENT_HOLDING) {
 		if (pin == BUTTON_UP)
 			Menu_HoldUp();
 		else if (pin == BUTTON_DOWN)
 			Menu_HoldDown();
-		Menu_Display();
 	} else if (eventType == IOEVENT_HOLDRELEASE) {
-		Menu_Display();
 	}
-
+	menuNeedsUpdating = 1;
 }
-
-unsigned long inputNextThink = 0;
 
 int gpiodebounce[4] = { 0, 0, 0, 0 };
 
-
+//should be run every 1ms by TIM2
 void inputProcess(void) {
 
 	GPIO_PinState butstate;
 
 	ButtonType i;
-
-	if (uwTick < inputNextThink)
-		return;
-
-	inputNextThink = uwTick + 1;
 
 	for (i = 0; i < NUMINPUTS; i++) {
 
@@ -119,5 +108,5 @@ void inputProcess(void) {
 			gpiodebounce[i]++;
 		}
 	}
-	Menu_Display();
+
 }
