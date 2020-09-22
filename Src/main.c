@@ -111,6 +111,7 @@ void MX_USB_HOST_Process(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
+	// Specifies whether the OLED screen has been detected and therefore whether or not to send data to it
 	uint8_t screenOK = 0;
   /* USER CODE END 1 */
 
@@ -145,6 +146,8 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   jumpToDFU = 0;
+
+  // Check the OLED screen is there and initialize it if so
   screenOK = USB_Playback_Init();
 
   /* USER CODE END 2 */
