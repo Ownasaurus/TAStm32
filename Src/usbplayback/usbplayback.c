@@ -112,7 +112,7 @@ void USB_Playback_Task() {
 					ExtractDataAndAddFrame(tasrun, &buffer[k], tasrun->input_data_size);
 				}
 			} else { // we ran out of data
-				USBPlaybackState = RUNSTATE_STOPPING;
+				USBPlaybackState = RUNSTATE_FINISHING;
 				break;
 			}
 		}
