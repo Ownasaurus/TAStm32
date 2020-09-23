@@ -11,7 +11,7 @@ extern TIM_HandleTypeDef htim6;
 extern TIM_HandleTypeDef htim7;
 
 // local definition of tasrun
-static TASRun tasruns;
+TASRun tasruns;
 
 // global pointer to it
 TASRun *tasrun = &tasruns;
@@ -115,10 +115,10 @@ uint8_t TASRunGetClockFix()
 
 void ClearRunData()
 {
-	memset(&tasruns, 0, sizeof(tasruns));
-	tasruns.buf = tasruns.runData;
-	tasruns.current = tasruns.runData;
-	tasruns.end = &(tasruns.runData[MAX_SIZE - 1]);
+	memset(tasrun, 0, sizeof(tasruns));
+	tasrun->buf = &tasrun->runData[0];
+	tasrun->current = &tasrun->runData[0];
+	tasrun->end = &(tasrun->runData[MAX_SIZE - 1]);
 }
 
 void ResetRun()

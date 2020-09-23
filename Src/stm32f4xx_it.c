@@ -159,7 +159,6 @@ uint8_t firstLatch = 0;
 
 uint16_t* latch_trains;
 
-Console c;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -366,10 +365,9 @@ void EXTI1_IRQHandler(void)
 		if(dataptr)
 		{
 			toggleNext = TASRunIncrementFrameCount(tasrun);
-			c = tasrun->console;
 
 			databit = 0;
-			if(c == CONSOLE_NES)
+			if(tasrun->console == CONSOLE_NES)
 			{
 				databit = 7; // number of bits of NES - 1
 
@@ -453,7 +451,7 @@ void EXTI1_IRQHandler(void)
 		}
 		else // no data left in the buffer
 		{
-			if(c == CONSOLE_NES)
+			if(tasrun->console == CONSOLE_NES)
 			{
 				databit = 7; // number of bits of NES - 1
 			}
@@ -493,7 +491,7 @@ void EXTI1_IRQHandler(void)
 		}
 		else
 		{
-			if(c == CONSOLE_NES)
+			if(tasrun->console == CONSOLE_NES)
 				regbit = 8;
 			else
 				regbit = 16;
@@ -588,11 +586,11 @@ void EXTI4_IRQHandler(void)
 		switch(cmd)
 		{
 		  case 0x00: // identity
-			  if(c == CONSOLE_N64)
+			  if(tasrun->console == CONSOLE_N64)
 			  {
 				  SendIdentityN64();
 			  }
-			  else if(c == CONSOLE_GC)
+			  else if(tasrun->console == CONSOLE_GC)
 			  {
 				  SendIdentityGC();
 			  }
@@ -943,7 +941,7 @@ void ResetAndEnableP2ClockTimer()
 
 inline void UpdateVisBoards()
 {
-	if(c == CONSOLE_NES)
+	if(tasrun->console == CONSOLE_NES)
 	{
 		// first 8 clock pulses at least 10ns in width
 		for(int x = 0;x < 8;x++)
@@ -981,7 +979,7 @@ inline void UpdateVisBoards()
 			WAIT_4_CYCLES;
 		}
 	}
-	else if(c == CONSOLE_SNES)
+	else if(tasrun->console == CONSOLE_SNES)
 	{
 		// fix bit order
 

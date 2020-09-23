@@ -17,7 +17,6 @@ static uint8_t NullOutputFunction(uint8_t *buffer, uint16_t n)
 
 void serial_interface_reset() {
 	instance.state = SERIAL_COMPLETE;
-	instance.tasrun = NULL;
 	serial_interface_set_output_function(NullOutputFunction);
 }
 
@@ -55,7 +54,6 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 						instance.state = SERIAL_COMPLETE;
 						break;
 					case 'A': // Run #1 controller data
-						instance.tasrun = tasrun;
 						instance.state = SERIAL_CONTROLLER_DATA_START;
 						break;
 					case 'a': // 28 frame data burst is complete
@@ -85,7 +83,6 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 				if(input != 'A')
 				{
 					serial_interface_output((uint8_t*)"\xFE", 1); // run not supported
-					instance.tasrun = NULL;
 					instance.state = SERIAL_COMPLETE;
 				}
 				else
@@ -125,7 +122,6 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 				if(input != 'A')
 				{
 					serial_interface_output((uint8_t*)"\xFE", 1); // run not supported
-					instance.tasrun = NULL;
 					instance.state = SERIAL_COMPLETE;
 				}
 				else
@@ -145,7 +141,6 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 				else // should not reach this
 				{
 					serial_interface_output((uint8_t*) "\xFA", 1); // Error during bulk transfer toggle
-					instance.tasrun = NULL;
 				}
 				instance.state = SERIAL_COMPLETE;
 				break;
@@ -193,7 +188,7 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 				// fall through
 			case SERIAL_CONTROLLER_DATA_CONTINUE:
 				instance.controller_data_buffer[instance.controller_data_bytes_read++] = input;
-				if (instance.controller_data_bytes_read < tasrun->size)
+				if (instance.controller_data_bytes_read < tasrun->console_data_size)
 				{
 					// wait for next byte...
 					break;
@@ -207,7 +202,7 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 					serial_interface_output((uint8_t*)"\xB0", 1);
 				}
 
-				if(!tasrun->initialized && tasrun->size > 0) // this should only run once per run to set up the 1st frame of data
+				if(!tasrun->initialized && tasrun->input_data_size > 0) // this should only run once per run to set up the 1st frame of data
 				{
 
 					Console c = tasrun->console;
@@ -217,7 +212,7 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 						{
 							toggleNext = 1;
 						}
-						if(TASRunGetClockFix(instance.tasrun))
+						if(TASRunGetClockFix(tasrun))
 						{
 							clockFix = 1;
 						}
@@ -234,7 +229,7 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 						HAL_NVIC_EnableIRQ(EXTI0_IRQn);
 						HAL_NVIC_EnableIRQ(EXTI1_IRQn);
 						HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
-						if (instance.tasrun->multitap)
+						if (tasrun->multitap)
 							HAL_NVIC_EnableIRQ(EXTI4_IRQn);
 						__enable_irq();
 					}
@@ -245,7 +240,6 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 				}
 
 				instance.state = SERIAL_COMPLETE;
-				instance.tasrun = NULL;
 				break;
 			case SERIAL_CONSOLE:
 				switch(input)
@@ -272,7 +266,6 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 						break;
 					default: // Error: console type not understood
 						instance.state = SERIAL_COMPLETE;
-						instance.tasrun = NULL;
 						serial_interface_output((uint8_t*)"\xFC", 1);
 						break;
 				}
@@ -281,12 +274,10 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 				switch(input)
 				{
 					case 'A': // setup Run #1
-						instance.tasrun = tasrun;
 						instance.state = SERIAL_CONSOLE;
 						break;
 					default: // Error: run number not understood
 						instance.state = SERIAL_COMPLETE;
-						instance.tasrun = NULL;
 						serial_interface_output((uint8_t*)"\xFE", 1);
 						break;
 				}
@@ -305,8 +296,8 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 					p1_lanes = 3;
 				else if(p1 == 0xF){
 					p1_lanes = 4;
-					if (instance.tasrun->console == CONSOLE_SNES)
-						instance.tasrun->multitap = 1;
+					if (tasrun->console == CONSOLE_SNES)
+						tasrun->multitap = 1;
 				}
 
 				if(p2 == 0x8)
@@ -317,11 +308,11 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 					p2_lanes = 3;
 				else if(p2 == 0xF){
 					p2_lanes = 4;
-					if (instance.tasrun->console == CONSOLE_SNES)
-						instance.tasrun->multitap = 1;
+					if (tasrun->console == CONSOLE_SNES)
+						tasrun->multitap = 1;
 				}
 
-				if (instance.tasrun->multitap)
+				if (tasrun->multitap)
 					SetMultitapMode();
 
 				if(p1 != 0) // player 1 better have some kind of data!
@@ -349,7 +340,6 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 				else
 				{
 					instance.state = SERIAL_COMPLETE;
-					instance.tasrun = NULL;
 					serial_interface_output((uint8_t*)"\xFD", 1);
 				}
 				break;
@@ -365,20 +355,16 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 				serial_interface_output((uint8_t*)"\x01S", 2);
 
 				instance.state = SERIAL_COMPLETE;
-				instance.tasrun = NULL;
 				break;
 			case SERIAL_TRANSITION:
 				// process 2nd character in command for run letter
 				if(input == 'A')
 				{
-					instance.tasrun = tasrun;
-
 					instance.state = SERIAL_TRANSITION_1;
 				}
 				else
 				{
 					instance.state = SERIAL_COMPLETE;
-					instance.tasrun = NULL;
 					serial_interface_output((uint8_t*)"\xFE", 1);
 				}
 				break;
@@ -409,7 +395,6 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 					{
 						// adding transition failed
 						instance.state = SERIAL_COMPLETE;
-						instance.tasrun = NULL;
 						serial_interface_output((uint8_t*)"\xFB", 1);
 						break;
 					}
@@ -420,7 +405,6 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 					{
 						// adding transition failed
 						instance.state = SERIAL_COMPLETE;
-						instance.tasrun = NULL;
 						serial_interface_output((uint8_t*)"\xFB", 1);
 						break;
 					}
@@ -431,7 +415,6 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 					{
 						// adding transition failed
 						instance.state = SERIAL_COMPLETE;
-						instance.tasrun = NULL;
 						serial_interface_output((uint8_t*)"\xFB", 1);
 						break;
 					}
@@ -442,14 +425,12 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 					{
 						// adding transition failed
 						instance.state = SERIAL_COMPLETE;
-						instance.tasrun = NULL;
 						serial_interface_output((uint8_t*)"\xFB", 1);
 						break;
 					}
 				}
 
 				instance.state = SERIAL_COMPLETE;
-				instance.tasrun = NULL;
 				break;
 			default:
 				break;
