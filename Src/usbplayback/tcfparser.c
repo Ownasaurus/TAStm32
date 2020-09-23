@@ -72,7 +72,7 @@ int do_parse_event(struct parser_state *s, yaml_event_t *event) {
 				if (strcmp(s->value, "snes") == 0) {
 					TASRunSetConsole(CONSOLE_SNES);
 					SetSNESMode();
-					TASRunSetNumControllers(2);
+					TASRunSetNumControllers( 2);
 					TASRunSetNumDataLanes(4);
 				} else if (strcmp(s->value, "nes") == 0) {
 					TASRunSetConsole(CONSOLE_NES);

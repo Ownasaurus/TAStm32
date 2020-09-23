@@ -188,7 +188,7 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 				// fall through
 			case SERIAL_CONTROLLER_DATA_CONTINUE:
 				instance.controller_data_buffer[instance.controller_data_bytes_read++] = input;
-				if (instance.controller_data_bytes_read < tasrun->console_data_size)
+				if (instance.controller_data_bytes_read < tasrun->input_data_size)
 				{
 					// wait for next byte...
 					break;
@@ -202,7 +202,7 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 					serial_interface_output((uint8_t*)"\xB0", 1);
 				}
 
-				if(!tasrun->initialized && tasrun->input_data_size > 0) // this should only run once per run to set up the 1st frame of data
+				if(!tasrun->initialized && tasrun->size > 0) // this should only run once per run to set up the 1st frame of data
 				{
 
 					Console c = tasrun->console;
@@ -212,7 +212,7 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 						{
 							toggleNext = 1;
 						}
-						if(TASRunGetClockFix(tasrun))
+						if(TASRunGetClockFix())
 						{
 							clockFix = 1;
 						}

@@ -50,7 +50,7 @@ void USB_Start_Tas(char *file) {
 
 	// Extension is tcf, grab parameters from it
 	if (strcmp(extension, ".tcf") == 0) {
-		if (load_tcf( file)) {
+		if (load_tcf(file)) {
 			tasfile = tasrun->inputFile;
 		}
 	}
@@ -58,7 +58,7 @@ void USB_Start_Tas(char *file) {
 	// Failing that, guess at some default parameters by the extension name. TODO maybe try and find an associated tcf?
 	else if (strcmp(extension, ".r08") == 0) {
 
-		TASRunSetConsole( CONSOLE_NES);
+		TASRunSetConsole(CONSOLE_NES);
 		tasfile = file;
 		SetSNESMode();
 		TASRunSetNumControllers(2);
@@ -102,7 +102,7 @@ void USB_Playback_Task() {
 	case RUNSTATE_RUNNING:
 
 		// Fill buffer up to the last inputBufferSize
-		while ( tasrun->size * tasrun->input_data_size < (1024 * tasrun->input_data_size) - inputBufferSize) {
+		while (tasrun->size * tasrun->input_data_size < (1024 * tasrun->input_data_size) - inputBufferSize) {
 			res = f_read(&TasFile, buffer, inputBufferSize, &br);
 			if (res == FR_OK && br >= tasrun->input_data_size) {
 				readcount += br;
@@ -121,7 +121,7 @@ void USB_Playback_Task() {
 				if (tasrun->dpcmFix) {
 					toggleNext = 1;
 				}
-				if (TASRunGetClockFix(tasrun)) {
+				if (TASRunGetClockFix()) {
 					clockFix = 1;
 				}
 

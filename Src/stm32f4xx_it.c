@@ -324,8 +324,8 @@ void EXTI1_IRQHandler(void)
 
 				if(diff == 1) // we are one latch short
 				{
-					GetNextFrame(tasrun); // burn a frame of data
-					dataptr = GetNextFrame(tasrun); // use this frame instead
+					GetNextFrame(); // burn a frame of data
+					dataptr = GetNextFrame(); // use this frame instead
 					serial_interface_output((uint8_t*)"UB", 2);
 				}
 				else if(diff == -1) // we had one extra latch
@@ -340,7 +340,7 @@ void EXTI1_IRQHandler(void)
 				}
 				else // normalcy
 				{
-					dataptr = GetNextFrame(tasrun);
+					dataptr = GetNextFrame();
 					serial_interface_output((uint8_t*)"UC", 2);
 				}
 
@@ -351,7 +351,7 @@ void EXTI1_IRQHandler(void)
 			else
 			{
 				current_train_latch_count++;
-				dataptr = GetNextFrame(tasrun);
+				dataptr = GetNextFrame();
 			}
 
 			DisableTrainTimer(); // reset counters back to 0
@@ -359,12 +359,12 @@ void EXTI1_IRQHandler(void)
 		}
 		else
 		{
-			dataptr = GetNextFrame(tasrun);
+			dataptr = GetNextFrame();
 		}
 
 		if(dataptr)
 		{
-			toggleNext = TASRunIncrementFrameCount(tasrun);
+			toggleNext = TASRunIncrementFrameCount();
 
 			databit = 0;
 			if(tasrun->console == CONSOLE_NES)
@@ -599,7 +599,7 @@ void EXTI4_IRQHandler(void)
 			  SendIdentityN64();
 			  break;
 		  case 0x01: // poll for N64 state
-			  frame = GetNextFrame(tasrun);
+			  frame = GetNextFrame();
 			  if(frame == NULL) // buffer underflow
 			  {
 				  SendControllerDataN64(0); // send blank controller data
@@ -615,7 +615,7 @@ void EXTI4_IRQHandler(void)
 		  case 0x400302:
 		  case 0x400300:
 		  case 0x400301:
-			  frame = GetNextFrame(tasrun);
+			  frame = GetNextFrame();
 			  if(frame == NULL) // buffer underflow
 			  {
 					memset(&gc_data, 0, sizeof(gc_data));

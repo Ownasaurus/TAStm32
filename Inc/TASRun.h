@@ -12,6 +12,7 @@
 #define MAX_DATA_LANES 4
 #define MAX_TRANSITIONS 5
 
+
 typedef enum
 {
 	CONSOLE_N64,
@@ -71,6 +72,7 @@ typedef struct
 } TASRun;
 
 extern TASRun *tasrun;
+extern TASRun tasruns;
 
 // This file includes a load of static functions with definitions to make
 // inlining easier
