@@ -42,6 +42,7 @@
 #include "TASRun.h"
 #include "usbd_cdc_if.h"
 #include "serial_interface.h"
+#include "usbplayback/inputs.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -89,6 +90,9 @@ const uint32_t P1_D1_MASK = 0x00040004;
 const uint32_t P2_D0_MASK = 0x01000100;
 const uint32_t P2_D1_MASK = 0x00800080;
 
+
+#define MODER_DATA_MASK 0xFFF03C0F
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -111,6 +115,14 @@ uint32_t P1_GPIOC_next[17];
 uint32_t P2_GPIOC_current[17];
 uint32_t P2_GPIOC_next[17];
 
+// extra words for multitap
+
+uint32_t P1_GPIOC_current_multitap[17];
+uint32_t P1_GPIOC_next_multitap[17];
+
+uint32_t P2_GPIOC_current_multitap[17];
+uint32_t P2_GPIOC_next_multitap[17];
+
 // leave enough room for SNES only
 uint32_t V1_GPIOB_current[16];
 uint32_t V1_GPIOB_next[16];
@@ -130,6 +142,11 @@ uint16_t p1_d1_next;
 uint16_t p2_d0_next;
 uint16_t p2_d1_next;
 
+uint16_t p1_d1_next_multitap;
+uint16_t p2_d0_next_multitap;
+uint16_t p1_d0_next_multitap;
+uint16_t p2_d1_next_multitap;
+
 uint8_t request_pending = 0;
 uint8_t bulk_mode = 0;
 
@@ -138,10 +155,10 @@ uint16_t current_train_index;
 uint16_t current_train_latch_count;
 uint8_t between_trains = 1;
 uint8_t trains_enabled;
+uint8_t firstLatch = 0;
 
 uint16_t* latch_trains;
 
-Console c;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -153,11 +170,13 @@ static HAL_StatusTypeDef Simple_Transmit(UART_HandleTypeDef *huart);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+uint8_t multitapSel = 1;
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
 extern PCD_HandleTypeDef hpcd_USB_OTG_FS;
+extern HCD_HandleTypeDef hhcd_USB_OTG_HS;
+extern TIM_HandleTypeDef htim2;
 extern TIM_HandleTypeDef htim3;
 extern TIM_HandleTypeDef htim6;
 extern TIM_HandleTypeDef htim7;
@@ -167,7 +186,7 @@ extern UART_HandleTypeDef huart2;
 /* USER CODE END EV */
 
 /******************************************************************************/
-/*           Cortex-M4 Processor Interruption and Exception Handlers          */ 
+/*           Cortex-M4 Processor Interruption and Exception Handlers          */
 /******************************************************************************/
 /**
   * @brief This function handles System tick timer.
@@ -205,7 +224,7 @@ void EXTI0_IRQHandler(void)
 			my_wait_us_asm(2); // necessary to prevent switching too fast in DPCM fix mode
 		}
 
-		uint32_t p1_data = P1_GPIOC_current[p1_current_bit];
+		uint32_t p1_data = multitapSel ? P1_GPIOC_current[p1_current_bit] : P1_GPIOC_current_multitap[p1_current_bit];
 		GPIOC->BSRR = p1_data;
 
 		ResetAndEnableP1ClockTimer();
@@ -230,7 +249,13 @@ void EXTI1_IRQHandler(void)
 
 	// P1_LATCH
 	int8_t regbit = 50, databit = -1; // random initial values
-	TASRun *tasrun = TASRunGetByIndex(RUN_A);
+
+	// set relevant data ports as output if this is the first latch
+	if(firstLatch && (EXTI->PR & P1_LATCH_Pin))
+	{
+		GPIOC->MODER = (GPIOC->MODER & MODER_DATA_MASK) | tasrun->moder_firstLatch;
+		firstLatch = 0;
+	}
 
 	if(recentLatch == 0) // no recent latch
 	{
@@ -251,6 +276,14 @@ void EXTI1_IRQHandler(void)
 		// P2 comes before P1 in NES, so copy P2 first
 		memcpy(P2_GPIOC_current, P2_GPIOC_next, 64);
 		memcpy(P1_GPIOC_current, P1_GPIOC_next, 64);
+
+		// copy the multitap bits too
+		if (tasrun->multitap) {
+			memcpy(P2_GPIOC_current_multitap, P2_GPIOC_next_multitap, 64);
+			memcpy(P1_GPIOC_current_multitap, P1_GPIOC_next_multitap, 64);
+			// Assume sel is high, this should perhaps be being being reset by the EXT4 interrupt if it was set to trigger both edges
+			multitapSel = 1;
+		}
 
 		// now prepare for the next frame!
 
@@ -291,8 +324,8 @@ void EXTI1_IRQHandler(void)
 
 				if(diff == 1) // we are one latch short
 				{
-					GetNextFrame(tasrun); // burn a frame of data
-					dataptr = GetNextFrame(tasrun); // use this frame instead
+					GetNextFrame(); // burn a frame of data
+					dataptr = GetNextFrame(); // use this frame instead
 					serial_interface_output((uint8_t*)"UB", 2);
 				}
 				else if(diff == -1) // we had one extra latch
@@ -307,7 +340,7 @@ void EXTI1_IRQHandler(void)
 				}
 				else // normalcy
 				{
-					dataptr = GetNextFrame(tasrun);
+					dataptr = GetNextFrame();
 					serial_interface_output((uint8_t*)"UC", 2);
 				}
 
@@ -318,7 +351,7 @@ void EXTI1_IRQHandler(void)
 			else
 			{
 				current_train_latch_count++;
-				dataptr = GetNextFrame(tasrun);
+				dataptr = GetNextFrame();
 			}
 
 			DisableTrainTimer(); // reset counters back to 0
@@ -326,16 +359,15 @@ void EXTI1_IRQHandler(void)
 		}
 		else
 		{
-			dataptr = GetNextFrame(tasrun);
+			dataptr = GetNextFrame();
 		}
 
 		if(dataptr)
 		{
-			toggleNext = TASRunIncrementFrameCount(tasrun);
-			c = TASRunGetConsole(tasrun);
+			toggleNext = TASRunIncrementFrameCount();
 
 			databit = 0;
-			if(c == CONSOLE_NES)
+			if(tasrun->console == CONSOLE_NES)
 			{
 				databit = 7; // number of bits of NES - 1
 
@@ -358,6 +390,21 @@ void EXTI1_IRQHandler(void)
 				p1_d1_next = ((p1_d1_next >> 8) & 0xFF) | ((p1_d1_next << 8) & 0xFF00);
 				p2_d0_next = ((p2_d0_next >> 8) & 0xFF) | ((p2_d0_next << 8) & 0xFF00);
 				p2_d1_next = ((p2_d1_next >> 8) & 0xFF) | ((p2_d1_next << 8) & 0xFF00);
+
+				// data lines 2 & 3 are multitap d0 and d1
+				if (tasrun->multitap) {
+					memcpy((uint16_t*) &p1_d0_next_multitap, &dataptr[0][0][2], sizeof(SNESControllerData));
+					memcpy((uint16_t*) &p1_d1_next_multitap, &dataptr[0][0][3], sizeof(SNESControllerData));
+					memcpy((uint16_t*) &p2_d0_next_multitap, &dataptr[0][1][2], sizeof(SNESControllerData));
+					memcpy((uint16_t*) &p2_d1_next_multitap, &dataptr[0][1][3], sizeof(SNESControllerData));
+
+					// fix endianness
+					p1_d0_next_multitap = ((p1_d0_next_multitap >> 8) & 0xFF) | ((p1_d0_next_multitap << 8) & 0xFF00);
+					p1_d1_next_multitap = ((p1_d1_next_multitap >> 8) & 0xFF) | ((p1_d1_next_multitap << 8) & 0xFF00);
+					p2_d0_next_multitap = ((p2_d0_next_multitap >> 8) & 0xFF) | ((p2_d0_next_multitap << 8) & 0xFF00);
+					p2_d1_next_multitap = ((p2_d1_next_multitap >> 8) & 0xFF) | ((p2_d1_next_multitap << 8) & 0xFF00);
+
+				}
 			}
 
 			regbit = 0;
@@ -385,10 +432,26 @@ void EXTI1_IRQHandler(void)
 				regbit++;
 				databit--;
 			}
+			// fill multitap data
+			if (tasrun->multitap) {
+				regbit = 0;
+				databit = 15;
+				while (databit >= 0) {
+					uint32_t temp;
+					temp = (uint32_t) (((p1_d0_next_multitap >> databit) & 1) << P1_D0_LOW_C) | (uint32_t) (((p1_d1_next_multitap >> databit) & 1) << P1_D1_LOW_C);
+					P1_GPIOC_next_multitap[regbit] = temp | (((~temp) & (P1_D0_MASK | P1_D1_MASK)) >> 16);
+
+					temp = (uint32_t) (((p2_d0_next_multitap >> databit) & 1) << P2_D0_LOW_C) | (uint32_t) (((p2_d1_next_multitap >> databit) & 1) << P2_D1_LOW_C);
+					P2_GPIOC_next_multitap[regbit] = temp | (((~temp) & (P2_D0_MASK | P2_D1_MASK)) >> 16);
+
+					regbit++;
+					databit--;
+				}
+			}
 		}
 		else // no data left in the buffer
 		{
-			if(c == CONSOLE_NES)
+			if(tasrun->console == CONSOLE_NES)
 			{
 				databit = 7; // number of bits of NES - 1
 			}
@@ -409,11 +472,11 @@ void EXTI1_IRQHandler(void)
 			}
 		}
 
-		if(TASRunIsInitialized(tasrun))
+		if(tasrun->initialized)
 		{
 			if(bulk_mode)
 			{
-				if(!request_pending && TASRunGetSize(tasrun) <= (MAX_SIZE-28)) // not full enough
+				if(!request_pending && tasrun->size <= (MAX_SIZE-28)) // not full enough
 				{
 					if(serial_interface_output((uint8_t*)"a", 1) == USBD_OK) // notify that we latched and want more
 					{
@@ -428,13 +491,13 @@ void EXTI1_IRQHandler(void)
 		}
 		else
 		{
-			if(c == CONSOLE_NES)
+			if(tasrun->console == CONSOLE_NES)
 				regbit = 8;
 			else
 				regbit = 16;
 
 			// fill the overread
-			if(TASRunGetOverread(tasrun)) // overread is 1/HIGH
+			if(tasrun->overread) // overread is 1/HIGH
 			{
 				// so set logical LOW (NES/SNES button pressed)
 				for(uint8_t index = regbit;index < 17;index++)
@@ -488,97 +551,115 @@ void EXTI4_IRQHandler(void)
   /* USER CODE BEGIN EXTI4_IRQn 0 */
 	// P1_DATA_2 == N64_DATA
 	// Read 64 command
-	TASRun *tasrun = TASRunGetByIndex(RUN_A);
-	Console c = TASRunGetConsole(tasrun);
-	GCControllerData gc_data;
 
-	__disable_irq();
-	uint32_t cmd;
-	RunDataArray *frame = NULL;
+	// If this is a SNES run, this means SEL is going LOW so tell clock interrupts
+	// to start using the second words of multitap frame
+	if (tasrun->console == CONSOLE_SNES) {
+		if (tasrun->multitap){
+			multitapSel = 0;
+			p1_current_bit = p2_current_bit = 1;
 
-	cmd = readCommand();
-
-	my_wait_us_asm(2); // wait a small amount of time before replying
-
-	//-------- SEND RESPONSE
-	SetN64OutputMode();
-
-	switch(cmd)
-	{
-	  case 0x00: // identity
-		  if(c == CONSOLE_N64)
-		  {
-			  SendIdentityN64();
-		  }
-		  else if(c == CONSOLE_GC)
-		  {
-			  SendIdentityGC();
-		  }
-		  break;
-	  case 0xFF: // N64 reset
-		  SendIdentityN64();
-		  break;
-	  case 0x01: // poll for N64 state
-		  frame = GetNextFrame(tasrun);
-		  if(frame == NULL) // buffer underflow
-		  {
-			  SendControllerDataN64(0); // send blank controller data
-		  }
-		  else
-		  {
-			  SendRunDataN64(frame[0][0][0].n64_data);
-		  }
-		  break;
-	  case 0x41: //gamecube origin call
-		  SendOriginGC();
-		  break;
-	  case 0x400302:
-	  case 0x400300:
-	  case 0x400301:
-		  frame = GetNextFrame(tasrun);
-		  if(frame == NULL) // buffer underflow
-		  {
-				memset(&gc_data, 0, sizeof(gc_data));
-
-				gc_data.a_x_axis = 128;
-				gc_data.a_y_axis = 128;
-				gc_data.c_x_axis = 128;
-				gc_data.c_y_axis = 128;
-				gc_data.beginning_one = 1;
-
-				SendRunDataGC(gc_data); // send blank controller data
-		  }
-		  else
-		  {
-			  frame[0][0][0].gc_data.beginning_one = 1;
-			  SendRunDataGC(frame[0][0][0].gc_data);
-		  }
-		  break;
-	  case 0x02:
-	  case 0x03:
-	  default:
-		  // we do not process the read and write commands (memory pack)
-		  break;
+			// quickly set first bit of data for the next frame
+			uint32_t p1_data = P1_GPIOC_current_multitap[0];
+			uint32_t p2_data = P2_GPIOC_current_multitap[0];
+			uint32_t all_data = (p1_data | p2_data);
+			GPIOC->BSRR = all_data;
+		}
 	}
-	//-------- DONE SENDING RESPOSE
 
-	SetN64InputMode();
+	// Otherwise process as N64 command
+	else {
 
-	__enable_irq();
+		GCControllerData gc_data;
 
-	switch(cmd)
-	{
-		case 0x01: // N64 poll
-			UpdateN64VisBoards(frame[0][0][0].n64_data);
-		case 0x400302: // GC poll
-		case 0x400300: // GC poll
-		case 0x400301: // GC poll
-			serial_interface_output((uint8_t*)"A", 1);
+		__disable_irq();
+		uint32_t cmd;
+		RunDataArray *frame = NULL;
+
+		cmd = readCommand();
+
+		my_wait_us_asm(2); // wait a small amount of time before replying
+
+		//-------- SEND RESPONSE
+		SetN64OutputMode();
+
+		switch(cmd)
+		{
+		  case 0x00: // identity
+			  if(tasrun->console == CONSOLE_N64)
+			  {
+				  SendIdentityN64();
+			  }
+			  else if(tasrun->console == CONSOLE_GC)
+			  {
+				  SendIdentityGC();
+			  }
+			  break;
+		  case 0xFF: // N64 reset
+			  SendIdentityN64();
+			  break;
+		  case 0x01: // poll for N64 state
+			  frame = GetNextFrame();
+			  if(frame == NULL) // buffer underflow
+			  {
+				  SendControllerDataN64(0); // send blank controller data
+			  }
+			  else
+			  {
+				  SendRunDataN64(frame[0][0][0].n64_data);
+			  }
+			  break;
+		  case 0x41: //gamecube origin call
+			  SendOriginGC();
+			  break;
+		  case 0x400302:
+		  case 0x400300:
+		  case 0x400301:
+			  frame = GetNextFrame();
+			  if(frame == NULL) // buffer underflow
+			  {
+					memset(&gc_data, 0, sizeof(gc_data));
+
+					gc_data.a_x_axis = 128;
+					gc_data.a_y_axis = 128;
+					gc_data.c_x_axis = 128;
+					gc_data.c_y_axis = 128;
+					gc_data.beginning_one = 1;
+
+					SendRunDataGC(gc_data); // send blank controller data
+			  }
+			  else
+			  {
+				  frame[0][0][0].gc_data.beginning_one = 1;
+				  SendRunDataGC(frame[0][0][0].gc_data);
+			  }
+			  break;
+		  case 0x02:
+		  case 0x03:
+		  default:
+			  // we do not process the read and write commands (memory pack)
+			  break;
+		}
+		//-------- DONE SENDING RESPOSE
+
+		SetN64InputMode();
+
+		__enable_irq();
+
+		switch(cmd)
+		{
+			case 0x01: // N64 poll
+				UpdateN64VisBoards(frame[0][0][0].n64_data);
+			case 0x400302: // GC poll
+			case 0x400300: // GC poll
+			case 0x400301: // GC poll
+				serial_interface_output((uint8_t*)"A", 1);
 
 
-			if(frame == NULL) // there was a buffer underflow
-				serial_interface_output((uint8_t*)"\xB2", 1);
-		break;
+				if(frame == NULL) // there was a buffer underflow
+					serial_interface_output((uint8_t*)"\xB2", 1);
+			break;
+		}
 	}
 
   /* USER CODE END EXTI4_IRQn 0 */
@@ -603,7 +684,7 @@ void EXTI9_5_IRQHandler(void)
 			my_wait_us_asm(2); // necessary to prevent switching too fast in DPCM fix mode
 		}
 
-		uint32_t p2_data = P2_GPIOC_current[p2_current_bit];
+		uint32_t p2_data = multitapSel ? P2_GPIOC_current[p2_current_bit] : P2_GPIOC_current_multitap[p2_current_bit];
 		GPIOC->BSRR = p2_data;
 
 		ResetAndEnableP2ClockTimer();
@@ -633,6 +714,20 @@ void TIM1_UP_TIM10_IRQHandler(void)
   /* USER CODE BEGIN TIM1_UP_TIM10_IRQn 1 */
 
   /* USER CODE END TIM1_UP_TIM10_IRQn 1 */
+}
+
+/**
+  * @brief This function handles TIM2 global interrupt.
+  */
+void TIM2_IRQHandler(void)
+{
+  /* USER CODE BEGIN TIM2_IRQn 0 */
+	inputProcess();
+  /* USER CODE END TIM2_IRQn 0 */
+  HAL_TIM_IRQHandler(&htim2);
+  /* USER CODE BEGIN TIM2_IRQn 1 */
+
+  /* USER CODE END TIM2_IRQn 1 */
 }
 
 /**
@@ -740,6 +835,20 @@ void OTG_FS_IRQHandler(void)
   /* USER CODE END OTG_FS_IRQn 1 */
 }
 
+/**
+  * @brief This function handles USB On The Go HS global interrupt.
+  */
+void OTG_HS_IRQHandler(void)
+{
+  /* USER CODE BEGIN OTG_HS_IRQn 0 */
+
+  /* USER CODE END OTG_HS_IRQn 0 */
+  HAL_HCD_IRQHandler(&hhcd_USB_OTG_HS);
+  /* USER CODE BEGIN OTG_HS_IRQn 1 */
+
+  /* USER CODE END OTG_HS_IRQn 1 */
+}
+
 /* USER CODE BEGIN 1 */
 static HAL_StatusTypeDef Simple_Transmit(UART_HandleTypeDef *huart)
 {
@@ -832,7 +941,7 @@ void ResetAndEnableP2ClockTimer()
 
 inline void UpdateVisBoards()
 {
-	if(c == CONSOLE_NES)
+	if(tasrun->console == CONSOLE_NES)
 	{
 		// first 8 clock pulses at least 10ns in width
 		for(int x = 0;x < 8;x++)
@@ -870,7 +979,7 @@ inline void UpdateVisBoards()
 			WAIT_4_CYCLES;
 		}
 	}
-	else if(c == CONSOLE_SNES)
+	else if(tasrun->console == CONSOLE_SNES)
 	{
 		// fix bit order
 

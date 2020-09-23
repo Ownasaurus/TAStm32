@@ -2,6 +2,7 @@
 
 #include "stm32f4xx_it.h"
 #include "main.h"
+#include "TASRun.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -16,7 +17,6 @@ static uint8_t NullOutputFunction(uint8_t *buffer, uint16_t n)
 
 void serial_interface_reset() {
 	instance.state = SERIAL_COMPLETE;
-	instance.tasrun = NULL;
 	serial_interface_set_output_function(NullOutputFunction);
 }
 
@@ -49,95 +49,11 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 						break;
 					case 'R': // Reset/clear all configuration
 
-						// disable interrupts on latch/clock/data for now
-						HAL_NVIC_DisableIRQ(EXTI0_IRQn);
-						HAL_NVIC_DisableIRQ(EXTI1_IRQn);
-						HAL_NVIC_DisableIRQ(EXTI4_IRQn);
-						HAL_NVIC_DisableIRQ(EXTI9_5_IRQn);
-
-						Disable8msTimer();
-						DisableP1ClockTimer();
-						DisableP2ClockTimer();
-						DisableTrainTimer();
-
-						// clear all interrupts
-						while (HAL_NVIC_GetPendingIRQ(EXTI0_IRQn))
-						{
-							__HAL_GPIO_EXTI_CLEAR_IT(P1_CLOCK_Pin);
-							HAL_NVIC_ClearPendingIRQ(EXTI0_IRQn);
-						}
-						while (HAL_NVIC_GetPendingIRQ(EXTI1_IRQn))
-						{
-							__HAL_GPIO_EXTI_CLEAR_IT(P1_LATCH_Pin);
-							HAL_NVIC_ClearPendingIRQ(EXTI1_IRQn);
-						}
-						while (HAL_NVIC_GetPendingIRQ(EXTI4_IRQn))
-						{
-							__HAL_GPIO_EXTI_CLEAR_IT(P1_DATA_2_Pin);
-							HAL_NVIC_ClearPendingIRQ(EXTI4_IRQn);
-						}
-						while (HAL_NVIC_GetPendingIRQ(EXTI9_5_IRQn))
-						{
-							__HAL_GPIO_EXTI_CLEAR_IT(P2_CLOCK_Pin);
-							HAL_NVIC_ClearPendingIRQ(EXTI9_5_IRQn);
-						}
-						while (HAL_NVIC_GetPendingIRQ(TIM3_IRQn))
-						{
-							HAL_NVIC_ClearPendingIRQ(TIM3_IRQn);
-						}
-						while (HAL_NVIC_GetPendingIRQ(TIM6_DAC_IRQn))
-						{
-							HAL_NVIC_ClearPendingIRQ(TIM6_DAC_IRQn);
-						}
-						while (HAL_NVIC_GetPendingIRQ(TIM7_IRQn))
-						{
-							HAL_NVIC_ClearPendingIRQ(TIM7_IRQn);
-						}
-						while (HAL_NVIC_GetPendingIRQ(TIM1_UP_TIM10_IRQn))
-						{
-							HAL_NVIC_ClearPendingIRQ(TIM1_UP_TIM10_IRQn);
-						}
-
-						// set all lines low to avoid conflicting with NES poweron
-						HAL_GPIO_WritePin(GPIOC, P1_DATA_1_Pin|P1_DATA_0_Pin|P2_DATA_1_Pin|P2_DATA_0_Pin
-						                          |P2_DATA_2_Pin|P1_DATA_2_Pin, GPIO_PIN_RESET);
-
-						// important to reset our state
-						recentLatch = 0;
-						toggleNext = 0;
-						p1_current_bit = 0;
-						p2_current_bit = 0;
-						dpcmFix = 0;
-						clockFix = 0;
-						request_pending = 0;
-						bulk_mode = 0;
-						current_train_index = 0;
-						current_train_latch_count = 0;
-						between_trains = 0;
-						trains_enabled = 0;
-
-						if(latch_trains != NULL)
-						{
-							free(latch_trains);
-							latch_trains = NULL;
-						}
-
-						memset(P1_GPIOC_current, 0, sizeof(P1_GPIOC_current));
-						memset(P1_GPIOC_next, 0, sizeof(P1_GPIOC_next));
-						memset(P2_GPIOC_current, 0, sizeof(P2_GPIOC_current));
-						memset(P2_GPIOC_next, 0, sizeof(P2_GPIOC_next));
-
-						memset(V1_GPIOB_current, 0, sizeof(V1_GPIOB_current));
-						memset(V1_GPIOB_next, 0, sizeof(V1_GPIOB_next));
-						memset(V2_GPIOC_current, 0, sizeof(V2_GPIOC_current));
-						memset(V2_GPIOC_next, 0, sizeof(V2_GPIOC_next));
-
-						ResetTASRuns();
+						ResetRun();
 						serial_interface_output((uint8_t*)"\x01R", 2); // good response for reset
 						instance.state = SERIAL_COMPLETE;
 						break;
 					case 'A': // Run #1 controller data
-						instance.tasrun = TASRunGetByIndex(RUN_A);
 						instance.state = SERIAL_CONTROLLER_DATA_START;
 						break;
 					case 'a': // 28 frame data burst is complete
@@ -167,7 +83,6 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 				if(input != 'A')
 				{
 					serial_interface_output((uint8_t*)"\xFE", 1); // run not supported
-					instance.tasrun = NULL;
 					instance.state = SERIAL_COMPLETE;
 				}
 				else
@@ -207,7 +122,6 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 				if(input != 'A')
 				{
 					serial_interface_output((uint8_t*)"\xFE", 1); // run not supported
-					instance.tasrun = NULL;
 					instance.state = SERIAL_COMPLETE;
 				}
 				else
@@ -227,7 +141,6 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 				else // should not reach this
 				{
 					serial_interface_output((uint8_t*) "\xFA", 1); // Error during bulk transfer toggle
-					instance.tasrun = NULL;
 				}
 				instance.state = SERIAL_COMPLETE;
 				break;
@@ -275,7 +188,7 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 				// fall through
 			case SERIAL_CONTROLLER_DATA_CONTINUE:
 				instance.controller_data_buffer[instance.controller_data_bytes_read++] = input;
-				if (instance.controller_data_bytes_read < GetSizeOfInputForRun(instance.tasrun))
+				if (instance.controller_data_bytes_read < tasrun->input_data_size)
 				{
 					// wait for next byte...
 					break;
@@ -283,23 +196,23 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 
 				// Got the full frame so add it to the RunData
 
-				if (ExtractDataAndAddFrame(instance.tasrun, instance.controller_data_buffer, instance.controller_data_bytes_read) == 0)
+				if (ExtractDataAndAddFrame(instance.controller_data_buffer, instance.controller_data_bytes_read) == 0)
 				{
 					// buffer must have been full
 					serial_interface_output((uint8_t*)"\xB0", 1);
 				}
 
-				if(!TASRunIsInitialized(instance.tasrun) && TASRunGetSize(instance.tasrun) > 0) // this should only run once per run to set up the 1st frame of data
+				if(!tasrun->initialized && tasrun->size > 0) // this should only run once per run to set up the 1st frame of data
 				{
 
-					Console c = TASRunGetConsole(instance.tasrun);
+					Console c = tasrun->console;
 					if(c == CONSOLE_NES || c == CONSOLE_SNES)
 					{
-						if(TASRunGetDPCMFix(instance.tasrun))
+						if(tasrun->dpcmFix)
 						{
 							toggleNext = 1;
 						}
-						if(TASRunGetClockFix(instance.tasrun))
+						if(TASRunGetClockFix())
 						{
 							clockFix = 1;
 						}
@@ -307,7 +220,7 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 						EXTI1_IRQHandler();
 					}
 
-					TASRunSetInitialized(instance.tasrun, 1);
+					tasrun->initialized = 1;
 
 					if(c == CONSOLE_NES || c == CONSOLE_SNES)
 					{
@@ -316,6 +229,8 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 						HAL_NVIC_EnableIRQ(EXTI0_IRQn);
 						HAL_NVIC_EnableIRQ(EXTI1_IRQn);
 						HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
+						if (tasrun->multitap)
+							HAL_NVIC_EnableIRQ(EXTI4_IRQn);
 						__enable_irq();
 					}
 					else if(c == CONSOLE_N64 || c == CONSOLE_GC)
@@ -325,34 +240,32 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 				}
 
 				instance.state = SERIAL_COMPLETE;
-				instance.tasrun = NULL;
 				break;
 			case SERIAL_CONSOLE:
 				switch(input)
 				{
 					case 'M': // setup N64
-						TASRunSetConsole(instance.tasrun, CONSOLE_N64);
+						TASRunSetConsole(CONSOLE_N64);
 						SetN64Mode();
 						instance.state = SERIAL_NUM_CONTROLLERS;
 						break;
 					case 'G': // setup Gamecube
-						TASRunSetConsole(instance.tasrun, CONSOLE_GC);
+						TASRunSetConsole(CONSOLE_GC);
 						SetN64Mode();
 						instance.state = SERIAL_NUM_CONTROLLERS;
 						break;
 					case 'S': // setup SNES
-						TASRunSetConsole(instance.tasrun, CONSOLE_SNES);
+						TASRunSetConsole(CONSOLE_SNES);
 						SetSNESMode();
 						instance.state = SERIAL_NUM_CONTROLLERS;
 						break;
 					case 'N': // setup NES
-						TASRunSetConsole(instance.tasrun, CONSOLE_NES);
+						TASRunSetConsole(CONSOLE_NES);
 						SetSNESMode();
 						instance.state = SERIAL_NUM_CONTROLLERS;
 						break;
 					default: // Error: console type not understood
 						instance.state = SERIAL_COMPLETE;
-						instance.tasrun = NULL;
 						serial_interface_output((uint8_t*)"\xFC", 1);
 						break;
 				}
@@ -361,12 +274,10 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 				switch(input)
 				{
 					case 'A': // setup Run #1
-						instance.tasrun = TASRunGetByIndex(RUN_A);
 						instance.state = SERIAL_CONSOLE;
 						break;
 					default: // Error: run number not understood
 						instance.state = SERIAL_COMPLETE;
-						instance.tasrun = NULL;
 						serial_interface_output((uint8_t*)"\xFE", 1);
 						break;
 				}
@@ -383,6 +294,11 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 					p1_lanes = 2;
 				else if(p1 == 0xE)
 					p1_lanes = 3;
+				else if(p1 == 0xF){
+					p1_lanes = 4;
+					if (tasrun->console == CONSOLE_SNES)
+						tasrun->multitap = 1;
+				}
 
 				if(p2 == 0x8)
 					p2_lanes = 1;
@@ -390,16 +306,24 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 					p2_lanes = 2;
 				else if(p2 == 0xE)
 					p2_lanes = 3;
+				else if(p2 == 0xF){
+					p2_lanes = 4;
+					if (tasrun->console == CONSOLE_SNES)
+						tasrun->multitap = 1;
+				}
+
+				if (tasrun->multitap)
+					SetMultitapMode();
 
 				if(p1 != 0) // player 1 better have some kind of data!
 				{
 					if(p2 != 0) // 2 controllers
 					{
-						TASRunSetNumControllers(instance.tasrun, 2);
+						TASRunSetNumControllers(2);
 
 						if(p1_lanes == p2_lanes)
 						{
-							TASRunSetNumDataLanes(instance.tasrun, p1_lanes);
+							TASRunSetNumDataLanes(p1_lanes);
 						}
 						else // error
 						{
@@ -408,44 +332,39 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 					}
 					else // 1 controller
 					{
-						TASRunSetNumControllers(instance.tasrun, 1);
-						TASRunSetNumDataLanes(instance.tasrun, p1_lanes);
+						TASRunSetNumControllers(1);
+						TASRunSetNumDataLanes(p1_lanes);
 					}
 					instance.state = SERIAL_SETTINGS;
 				}
 				else
 				{
 					instance.state = SERIAL_COMPLETE;
-					instance.tasrun = NULL;
 					serial_interface_output((uint8_t*)"\xFD", 1);
 				}
 				break;
 			}
 			case SERIAL_SETTINGS:
-				TASRunSetDPCMFix(instance.tasrun, ((input >> 7) & 1));
-				TASRunSetOverread(instance.tasrun, ((input >> 6) & 1));
+				tasrun->dpcmFix = (((input >> 7) & 1));
+				tasrun->overread = (((input >> 6) & 1));
 				// acceptable values for clock fix: 0 --> 63
 				// effective range of clock fix timer: 0us --> 15.75 us
-				TASRunSetClockFix(instance.tasrun, input & 0x3F); // get lower 6 bits
+				TASRunSetClockFix(input & 0x3F); // get lower 6 bits
 				ReInitClockTimers();
 
 				serial_interface_output((uint8_t*)"\x01S", 2);
 
 				instance.state = SERIAL_COMPLETE;
-				instance.tasrun = NULL;
 				break;
 			case SERIAL_TRANSITION:
 				// process 2nd character in command for run letter
 				if(input == 'A')
 				{
-					instance.tasrun = TASRunGetByIndex(RUN_A);
-
 					instance.state = SERIAL_TRANSITION_1;
 				}
 				else
 				{
 					instance.state = SERIAL_COMPLETE;
-					instance.tasrun = NULL;
 					serial_interface_output((uint8_t*)"\xFE", 1);
 				}
 				break;
@@ -472,51 +391,46 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 				// now make a decision based off of the 3rd byte noted earlier
 				if(instance.transition_type == 'A') // transition to ACE
 				{
-					if(!AddTransition(instance.tasrun, TRANSITION_ACE, tempVal)) // try adding transition
+					if(!AddTransition(TRANSITION_ACE, tempVal)) // try adding transition
 					{
 						// adding transition failed
 						instance.state = SERIAL_COMPLETE;
-						instance.tasrun = NULL;
 						serial_interface_output((uint8_t*)"\xFB", 1);
 						break;
 					}
 				}
 				else if(instance.transition_type == 'N')
 				{
-					if(!AddTransition(instance.tasrun, TRANSITION_NORMAL, tempVal)) // try adding transition
+					if(!AddTransition(TRANSITION_NORMAL, tempVal)) // try adding transition
 					{
 						// adding transition failed
 						instance.state = SERIAL_COMPLETE;
-						instance.tasrun = NULL;
 						serial_interface_output((uint8_t*)"\xFB", 1);
 						break;
 					}
 				}
 				else if(instance.transition_type == 'S')
 				{
-					if(!AddTransition(instance.tasrun, TRANSITION_RESET_SOFT, tempVal)) // try adding transition
+					if(!AddTransition(TRANSITION_RESET_SOFT, tempVal)) // try adding transition
 					{
 						// adding transition failed
 						instance.state = SERIAL_COMPLETE;
-						instance.tasrun = NULL;
 						serial_interface_output((uint8_t*)"\xFB", 1);
 						break;
 					}
 				}
 				else if(instance.transition_type == 'H')
 				{
-					if(!AddTransition(instance.tasrun, TRANSITION_RESET_HARD, tempVal)) // try adding transition
+					if(!AddTransition(TRANSITION_RESET_HARD, tempVal)) // try adding transition
 					{
 						// adding transition failed
 						instance.state = SERIAL_COMPLETE;
-						instance.tasrun = NULL;
 						serial_interface_output((uint8_t*)"\xFB", 1);
 						break;
 					}
 				}
 
 				instance.state = SERIAL_COMPLETE;
-				instance.tasrun = NULL;
 				break;
 			default:
 				break;

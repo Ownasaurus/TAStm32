@@ -65,6 +65,7 @@ Once you've prepared a movie dump, use it with the TAStm32. Here is one example 
 #### CraftedCart - Designed the awesome-looking 3D case
 #### total (@tewtal) - Helped with NES/SNES protocol and debugging. Provided his code as a reference
 #### booto (@booto) - Helped fix N64/GC protocols, serial-over-USB, and debugging
+#### rasteri (@rasteri) - Standalone USB playback, SNES multitap
 
 dwangoAC (@dwangoac) - warmly accepting me into the TASBot community
 
