@@ -16,6 +16,7 @@ python/*.py
 !python/dtm.py
 !python/m64.py
 !python/r08.py
+!python/rgen.py
 !python/r16m.py
 !python/run-n64.py
 !python/run-nes.py
