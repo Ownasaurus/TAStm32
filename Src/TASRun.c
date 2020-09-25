@@ -2,6 +2,7 @@
 #include <string.h>
 #include "n64.h"
 #include "snes.h"
+#include "gen.h"
 #include "TASRun.h"
 #include "stm32f4xx_hal.h"
 #include "stm32f4xx_it.h"
@@ -213,6 +214,19 @@ static void UpdateRunConfig()
 
 	tasrun->moder_firstLatch = 0;
 
+	// special case for genesis, which uses 6 data lines for 1 controller
+	if(tasrun->console == CONSOLE_GEN)
+	{
+		tasrun->moder_firstLatch 	|= P1_DATA_0_Pin * P1_DATA_0_Pin
+									| P1_DATA_1_Pin * P1_DATA_1_Pin
+									| P1_DATA_2_Pin * P1_DATA_2_Pin
+									| P2_DATA_0_Pin * P2_DATA_0_Pin
+									| P2_DATA_1_Pin * P2_DATA_1_Pin
+									| P2_DATA_2_Pin * P2_DATA_2_Pin;
+
+		return;
+	}
+
 	// Calculate MODER register for first latch, set appropriate D pins to output
 	tasrun->moder_firstLatch |= P1_DATA_0_Pin * P1_DATA_0_Pin; // D0 is always output
 	if (tasrun->numDataLanes >= 2) tasrun->moder_firstLatch |= P1_DATA_1_Pin * P1_DATA_1_Pin;
@@ -254,6 +268,9 @@ void TASRunSetConsole(Console console)
 		break;
 	case CONSOLE_GC:
 		tasrun->console_data_size = sizeof(GCControllerData);
+		break;
+	case CONSOLE_GEN:
+		tasrun->console_data_size = sizeof(GENControllerData);
 		break;
 	}
 	UpdateRunConfig();
@@ -325,6 +342,30 @@ void SetN64Mode()
 void SetSNESMode()
 {
 	GPIO_InitTypeDef GPIO_InitStruct = { 0 };
+
+	// Tristate the data pins until the first latch
+	GPIO_InitStruct.Pin = P1_DATA_0_Pin | P1_DATA_1_Pin | P1_DATA_2_Pin  | P2_DATA_0_Pin | P2_DATA_1_Pin | P2_DATA_2_Pin;
+	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+	HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+}
+
+void SetGENMode()
+{
+	GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+	// P1_D0 --> GEN Pin 1
+	// P1_D1 --> GEN Pin 2
+	// P1_D2 --> GEN Pin 3
+	// P2_D0 --> GEN Pin 4
+	// P2_D1 --> GEN Pin 6
+	// P2_D2 --> GEN Pin 9
+
+	// Ensure the latch pin interrupts on BOTH rising and falling. use this as the select line
+	GPIO_InitStruct.Pin = P1_LATCH_Pin;
+	GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
+	GPIO_InitStruct.Pull = GPIO_PULLUP;
+
+	HAL_GPIO_Init(P1_LATCH_GPIO_Port, &GPIO_InitStruct);
 
 	// Tristate the data pins until the first latch
 	GPIO_InitStruct.Pin = P1_DATA_0_Pin | P1_DATA_1_Pin | P1_DATA_2_Pin  | P2_DATA_0_Pin | P2_DATA_1_Pin | P2_DATA_2_Pin;

@@ -668,6 +668,7 @@ void JumpToBootLoader(void) {
 
 	// De-init USB
 	MX_USB_DEVICE_DeInit();
+	MX_USB_HOST_DeInit();
 
 	// Disable all of our interrupts (except systick which will be handled later)
 	HAL_NVIC_DisableIRQ(EXTI0_IRQn);
