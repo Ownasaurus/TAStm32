@@ -94,6 +94,7 @@ const uint32_t P2_D2_MASK = 0x02000200;
 
 const uint32_t ALL_MASK = 0x039C039C;
 
+RunDataArray *dataptr;
 
 #define MODER_DATA_MASK 0xFFF03C0F
 
@@ -255,7 +256,6 @@ void EXTI1_IRQHandler(void)
 
 	// P1_LATCH
 	int8_t regbit = 50, databit = -1; // random initial values
-	static RunDataArray *dataptr;
 
 	// set relevant data ports as output if this is the first latch
 	if(firstLatch && (EXTI->PR & P1_LATCH_Pin))
