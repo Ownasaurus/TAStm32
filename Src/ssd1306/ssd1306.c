@@ -448,3 +448,19 @@ void ssd1306_DrawRectangle(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, SSD13
   return;
 }
 
+// x and width is in units of 8 pixels, height and y are just pixels
+char ssd1306_Blit_OR(uint8 *src, uint8_t x, uint8_t y, uint8_t width, uint8_t height) {
+    static uint32_t i, j;
+
+    static uint32_t endx = x + width;
+    static uint32_t endy = y + height;
+
+    // Use the font to write
+    for(i = y; i < endy; i++) {
+        for(j = x; j < endx; j++) {
+			uint16_t loc = (i * (SSD1306_WIDTH / 8)) + j;
+			SSD1306_Buffer[loc] |= src[loc];
+        }
+    }
+}
+
