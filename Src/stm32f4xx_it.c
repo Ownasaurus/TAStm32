@@ -630,6 +630,7 @@ void EXTI4_IRQHandler(void)
 			  }
 			  else
 			  {
+				  toggleNext = TASRunIncrementFrameCount();
 				  frame[0][0][0].gc_data.beginning_one = 1;
 				  SendRunDataGC(frame[0][0][0].gc_data);
 			  }
