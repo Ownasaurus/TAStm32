@@ -160,8 +160,9 @@ int main(void)
   // Only start the input process timer if the screen has been detected
   if (screenOK) HAL_TIM_Base_Start_IT(&htim2);
   char msg[10];
-  int16_t average = 0, highpassed = 0;
+  int16_t highAverage = 0, lowAverage = 0, filtered = 0;
   uint16_t adcReading = 0;
+  uint32_t numIters = 0;
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -172,19 +173,24 @@ int main(void)
     MX_USB_HOST_Process();
 
     /* USER CODE BEGIN 3 */
-	#define alpha 0.3
+	#define highAlpha 0.1
+	#define lowAlpha 0.6
 
     HAL_ADC_Start(&hadc1);
     HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
 
     adcReading = HAL_ADC_GetValue(&hadc1);
-    average = (int16_t)(alpha * (float)adcReading) + ((1.0 - alpha) * (float)average);
-    highpassed = (int16_t)adcReading - average;
+    highAverage = (int16_t)(highAlpha * (float)adcReading) + ((1.0 - highAlpha) * (float)highAverage);
+    lowAverage = (int16_t)(lowAlpha * (float)adcReading) + ((1.0 - lowAlpha) * (float)lowAverage);
+    filtered = lowAverage - highAverage;
 
-    sprintf(msg, "%d\r\n", abs(highpassed));
-    CDC_Transmit_FS(msg, strlen(msg));
+    if (abs(filtered) > 200){
+		sprintf(msg, "BOOM");
+		CDC_Transmit_FS(msg, strlen(msg));
+		my_wait_us_asm(60000);
+    }
 
-
+    numIters++;
 
 	  if(jumpToDFU == 1)
 	  {
@@ -192,9 +198,8 @@ int main(void)
 	  }
 
 	  // Only run USB playback task if screen has been detected
-	  if (screenOK)
-		  USB_Playback_Task();
-
+	  /*if (screenOK)
+		  USB_Playback_Task();*/
 
 
   }
