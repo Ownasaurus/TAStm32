@@ -89,6 +89,8 @@ const uint32_t P1_D0_MASK = 0x00080008;
 const uint32_t P1_D1_MASK = 0x00040004;
 const uint32_t P2_D0_MASK = 0x01000100;
 const uint32_t P2_D1_MASK = 0x00800080;
+extern uint32_t booms;
+extern uint8_t waiting;
 
 
 #define MODER_DATA_MASK 0xFFF03C0F
@@ -542,7 +544,7 @@ void EXTI1_IRQHandler(void)
 
   /* USER CODE END EXTI1_IRQn 1 */
 }
-
+uint32_t startBooms;
 /**
   * @brief This function handles EXTI line 4 interrupt.
   */
@@ -615,8 +617,20 @@ void EXTI4_IRQHandler(void)
 		  case 0x400302:
 		  case 0x400300:
 		  case 0x400301:
-			  frame = GetNextFrame();
-			  if(frame == NULL) // buffer underflow
+
+				if(toggleNext == 4)
+				{
+					startBooms = booms;
+					waiting = 1;
+					toggleNext = 0;
+				}
+
+				if (waiting && booms > startBooms)
+					waiting = 0;
+
+				if (!waiting) frame = GetNextFrame();
+
+			  if(waiting || frame == NULL) // buffer underflow
 			  {
 					memset(&gc_data, 0, sizeof(gc_data));
 
@@ -630,6 +644,7 @@ void EXTI4_IRQHandler(void)
 			  }
 			  else
 			  {
+
 				  toggleNext = TASRunIncrementFrameCount();
 				  frame[0][0][0].gc_data.beginning_one = 1;
 				  SendRunDataGC(frame[0][0][0].gc_data);
@@ -654,7 +669,8 @@ void EXTI4_IRQHandler(void)
 			case 0x400302: // GC poll
 			case 0x400300: // GC poll
 			case 0x400301: // GC poll
-				serial_interface_output((uint8_t*)"A", 1);
+				if (!waiting)
+					serial_interface_output((uint8_t*)"A", 1);
 
 
 				if(frame == NULL) // there was a buffer underflow
@@ -724,6 +740,7 @@ void TIM2_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM2_IRQn 0 */
 	inputProcess();
+	USB_Playback_Task();
   /* USER CODE END TIM2_IRQn 0 */
   HAL_TIM_IRQHandler(&htim2);
   /* USER CODE BEGIN TIM2_IRQn 1 */

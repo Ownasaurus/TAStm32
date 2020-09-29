@@ -125,6 +125,9 @@ class TAStm32():
             elif mode == b'H':
                 # Set Hard Reset
                 command = b''.join([b'T', prefix, mode, struct.pack('I', frame)])
+            elif mode == b'W':
+                # Wait audio
+                command = b''.join([b'T', prefix, mode, struct.pack('I', frame)])
             if command != '':
                 self.write(command)
 
@@ -323,6 +326,8 @@ def main():
                 transition[1] = b'S'
             elif transition[1] == 'H':
                 transition[1] = b'H'
+            elif transition[1] == 'W':
+                transition[1] = b'W'
 
     if args.latchtrain != '':
         args.latchtrain = [int(x) for x in args.latchtrain.split(',')]

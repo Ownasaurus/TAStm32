@@ -106,7 +106,7 @@ void MX_USB_HOST_Process(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+uint32_t booms = 0;
 /* USER CODE END 0 */
 
 /**
@@ -174,7 +174,7 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 	#define highAlpha 0.1
-	#define lowAlpha 0.6
+	#define lowAlpha 0.8
 
     HAL_ADC_Start(&hadc1);
     HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
@@ -184,13 +184,14 @@ int main(void)
     lowAverage = (int16_t)(lowAlpha * (float)adcReading) + ((1.0 - lowAlpha) * (float)lowAverage);
     filtered = lowAverage - highAverage;
 
-    if (abs(filtered) > 200){
-		sprintf(msg, "BOOM");
+    if (abs(filtered) > 650){
+		/*sprintf(msg, "BOOM");
 		CDC_Transmit_FS(msg, strlen(msg));
-		my_wait_us_asm(60000);
+		my_wait_us_asm(60000);*/
+    	booms++;
     }
 
-    numIters++;
+    //numIters++;
 
 	  if(jumpToDFU == 1)
 	  {

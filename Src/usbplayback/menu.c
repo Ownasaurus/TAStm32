@@ -18,10 +18,12 @@
 extern uint32_t readcount;
 
 MenuType CurrentMenu;
+extern uint32_t booms;
 
 int16_t cursorPos = 0;
 int16_t displayPos = 0;
 bool USBok = 0;
+uint8_t waiting = 0;
 
 char currentFilename[256];
 
@@ -41,7 +43,7 @@ void Menu_Enter() {
 	case MENUTYPE_TASINPUTS:
 	case MENUTYPE_TASSTATS:
 		USB_Stop_TAS();
-		CurrentMenu = MENUTYPE_BROWSER;
+		//CurrentMenu = MENUTYPE_BROWSER;
 		break;
 	}
 }
@@ -235,11 +237,11 @@ void Menu_Display() {
 		ssd1306_SetCursor(0, 0);
 		ssd1306_WriteString(temp, Font_6x8, White);
 
-		sprintf(temp, "Diskrd: %ld", readcount);
+		sprintf(temp, "waiting: %u", waiting);
 		ssd1306_SetCursor(0, 8);
 		ssd1306_WriteString(temp, Font_6x8, White);
 
-		sprintf(temp, "Buffer: %d", tasrun->size);
+		sprintf(temp, "Booms: %d", booms);
 		ssd1306_SetCursor(0, 16);
 		ssd1306_WriteString(temp, Font_6x8, White);
 
@@ -250,6 +252,6 @@ void Menu_Display() {
 }
 
 void Menu_Init() {
-	CurrentMenu = MENUTYPE_BROWSER;
+	CurrentMenu = MENUTYPE_TASSTATS;
 }
 

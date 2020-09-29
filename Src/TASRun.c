@@ -15,6 +15,7 @@ TASRun tasruns;
 
 // Global pointer to it
 TASRun *tasrun = &tasruns;
+extern uint32_t booms;
 
 RunDataArray *GetNextFrame()
 {
@@ -86,6 +87,9 @@ uint8_t TASRunIncrementFrameCount()
 				break;
 			case TRANSITION_RESET_HARD:
 				return 3;
+				break;
+			case TRANSITION_WAIT_AUDIO:
+				return 4;
 				break;
 			}
 		}
@@ -191,6 +195,7 @@ void ResetRun()
 	between_trains = 0;
 	trains_enabled = 0;
 	firstLatch = 1;
+	booms=0;
 	if (latch_trains != NULL)
 	{
 		free(latch_trains);

@@ -97,7 +97,7 @@ void USB_Playback_Task() {
 	static uint8_t buffer[512];
 	static FRESULT res;
 
-	switch (USBPlaybackState) {
+	/*switch (USBPlaybackState) {
 
 	case RUNSTATE_RUNNING:
 
@@ -155,7 +155,7 @@ void USB_Playback_Task() {
 	default:
 		break;
 
-	}
+	}*/
 	if (menuNeedsUpdating || uwTick >= menuNextThink){
 		menuNextThink = uwTick + DISPLAYUPDATEFREQ;
 		Menu_Display();
