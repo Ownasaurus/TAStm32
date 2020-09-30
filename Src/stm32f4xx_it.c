@@ -622,11 +622,14 @@ void EXTI4_IRQHandler(void)
 				{
 					startBooms = booms;
 					waiting = 1;
+		            GPIOA->BSRR = (1 << SNES_RESET_LOW_A);
 					toggleNext = 0;
 				}
 
-				if (waiting && booms > startBooms)
+				if (waiting && booms > startBooms){
 					waiting = 0;
+		            GPIOA->BSRR = (1 << SNES_RESET_HIGH_A);
+				}
 
 				if (!waiting) frame = GetNextFrame();
 

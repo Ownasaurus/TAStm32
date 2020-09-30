@@ -163,7 +163,6 @@ int main(void)
   char msg[10];
   int16_t highAverage = 0, lowAverage = 0, filtered = 0;
   uint16_t adcReading = 0;
-
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -175,7 +174,7 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 	#define highAlpha 0.05
-	#define lowAlpha 0.2
+	#define lowAlpha 0.4
 
     HAL_ADC_Start(&hadc1);
     HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
@@ -185,7 +184,7 @@ int main(void)
     lowAverage = (int16_t)(lowAlpha * (float)adcReading) + ((1.0 - lowAlpha) * (float)lowAverage);
     filtered = lowAverage - highAverage;
 
-    if (abs(filtered) > 750){
+    if (abs(filtered) > 800){
 		/*sprintf(msg, "BOOM");
 		CDC_Transmit_FS(msg, strlen(msg));
 		my_wait_us_asm(60000);*/
@@ -664,9 +663,9 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin : SNES_RESET_Pin */
   GPIO_InitStruct.Pin = SNES_RESET_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(SNES_RESET_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : V2_CLOCK_Pin */
