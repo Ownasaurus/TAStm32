@@ -159,6 +159,7 @@ void USB_Playback_Task() {
 	if (menuNeedsUpdating || uwTick >= menuNextThink){
 		menuNextThink = uwTick + DISPLAYUPDATEFREQ;
 		Menu_Display();
+		menuNeedsUpdating = 0;
 	}
 
 }

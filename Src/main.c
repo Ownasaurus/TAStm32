@@ -107,6 +107,7 @@ void MX_USB_HOST_Process(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 uint32_t booms = 0;
+uint32_t numIters = 0;
 /* USER CODE END 0 */
 
 /**
@@ -162,7 +163,7 @@ int main(void)
   char msg[10];
   int16_t highAverage = 0, lowAverage = 0, filtered = 0;
   uint16_t adcReading = 0;
-  uint32_t numIters = 0;
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -173,8 +174,8 @@ int main(void)
     MX_USB_HOST_Process();
 
     /* USER CODE BEGIN 3 */
-	#define highAlpha 0.1
-	#define lowAlpha 0.8
+	#define highAlpha 0.05
+	#define lowAlpha 0.2
 
     HAL_ADC_Start(&hadc1);
     HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
@@ -184,14 +185,14 @@ int main(void)
     lowAverage = (int16_t)(lowAlpha * (float)adcReading) + ((1.0 - lowAlpha) * (float)lowAverage);
     filtered = lowAverage - highAverage;
 
-    if (abs(filtered) > 650){
+    if (abs(filtered) > 750){
 		/*sprintf(msg, "BOOM");
 		CDC_Transmit_FS(msg, strlen(msg));
 		my_wait_us_asm(60000);*/
     	booms++;
     }
 
-    //numIters++;
+    numIters++;
 
 	  if(jumpToDFU == 1)
 	  {
@@ -202,7 +203,7 @@ int main(void)
 	  /*if (screenOK)
 		  USB_Playback_Task();*/
 
-
+	  my_wait_us_asm(7);
   }
   /* USER CODE END 3 */
 }
