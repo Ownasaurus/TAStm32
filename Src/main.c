@@ -77,6 +77,7 @@ I2C_HandleTypeDef hi2c1;
 
 TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim3;
+TIM_HandleTypeDef htim4;
 TIM_HandleTypeDef htim6;
 TIM_HandleTypeDef htim7;
 TIM_HandleTypeDef htim10;
@@ -98,6 +99,7 @@ static void MX_USART2_UART_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_ADC1_Init(void);
+static void MX_TIM4_Init(void);
 void MX_USB_HOST_Process(void);
 
 /* USER CODE BEGIN PFP */
@@ -108,7 +110,7 @@ void MX_USB_HOST_Process(void);
 /* USER CODE BEGIN 0 */
 uint32_t booms = 0;
 uint32_t numIters = 0;
-int32_t lastavg = 0;
+
 /* USER CODE END 0 */
 
 /**
@@ -152,6 +154,7 @@ int main(void)
   MX_I2C1_Init();
   MX_TIM2_Init();
   MX_ADC1_Init();
+  MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
 
   jumpToDFU = 0;
@@ -162,8 +165,7 @@ int main(void)
   // Only start the input process timer if the screen has been detected
   if (screenOK) HAL_TIM_Base_Start_IT(&htim2);
   char msg[10];
-  int32_t highAverage = 0, lowAverage = 0, filtered = 0, highpassed = 0;
-  uint16_t adcReading = 0;
+  HAL_TIM_Base_Start_IT(&htim4);
 
   /* USER CODE END 2 */
 
@@ -175,37 +177,7 @@ int main(void)
     MX_USB_HOST_Process();
 
     /* USER CODE BEGIN 3 */
-	#define highAlpha 0.2
-	#define lowAlpha 0.5
-	#define numSamples 128 // number of samples to average in FIR lowpass filter
 
-    for (int i=0; i < numSamples; i++){
-
-		HAL_ADC_Start(&hadc1);
-		HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
-
-		adcReading = HAL_ADC_GetValue(&hadc1);
-		highAverage = (int32_t)(highAlpha * (float)adcReading) + ((1.0 - highAlpha) * (float)highAverage);
-		lowAverage += (int32_t)adcReading - highAverage;
-		my_wait_us_asm(7);
-    }
-
-    lowAverage /= numSamples;
-
-
-    /*lowAverage = (int16_t)(lowAlpha * (float)abs(highpassed)) + ((1.0 - lowAlpha) * (float)abs(highpassed));
-    filtered = lowAverage;*/
-
-    if (abs(lowAverage) - abs(lastavg) > 20){
-		/*sprintf(msg, "BOOM");
-		CDC_Transmit_FS(msg, strlen(msg));
-		my_wait_us_asm(60000);*/
-    	my_wait_us_asm(700);
-    	booms++;
-    	//HAL_GPIO_TogglePin(SNES_RESET_GPIO_Port, SNES_RESET_Pin);
-    }
-    lastavg = lowAverage;
-    numIters++;
 
 	  if(jumpToDFU == 1)
 	  {
@@ -215,7 +187,6 @@ int main(void)
 	  // Only run USB playback task if screen has been detected
 	  /*if (screenOK)
 		  USB_Playback_Task();*/
-
 
   }
   /* USER CODE END 3 */
@@ -446,6 +417,51 @@ static void MX_TIM3_Init(void)
 }
 
 /**
+  * @brief TIM4 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM4_Init(void)
+{
+
+  /* USER CODE BEGIN TIM4_Init 0 */
+
+  /* USER CODE END TIM4_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM4_Init 1 */
+
+  /* USER CODE END TIM4_Init 1 */
+  htim4.Instance = TIM4;
+  htim4.Init.Prescaler = 175;
+  htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim4.Init.Period = 10;
+  htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim4.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim4) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim4, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim4, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM4_Init 2 */
+
+  /* USER CODE END TIM4_Init 2 */
+
+}
+
+/**
   * @brief TIM6 Initialization Function
   * @param None
   * @retval None
@@ -648,12 +664,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : LD2_Pin */
-  GPIO_InitStruct.Pin = LD2_Pin;
+  /*Configure GPIO pins : LD2_Pin SNES_RESET_Pin */
+  GPIO_InitStruct.Pin = LD2_Pin|SNES_RESET_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pins : SWITCH1_Pin SWITCH2_Pin */
   GPIO_InitStruct.Pin = SWITCH1_Pin|SWITCH2_Pin;
@@ -674,13 +690,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : SNES_RESET_Pin */
-  GPIO_InitStruct.Pin = SNES_RESET_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(SNES_RESET_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : V2_CLOCK_Pin */
   GPIO_InitStruct.Pin = V2_CLOCK_Pin;
