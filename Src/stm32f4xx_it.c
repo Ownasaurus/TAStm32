@@ -632,7 +632,7 @@ void EXTI4_IRQHandler(void) {
 
 			if (!waiting){
 				frame = GetNextFrame();
-				GPIOA->BSRR = (1 << SNES_RESET_HIGH_A);
+
 			}
 
 			if (waiting || frame == NULL) // buffer underflow
@@ -797,6 +797,7 @@ void TIM4_IRQHandler(void) {
 		 my_wait_us_asm(60000);*/
 		//
 		waiting = 0;
+		GPIOA->BSRR = (1 << SNES_RESET_HIGH_A);
 		//HAL_GPIO_TogglePin(SNES_RESET_GPIO_Port, SNES_RESET_Pin);
 		//my_wait_us_asm(70);
 	}
