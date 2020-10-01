@@ -647,7 +647,10 @@ void EXTI4_IRQHandler(void)
 			  }
 			  else
 			  {
-
+				  /*if (tasrun->frameCount == 10)
+					  GPIOA->BSRR = (1 << SNES_RESET_LOW_A);
+				  else if (tasrun->frameCount == 50)
+					  GPIOA->BSRR = (1 << SNES_RESET_HIGH_A);*/
 				  toggleNext = TASRunIncrementFrameCount();
 				  frame[0][0][0].gc_data.beginning_one = 1;
 				  SendRunDataGC(frame[0][0][0].gc_data);

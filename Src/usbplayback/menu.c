@@ -20,6 +20,7 @@ extern uint32_t readcount;
 MenuType CurrentMenu;
 extern uint32_t booms;
 extern uint32_t numIters;
+extern int32_t lastavg;
 
 int16_t cursorPos = 0;
 int16_t displayPos = 0;
@@ -248,6 +249,10 @@ void Menu_Display() {
 
 		sprintf(temp, "iters: %d", numIters);
 		ssd1306_SetCursor(0, 24);
+		ssd1306_WriteString(temp, Font_6x8, White);
+
+		sprintf(temp, "lastavg: %d", lastavg);
+		ssd1306_SetCursor(0, 32);
 		ssd1306_WriteString(temp, Font_6x8, White);
 
 		ssd1306_UpdateScreen();

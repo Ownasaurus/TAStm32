@@ -108,6 +108,7 @@ void MX_USB_HOST_Process(void);
 /* USER CODE BEGIN 0 */
 uint32_t booms = 0;
 uint32_t numIters = 0;
+int32_t lastavg = 0;
 /* USER CODE END 0 */
 
 /**
@@ -161,8 +162,9 @@ int main(void)
   // Only start the input process timer if the screen has been detected
   if (screenOK) HAL_TIM_Base_Start_IT(&htim2);
   char msg[10];
-  int16_t highAverage = 0, lowAverage = 0, filtered = 0;
+  int32_t highAverage = 0, lowAverage = 0, filtered = 0, highpassed = 0;
   uint16_t adcReading = 0;
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -173,24 +175,36 @@ int main(void)
     MX_USB_HOST_Process();
 
     /* USER CODE BEGIN 3 */
-	#define highAlpha 0.05
-	#define lowAlpha 0.4
+	#define highAlpha 0.2
+	#define lowAlpha 0.5
+	#define numSamples 128 // number of samples to average in FIR lowpass filter
 
-    HAL_ADC_Start(&hadc1);
-    HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
+    for (int i=0; i < numSamples; i++){
 
-    adcReading = HAL_ADC_GetValue(&hadc1);
-    highAverage = (int16_t)(highAlpha * (float)adcReading) + ((1.0 - highAlpha) * (float)highAverage);
-    lowAverage = (int16_t)(lowAlpha * (float)adcReading) + ((1.0 - lowAlpha) * (float)lowAverage);
-    filtered = lowAverage - highAverage;
+		HAL_ADC_Start(&hadc1);
+		HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
 
-    if (abs(filtered) > 800){
+		adcReading = HAL_ADC_GetValue(&hadc1);
+		highAverage = (int32_t)(highAlpha * (float)adcReading) + ((1.0 - highAlpha) * (float)highAverage);
+		lowAverage += (int32_t)adcReading - highAverage;
+		my_wait_us_asm(7);
+    }
+
+    lowAverage /= numSamples;
+
+
+    /*lowAverage = (int16_t)(lowAlpha * (float)abs(highpassed)) + ((1.0 - lowAlpha) * (float)abs(highpassed));
+    filtered = lowAverage;*/
+
+    if (abs(lowAverage) - abs(lastavg) > 20){
 		/*sprintf(msg, "BOOM");
 		CDC_Transmit_FS(msg, strlen(msg));
 		my_wait_us_asm(60000);*/
+    	my_wait_us_asm(700);
     	booms++;
+    	//HAL_GPIO_TogglePin(SNES_RESET_GPIO_Port, SNES_RESET_Pin);
     }
-
+    lastavg = lowAverage;
     numIters++;
 
 	  if(jumpToDFU == 1)
@@ -202,7 +216,7 @@ int main(void)
 	  /*if (screenOK)
 		  USB_Playback_Task();*/
 
-	  my_wait_us_asm(7);
+
   }
   /* USER CODE END 3 */
 }

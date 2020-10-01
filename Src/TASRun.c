@@ -9,7 +9,7 @@
 
 extern TIM_HandleTypeDef htim6;
 extern TIM_HandleTypeDef htim7;
-
+extern uint8_t waiting;
 // Local definition of tasrun structure
 TASRun tasruns;
 
@@ -127,7 +127,7 @@ void ClearRunData()
 
 void ResetRun()
 {
-	HAL_GPIO_WritePin(SNES_RESET_GPIO_Port, SNES_RESET_Pin, GPIO_PIN_RESET);
+	//HAL_GPIO_WritePin(SNES_RESET_GPIO_Port, SNES_RESET_Pin, GPIO_PIN_RESET);
 
 	// Tristate the data pins
 	GPIO_InitTypeDef GPIO_InitStruct = { 0 };
@@ -197,6 +197,7 @@ void ResetRun()
 	between_trains = 0;
 	trains_enabled = 0;
 	firstLatch = 1;
+	waiting = 0;
 	booms=0;
 	if (latch_trains != NULL)
 	{
