@@ -9,7 +9,7 @@
 
 // only instance of this, but make callers use access functions
 static serial_interface_state_t instance;
-
+extern RunDataArray *dataptr;
 static uint8_t NullOutputFunction(uint8_t *buffer, uint16_t n)
 {
 	return 0;
@@ -218,6 +218,10 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 						}
 
 						EXTI1_IRQHandler();
+					}
+					else if (c == CONSOLE_GEN)
+					{
+						dataptr = GetNextFrame(tasrun);
 					}
 
 					tasrun->initialized = 1;

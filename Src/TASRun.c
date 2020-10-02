@@ -367,6 +367,8 @@ void SetGENMode()
 
 	HAL_GPIO_Init(P1_LATCH_GPIO_Port, &GPIO_InitStruct);
 
+	memset (&GPIO_InitStruct, 0, sizeof(GPIO_InitTypeDef));
+
 	// Tristate the data pins until the first latch
 	GPIO_InitStruct.Pin = P1_DATA_0_Pin | P1_DATA_1_Pin | P1_DATA_2_Pin  | P2_DATA_0_Pin | P2_DATA_1_Pin | P2_DATA_2_Pin;
 	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
