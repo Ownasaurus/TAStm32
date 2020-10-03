@@ -17,6 +17,8 @@ TASRun tasruns;
 // Global pointer to it
 TASRun *tasrun = &tasruns;
 
+extern RunDataArray *dataptr;
+
 RunDataArray *GetNextFrame()
 {
 	if (tasrun->size == 0) // in case of buffer underflow
