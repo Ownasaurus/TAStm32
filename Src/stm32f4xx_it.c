@@ -94,7 +94,7 @@ const uint32_t P2_D2_MASK = 0x02000200;
 
 const uint32_t ALL_MASK = 0x039C039C;
 
-RunDataArray *dataptr;
+RunDataArray *dataptr = 0;
 
 #define MODER_DATA_MASK 0xFFF03C0F
 

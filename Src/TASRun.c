@@ -192,6 +192,7 @@ void ResetRun()
 	between_trains = 0;
 	trains_enabled = 0;
 	firstLatch = 1;
+	dataptr = 0;
 	if (latch_trains != NULL)
 	{
 		free(latch_trains);
