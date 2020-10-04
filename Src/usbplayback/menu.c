@@ -250,7 +250,7 @@ void Menu_Display() {
 		ssd1306_SetCursor(0, 16);
 		ssd1306_WriteString(temp, Font_6x8, White);
 
-		sprintf(temp, "iters: %d", numIters);
+		sprintf(temp, "iters: %d", numIters/1000);
 		ssd1306_SetCursor(0, 24);
 		ssd1306_WriteString(temp, Font_6x8, White);
 
