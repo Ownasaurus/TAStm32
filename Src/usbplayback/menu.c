@@ -83,7 +83,7 @@ void Menu_Settings(){
 	else if (CurrentMenu == MENUTYPE_TASSTATS)
 		CurrentMenu = MENUTYPE_TASINPUTS;
 }
-
+extern double delta;
 void Menu_Display() {
 	static char temp[100];
 	static FRESULT res;
@@ -254,15 +254,15 @@ void Menu_Display() {
 		ssd1306_SetCursor(0, 24);
 		ssd1306_WriteString(temp, Font_6x8, White);
 
-		sprintf(temp, "lastavg: %d", (int32_t)lastavg);
+		sprintf(temp, "delta: %d", (int32_t)delta);
 		ssd1306_SetCursor(0, 32);
 		ssd1306_WriteString(temp, Font_6x8, White);
 
 		ssd1306_UpdateScreen();
 		break;
 	}
-	sprintf(temp, "composite : %d\r\n", (int32_t)lastavg);
-	CDC_Transmit_FS(temp, strlen(temp));
+	/*sprintf(temp, "composite : %d --- %d\r\n", (int32_t)lastavg, (int32_t)delta);
+	CDC_Transmit_FS(temp, strlen(temp));*/
 
 
 }

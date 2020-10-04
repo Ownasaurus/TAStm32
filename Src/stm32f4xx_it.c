@@ -553,6 +553,13 @@ void EXTI1_IRQHandler(void) {
 	/* USER CODE END EXTI1_IRQn 1 */
 }
 
+extern ADC_HandleTypeDef hadc1;
+double highAverage = 0.0, lowAverage = 0.0, filtered = 0.0, highpassed = 0.0;
+double adcReading = 0.0;
+extern uint32_t numIters;
+double lastavg = 0, sceneBrightness = 0;
+double delta = 0;
+
 /**
  * @brief This function handles EXTI line 4 interrupt.
  */
@@ -623,6 +630,7 @@ void EXTI4_IRQHandler(void) {
 				waiting = 1;
 				GPIOA->BSRR = (1 << SNES_RESET_LOW_A);
 				toggleNext = 0;
+				sceneBrightness = lastavg;
 			}
 
 			/*if (waiting && booms > startBooms) {
@@ -764,11 +772,7 @@ void TIM3_IRQHandler(void) {
 /**
  * @brief This function handles TIM4 global interrupt.
  */
-extern ADC_HandleTypeDef hadc1;
-double highAverage = 0.0, lowAverage = 0.0, filtered = 0.0, highpassed = 0.0;
-double adcReading = 0.0;
-extern uint32_t numIters;
-double lastavg = 0;
+
 void TIM4_IRQHandler(void) {
 	/* USER CODE BEGIN TIM4_IRQn 0 */
 
@@ -776,8 +780,9 @@ void TIM4_IRQHandler(void) {
 	HAL_TIM_IRQHandler(&htim4);
 	/* USER CODE BEGIN TIM4_IRQn 1 */
 #define highAlpha 0.005
-#define lowAlpha 0.004
-#define blackLevel 900
+#define lowAlpha 0.0001
+#define blackLevel 250
+
 #define numSamples 128 // number of samples to average in FIR lowpass filter
 
 	HAL_ADC_Start(&hadc1);
@@ -788,12 +793,14 @@ void TIM4_IRQHandler(void) {
 		//highAverage = (highAlpha * adcReading) + ((1.0 - highAlpha) * highAverage);
 		highpassed = adcReading;// - highAverage;
 		lowAverage = (lowAlpha * highpassed) + ((1.0 - lowAlpha) * lowAverage);
-
-		if (lowAverage < 1100) {
+		delta = lowAverage - sceneBrightness;
+		if (abs(delta) > 20) {
 			waiting = 0;
 			GPIOA->BSRR = (1 << SNES_RESET_HIGH_A);
 		}
+
 		lastavg = lowAverage;
+
 	}
 	numIters++;
 	//HAL_GPIO_TogglePin(SNES_RESET_GPIO_Port, SNES_RESET_Pin);
