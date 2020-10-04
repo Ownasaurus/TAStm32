@@ -776,10 +776,6 @@ void TIM3_IRQHandler(void) {
 
 void TIM4_IRQHandler(void) {
 	/* USER CODE BEGIN TIM4_IRQn 0 */
-
-	/* USER CODE END TIM4_IRQn 0 */
-	HAL_TIM_IRQHandler(&htim4);
-	/* USER CODE BEGIN TIM4_IRQn 1 */
 #define highAlpha 0.004
 #define lowAlpha 0.0005
 #define blackLevel 0
@@ -805,6 +801,10 @@ void TIM4_IRQHandler(void) {
 
 	}
 	numIters++;
+	/* USER CODE END TIM4_IRQn 0 */
+	HAL_TIM_IRQHandler(&htim4);
+	/* USER CODE BEGIN TIM4_IRQn 1 */
+
 	//HAL_GPIO_TogglePin(SNES_RESET_GPIO_Port, SNES_RESET_Pin);
 	/* USER CODE END TIM4_IRQn 1 */
 }
