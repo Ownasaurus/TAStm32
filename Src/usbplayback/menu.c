@@ -261,7 +261,8 @@ void Menu_Display() {
 		ssd1306_UpdateScreen();
 		break;
 	}
-
+	sprintf(temp, "composite : %d\r\n", (int32_t)lastavg);
+	CDC_Transmit_FS(temp, strlen(temp));
 
 
 }
