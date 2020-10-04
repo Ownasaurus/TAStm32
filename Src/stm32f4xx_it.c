@@ -631,6 +631,7 @@ void EXTI4_IRQHandler(void) {
 				GPIOA->BSRR = (1 << SNES_RESET_LOW_A);
 				toggleNext = 0;
 				sceneBrightness = lastavg;
+				HAL_NVIC_DisableIRQ(EXTI4_IRQn);
 			}
 
 			/*if (waiting && booms > startBooms) {
@@ -780,7 +781,7 @@ void TIM4_IRQHandler(void) {
 	HAL_TIM_IRQHandler(&htim4);
 	/* USER CODE BEGIN TIM4_IRQn 1 */
 #define highAlpha 0.004
-#define lowAlpha 0.004
+#define lowAlpha 0.005
 #define blackLevel 0
 
 #define numSamples 128 // number of samples to average in FIR lowpass filter
@@ -797,6 +798,7 @@ void TIM4_IRQHandler(void) {
 		if (abs(delta) > 100) {
 			waiting = 0;
 			GPIOA->BSRR = (1 << SNES_RESET_HIGH_A);
+			HAL_NVIC_EnableIRQ(EXTI4_IRQn);
 		}
 
 		lastavg = lowAverage;
