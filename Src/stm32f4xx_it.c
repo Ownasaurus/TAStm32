@@ -647,10 +647,7 @@ void EXTI4_IRQHandler(void) {
 
 				SendRunDataGC(gc_data); // send blank controller data
 			} else {
-				/*if (tasrun->frameCount == 10)
-				 GPIOA->BSRR = (1 << SNES_RESET_LOW_A);
-				 else if (tasrun->frameCount == 50)
-				 GPIOA->BSRR = (1 << SNES_RESET_HIGH_A);*/
+
 				toggleNext = TASRunIncrementFrameCount();
 				frame[0][0][0].gc_data.beginning_one = 1;
 				SendRunDataGC(frame[0][0][0].gc_data);
@@ -771,7 +768,7 @@ extern ADC_HandleTypeDef hadc1;
 double highAverage = 0.0, lowAverage = 0.0, filtered = 0.0, highpassed = 0.0;
 double adcReading = 0.0;
 extern uint32_t numIters;
-int32_t lastavg = 0;
+double lastavg = 0;
 void TIM4_IRQHandler(void) {
 	/* USER CODE BEGIN TIM4_IRQn 0 */
 
@@ -779,29 +776,25 @@ void TIM4_IRQHandler(void) {
 	HAL_TIM_IRQHandler(&htim4);
 	/* USER CODE BEGIN TIM4_IRQn 1 */
 #define highAlpha 0.005
-#define lowAlpha 0.0000001
+#define lowAlpha 0.015
+#define blackLevel 900
 #define numSamples 128 // number of samples to average in FIR lowpass filter
 
 	HAL_ADC_Start(&hadc1);
 	HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
 
 	adcReading = (double) HAL_ADC_GetValue(&hadc1);
-	highAverage = (highAlpha * adcReading) + ((1.0 - highAlpha) * highAverage);
-	highpassed = adcReading - highAverage;
-	lowAverage = (lowAlpha * (float) highpassed) + ((1.0 - lowAlpha) * highpassed);
-//filtered = lowAverage;
+	if (adcReading > blackLevel){
+		//highAverage = (highAlpha * adcReading) + ((1.0 - highAlpha) * highAverage);
+		highpassed = adcReading;// - highAverage;
+		lowAverage = (lowAlpha * highpassed) + ((1.0 - lowAlpha) * lowAverage);
 
-	if (abs(lowAverage) > 400) {
-		/*sprintf(msg, "BOOM");
-		 CDC_Transmit_FS(msg, strlen(msg));
-		 my_wait_us_asm(60000);*/
-		//
-		waiting = 0;
-		GPIOA->BSRR = (1 << SNES_RESET_HIGH_A);
-		//HAL_GPIO_TogglePin(SNES_RESET_GPIO_Port, SNES_RESET_Pin);
-		//my_wait_us_asm(70);
+		if (lowAverage < 1100) {
+			waiting = 0;
+			GPIOA->BSRR = (1 << SNES_RESET_HIGH_A);
+		}
+		lastavg = lowAverage;
 	}
-	lastavg = lowAverage;
 	numIters++;
 	//HAL_GPIO_TogglePin(SNES_RESET_GPIO_Port, SNES_RESET_Pin);
 	/* USER CODE END TIM4_IRQn 1 */

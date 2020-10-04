@@ -20,7 +20,7 @@ extern uint32_t readcount;
 MenuType CurrentMenu;
 extern uint32_t booms;
 extern uint32_t numIters;
-extern int32_t lastavg;
+extern double lastavg;
 
 int16_t cursorPos = 0;
 int16_t displayPos = 0;
@@ -85,7 +85,7 @@ void Menu_Settings(){
 }
 
 void Menu_Display() {
-	static char temp[23];
+	static char temp[100];
 	static FRESULT res;
 	static DIR dir;
 	static char path[2] = "/";
@@ -251,7 +251,7 @@ void Menu_Display() {
 		ssd1306_SetCursor(0, 24);
 		ssd1306_WriteString(temp, Font_6x8, White);
 
-		sprintf(temp, "lastavg: %d", lastavg);
+		sprintf(temp, "lastavg: %d", (int32_t)lastavg);
 		ssd1306_SetCursor(0, 32);
 		ssd1306_WriteString(temp, Font_6x8, White);
 
