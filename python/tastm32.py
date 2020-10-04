@@ -10,7 +10,7 @@ import psutil
 import serial_helper
 import argparse_helper
 
-import r08, r16m, m64, dtm, gmv
+import r08, r16m, m64, dtm, rgen
 
 DEBUG = False
 
@@ -23,7 +23,8 @@ VALID_PLAYERS = {
     "n64": (1,),
     "snes": (1,2,3,4,5,6,7,8,),
     "nes": (1,5,),
-    "gc": (1,)
+    "gc": (1,),
+    "genesis": (1,5,)
 }
 
 int_to_byte_struct = struct.Struct('B')
@@ -193,20 +194,13 @@ class TAStm32():
         elif console == 'genesis':
             cbyte = b'J'
             pbyte = 0
-            p1, p2, p3 = players
             sbyte = 0
-            if p1 == b'3':
-                pbyte = pbyte ^ 0x80
-            elif p1 == b'6':
-                pbyte = pbyte ^ 0xc0
-                sbyte = 128
-            if p2 == b'3':
-                pbyte = pbyte ^ 0x20
-            elif p2 == b'6':
-                pbyte = pbyte ^ 0x30
-                sbyte = 128
-            if p3:
-                pbyte = pbyte ^ 0x08
+            for player in players:
+                p = int(player)
+                if p in vp:
+                    pbyte = pbyte ^ 2**(8-p)
+                else:
+                    raise RuntimeError('Invalid player for Genesis')
         command = b'S' + prefix + cbyte + int_to_byte(pbyte) + int_to_byte(sbyte)
         self.write(command)
         time.sleep(0.1)
@@ -357,9 +351,6 @@ def main():
         sys.exit(0)
 
     dev.reset()
-    if args.console == 'genesis':
-        header = gmv.read_header(data)
-        args.players = (header.get("p1"), header.get("p2"), header.get("3players"))
     run_id = dev.setup_run(args.console, args.players, args.dpcm, args.overread, args.clock)
     if run_id == None:
         raise RuntimeError('ERROR')
@@ -377,8 +368,8 @@ def main():
         buffer = dtm.read_input(data)
         blankframe = b'\x00\x00\x00\x00\x00\x00\x00\x00' * len(args.players)
     elif args.console == 'genesis':
-        buffer = gmv.read_input(data)
-        blankframe = b'\x00\x00\x00'
+        buffer = rgen.read_input(data, args.players)
+        blankframe = b'\x00\x00' * len(args.players)
 
     # Transitions
     if args.transition != None:

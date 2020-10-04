@@ -2,6 +2,7 @@
 #include <string.h>
 #include "n64.h"
 #include "snes.h"
+#include "gen.h"
 #include "TASRun.h"
 #include "stm32f4xx_hal.h"
 #include "stm32f4xx_it.h"
@@ -15,6 +16,8 @@ TASRun tasruns;
 
 // Global pointer to it
 TASRun *tasrun = &tasruns;
+
+extern RunDataArray *dataptr;
 
 RunDataArray *GetNextFrame()
 {
@@ -123,12 +126,6 @@ void ClearRunData()
 
 void ResetRun()
 {
-	// Tristate the data pins
-	GPIO_InitTypeDef GPIO_InitStruct = { 0 };
-	GPIO_InitStruct.Pin = P1_DATA_0_Pin | P1_DATA_1_Pin | P1_DATA_2_Pin  | P2_DATA_0_Pin | P2_DATA_1_Pin | P2_DATA_2_Pin;
-	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-	HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-
 	// disable interrupts on latch/clock/data for now
 	HAL_NVIC_DisableIRQ(EXTI0_IRQn);
 	HAL_NVIC_DisableIRQ(EXTI1_IRQn);
@@ -138,6 +135,13 @@ void ResetRun()
 	DisableP1ClockTimer();
 	DisableP2ClockTimer();
 	DisableTrainTimer();
+
+	// Tristate the data pins
+	GPIO_InitTypeDef GPIO_InitStruct = { 0 };
+	GPIO_InitStruct.Pin = P1_DATA_0_Pin | P1_DATA_1_Pin | P1_DATA_2_Pin  | P2_DATA_0_Pin | P2_DATA_1_Pin | P2_DATA_2_Pin;
+	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+	HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
 	// clear all interrupts
 	while (HAL_NVIC_GetPendingIRQ(EXTI0_IRQn))
 	{
@@ -191,6 +195,7 @@ void ResetRun()
 	between_trains = 0;
 	trains_enabled = 0;
 	firstLatch = 1;
+	dataptr = 0;
 	if (latch_trains != NULL)
 	{
 		free(latch_trains);
@@ -212,6 +217,19 @@ static void UpdateRunConfig()
 	tasrun->input_data_size = tasrun->numControllers * tasrun->numDataLanes * tasrun->console_data_size;
 
 	tasrun->moder_firstLatch = 0;
+
+	// special case for genesis, which uses 6 data lines for 1 controller
+	if(tasrun->console == CONSOLE_GEN)
+	{
+		tasrun->moder_firstLatch 	|= P1_DATA_0_Pin * P1_DATA_0_Pin
+									| P1_DATA_1_Pin * P1_DATA_1_Pin
+									| P1_DATA_2_Pin * P1_DATA_2_Pin
+									| P2_DATA_0_Pin * P2_DATA_0_Pin
+									| P2_DATA_1_Pin * P2_DATA_1_Pin
+									| P2_DATA_2_Pin * P2_DATA_2_Pin;
+
+		return;
+	}
 
 	// Calculate MODER register for first latch, set appropriate D pins to output
 	tasrun->moder_firstLatch |= P1_DATA_0_Pin * P1_DATA_0_Pin; // D0 is always output
@@ -254,6 +272,9 @@ void TASRunSetConsole(Console console)
 		break;
 	case CONSOLE_GC:
 		tasrun->console_data_size = sizeof(GCControllerData);
+		break;
+	case CONSOLE_GEN:
+		tasrun->console_data_size = sizeof(GENControllerData);
 		break;
 	}
 	UpdateRunConfig();
@@ -325,6 +346,42 @@ void SetN64Mode()
 void SetSNESMode()
 {
 	GPIO_InitTypeDef GPIO_InitStruct = { 0 };
+
+	// Tristate the data pins until the first latch
+	GPIO_InitStruct.Pin = P1_DATA_0_Pin | P1_DATA_1_Pin | P1_DATA_2_Pin  | P2_DATA_0_Pin | P2_DATA_1_Pin | P2_DATA_2_Pin;
+	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+	HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+	memset (&GPIO_InitStruct, 0, sizeof(GPIO_InitTypeDef));
+
+	/*Configure GPIO pins : P1_CLOCK_Pin P1_LATCH_Pin P2_CLOCK_Pin */
+	GPIO_InitStruct.Pin = P1_CLOCK_Pin|P1_LATCH_Pin|P2_CLOCK_Pin;
+	GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+
+}
+
+void SetGENMode()
+{
+	GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+	// P1_D0 --> GEN Pin 1
+	// P1_D1 --> GEN Pin 2
+	// P1_D2 --> GEN Pin 3
+	// P2_D0 --> GEN Pin 4
+	// P2_D1 --> GEN Pin 6
+	// P2_D2 --> GEN Pin 9
+
+	// Ensure the latch pin interrupts on BOTH rising and falling. use this as the select line
+	GPIO_InitStruct.Pin = P1_LATCH_Pin;
+	GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
+	GPIO_InitStruct.Pull = GPIO_PULLUP;
+
+	HAL_GPIO_Init(P1_LATCH_GPIO_Port, &GPIO_InitStruct);
+
+	memset (&GPIO_InitStruct, 0, sizeof(GPIO_InitTypeDef));
 
 	// Tristate the data pins until the first latch
 	GPIO_InitStruct.Pin = P1_DATA_0_Pin | P1_DATA_1_Pin | P1_DATA_2_Pin  | P2_DATA_0_Pin | P2_DATA_1_Pin | P2_DATA_2_Pin;

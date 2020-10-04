@@ -83,6 +83,8 @@ rcombs (@rcombs) - helped with optimizing the N64 protocol
 
 Sauraen (@sauraen) - Linux setup and installation notes, along with additional work on the GC/N64 protocol.
 
+Derf - worked on debugging the genesis protocol together
+
 sspx (@SuperSpyTX) - For help with finding a bug in the N64 controller identity code.
 
 #### If I accidentally forgot to credit you, please let me know so I can fix it!

@@ -546,6 +546,7 @@ static void MX_GPIO_Init(void)
                           |P2_DATA_0_Pin|P2_DATA_2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PA0 PA1 PA4 PA8
@@ -668,6 +669,7 @@ void JumpToBootLoader(void) {
 
 	// De-init USB
 	MX_USB_DEVICE_DeInit();
+	MX_USB_HOST_DeInit();
 
 	// Disable all of our interrupts (except systick which will be handled later)
 	HAL_NVIC_DisableIRQ(EXTI0_IRQn);
