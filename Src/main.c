@@ -163,7 +163,8 @@ int main(void)
   screenOK = USB_Playback_Init();
 
   // Only start the input process timer if the screen has been detected
-  if (screenOK) HAL_TIM_Base_Start_IT(&htim2);
+  //if (screenOK)
+  HAL_TIM_Base_Start_IT(&htim2);
   char msg[10];
   HAL_TIM_Base_Start_IT(&htim4);
 

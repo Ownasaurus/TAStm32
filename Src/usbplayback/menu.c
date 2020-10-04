@@ -262,8 +262,7 @@ void Menu_Display() {
 		break;
 	}
 
-	sprintf(temp, "composite : %d\r\n", (int32_t)lastavg);
-	CDC_Transmit_FS(temp, strlen(temp));
+
 
 }
 
