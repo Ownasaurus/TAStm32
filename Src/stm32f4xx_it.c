@@ -287,7 +287,7 @@ void EXTI1_IRQHandler(void)
 
 			GPIOC->BSRR = P1_GPIOC_next[0];
 
-			dataptr = GetNextFrame(tasrun);
+			dataptr = GetNextFrame();
 			serial_interface_output((uint8_t*)"A", 1); // tell python that we processed a frame
 		}
 		else // falling edge

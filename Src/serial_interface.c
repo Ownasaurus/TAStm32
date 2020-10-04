@@ -219,6 +219,10 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 
 						EXTI1_IRQHandler();
 					}
+					else if (c == CONSOLE_GEN)
+					{
+						dataptr = GetNextFrame(tasrun);
+					}
 
 					tasrun->initialized = 1;
 
