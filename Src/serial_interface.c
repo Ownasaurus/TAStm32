@@ -221,7 +221,7 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 					}
 					else if (c == CONSOLE_GEN)
 					{
-						dataptr = GetNextFrame(tasrun);
+						dataptr = GetNextFrame();
 					}
 
 					tasrun->initialized = 1;
