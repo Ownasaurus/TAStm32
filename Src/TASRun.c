@@ -351,6 +351,14 @@ void SetSNESMode()
 	GPIO_InitStruct.Pin = P1_DATA_0_Pin | P1_DATA_1_Pin | P1_DATA_2_Pin  | P2_DATA_0_Pin | P2_DATA_1_Pin | P2_DATA_2_Pin;
 	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
 	HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+	/*Configure GPIO pins : P1_CLOCK_Pin P1_LATCH_Pin P2_CLOCK_Pin */
+	GPIO_InitStruct.Pin = P1_CLOCK_Pin|P1_LATCH_Pin|P2_CLOCK_Pin;
+	GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+
 }
 
 void SetGENMode()
