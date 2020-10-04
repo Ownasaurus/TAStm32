@@ -88,10 +88,13 @@ void Menu_Display() {
 	static char temp[100];
 	static FRESULT res;
 	static DIR dir;
+
 	static char path[2] = "/";
 	static FILINFO fno;
 
 	unsigned char lineNo = 0;
+
+
 
 	switch (CurrentMenu) {
 	case MENUTYPE_BROWSER:
@@ -258,6 +261,9 @@ void Menu_Display() {
 		ssd1306_UpdateScreen();
 		break;
 	}
+
+	sprintf(temp, "composite : %d\r\n", (int32_t)lastavg);
+	CDC_Transmit_FS(temp, strlen(temp));
 
 }
 

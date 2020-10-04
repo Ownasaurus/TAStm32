@@ -776,7 +776,7 @@ void TIM4_IRQHandler(void) {
 	HAL_TIM_IRQHandler(&htim4);
 	/* USER CODE BEGIN TIM4_IRQn 1 */
 #define highAlpha 0.005
-#define lowAlpha 0.015
+#define lowAlpha 0.004
 #define blackLevel 900
 #define numSamples 128 // number of samples to average in FIR lowpass filter
 
