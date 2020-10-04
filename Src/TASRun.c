@@ -126,12 +126,6 @@ void ClearRunData()
 
 void ResetRun()
 {
-	// Tristate the data pins
-	GPIO_InitTypeDef GPIO_InitStruct = { 0 };
-	GPIO_InitStruct.Pin = P1_DATA_0_Pin | P1_DATA_1_Pin | P1_DATA_2_Pin  | P2_DATA_0_Pin | P2_DATA_1_Pin | P2_DATA_2_Pin;
-	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-	HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-
 	// disable interrupts on latch/clock/data for now
 	HAL_NVIC_DisableIRQ(EXTI0_IRQn);
 	HAL_NVIC_DisableIRQ(EXTI1_IRQn);
