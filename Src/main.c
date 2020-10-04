@@ -159,6 +159,11 @@ int main(void)
 
   jumpToDFU = 0;
 
+  HAL_NVIC_DisableIRQ(EXTI0_IRQn);
+  HAL_NVIC_DisableIRQ(EXTI1_IRQn);
+  HAL_NVIC_DisableIRQ(EXTI4_IRQn);
+  HAL_NVIC_DisableIRQ(EXTI9_5_IRQn);
+
   // Check the OLED screen is there and initialize it if so
   screenOK = USB_Playback_Init();
 

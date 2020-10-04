@@ -781,7 +781,7 @@ void TIM4_IRQHandler(void) {
 	HAL_TIM_IRQHandler(&htim4);
 	/* USER CODE BEGIN TIM4_IRQn 1 */
 #define highAlpha 0.004
-#define lowAlpha 0.005
+#define lowAlpha 0.0005
 #define blackLevel 0
 
 #define numSamples 128 // number of samples to average in FIR lowpass filter
@@ -795,7 +795,7 @@ void TIM4_IRQHandler(void) {
 		highpassed = adcReading;// - highAverage;
 		lowAverage = (lowAlpha * highpassed) + ((1.0 - lowAlpha) * lowAverage);
 		delta = lowAverage - sceneBrightness;
-		if (abs(delta) > 100) {
+		if (abs(delta) > 40) {
 			waiting = 0;
 			GPIOA->BSRR = (1 << SNES_RESET_HIGH_A);
 			//HAL_NVIC_EnableIRQ(EXTI4_IRQn);
