@@ -777,6 +777,7 @@ void JumpToBootLoader(void) {
 	HAL_NVIC_DisableIRQ(EXTI9_5_IRQn);
 	HAL_NVIC_DisableIRQ(OTG_FS_IRQn);
 	HAL_NVIC_DisableIRQ(TIM3_IRQn);
+	HAL_NVIC_DisableIRQ(TIM4_IRQn);
 	HAL_NVIC_DisableIRQ(TIM6_DAC_IRQn);
 	HAL_NVIC_DisableIRQ(TIM7_IRQn);
 	HAL_NVIC_DisableIRQ(TIM1_UP_TIM10_IRQn);
@@ -784,6 +785,7 @@ void JumpToBootLoader(void) {
 
 	// De-init timers
 	HAL_TIM_Base_DeInit(&htim3);
+	HAL_TIM_Base_DeInit(&htim4);
 	HAL_TIM_Base_DeInit(&htim6);
 	HAL_TIM_Base_DeInit(&htim7);
 	HAL_TIM_Base_DeInit(&htim10);
