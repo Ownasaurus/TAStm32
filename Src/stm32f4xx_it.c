@@ -554,11 +554,12 @@ void EXTI1_IRQHandler(void) {
 }
 
 extern ADC_HandleTypeDef hadc1;
-double highAverage = 0.0, lowAverage = 0.0, filtered = 0.0, highpassed = 0.0;
-double adcReading = 0.0;
 extern uint32_t numIters;
 double lastavg = 0, sceneBrightness = 0;
 double delta = 0;
+uint8_t parity = 0;
+uint32_t sampleNumber = 0; // number of samples taken in the current frame
+double frameTotal = 0; // sum of samples taken in current frame
 
 /**
  * @brief This function handles EXTI line 4 interrupt.
@@ -625,26 +626,35 @@ void EXTI4_IRQHandler(void) {
 		case 0x400300:
 		case 0x400301:
 
-			if (toggleNext == 4) {
-				startBooms = booms;
-				waiting = 1;
-				GPIOA->BSRR = (1 << SNES_RESET_LOW_A);
-				toggleNext = 0;
-				sceneBrightness = lastavg;
-				//HAL_NVIC_DisableIRQ(EXTI4_IRQn);
+			if (!parity) // hopefully at start of vsync, get average of last frame's brightness measurements
+			{
+				lastavg = frameTotal / (double)sampleNumber;
+				frameTotal = 0.0;
+				numIters = sampleNumber;
+				sampleNumber = 0;
+				delta = sceneBrightness - lastavg;
+				if (waiting) {
+					if (abs(delta) > 100){
+						waiting = 0;
+						GPIOA->BSRR = (1 << SNES_RESET_HIGH_A);
+					}
+				}
+
+				if (toggleNext == 4) // only trigger wait on zero parity to make sure we're vsync-aligned
+				{
+					waiting = 1;
+					GPIOA->BSRR = (1 << SNES_RESET_LOW_A);
+					toggleNext = 0;
+					sceneBrightness = lastavg;
+				}
 			}
 
-			/*if (waiting && booms > startBooms) {
-				waiting = 0;
-				//GPIOA->BSRR = (1 << SNES_RESET_HIGH_A);
-			}*/
-
-			if (!waiting){
+			if (waiting)
+				frame = NULL;
+			else
 				frame = GetNextFrame();
 
-			}
-
-			if (waiting || frame == NULL) // buffer underflow
+			if (frame == NULL) // buffer underflow or waiting
 			{
 				memset(&gc_data, 0, sizeof(gc_data));
 
@@ -661,6 +671,7 @@ void EXTI4_IRQHandler(void) {
 				frame[0][0][0].gc_data.beginning_one = 1;
 				SendRunDataGC(frame[0][0][0].gc_data);
 			}
+			parity = !parity;
 			break;
 		case 0x02:
 		case 0x03:
@@ -774,33 +785,22 @@ void TIM3_IRQHandler(void) {
  * @brief This function handles TIM4 global interrupt.
  */
 
+
+uint32_t adcReading;
 void TIM4_IRQHandler(void) {
 	/* USER CODE BEGIN TIM4_IRQn 0 */
-#define highAlpha 0.004
-#define lowAlpha 0.0005
-#define blackLevel 0
-
-#define numSamples 128 // number of samples to average in FIR lowpass filter
 
 	HAL_ADC_Start(&hadc1);
 	HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
 
-	adcReading = (double) HAL_ADC_GetValue(&hadc1);
-	if (adcReading > blackLevel){
-		//highAverage = (highAlpha * adcReading) + ((1.0 - highAlpha) * highAverage);
-		highpassed = adcReading;// - highAverage;
-		lowAverage = (lowAlpha * highpassed) + ((1.0 - lowAlpha) * lowAverage);
-		delta = lowAverage - sceneBrightness;
-		if (abs(delta) > 40) {
-			waiting = 0;
-			GPIOA->BSRR = (1 << SNES_RESET_HIGH_A);
-			//HAL_NVIC_EnableIRQ(EXTI4_IRQn);
-		}
-
-		lastavg = lowAverage;
-
+	adcReading = HAL_ADC_GetValue(&hadc1);
+	if (adcReading > 1000) {
+		frameTotal += (double) adcReading;
+		sampleNumber++;
 	}
-	numIters++;
+
+
+	//numIters++;
 	/* USER CODE END TIM4_IRQn 0 */
 	HAL_TIM_IRQHandler(&htim4);
 	/* USER CODE BEGIN TIM4_IRQn 1 */

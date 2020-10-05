@@ -10,6 +10,7 @@
 extern TIM_HandleTypeDef htim6;
 extern TIM_HandleTypeDef htim7;
 extern uint8_t waiting;
+extern uint8_t parity;
 // Local definition of tasrun structure
 TASRun tasruns;
 
@@ -199,6 +200,7 @@ void ResetRun()
 	firstLatch = 1;
 	waiting = 0;
 	booms=0;
+	parity = 0;
 	if (latch_trains != NULL)
 	{
 		free(latch_trains);
