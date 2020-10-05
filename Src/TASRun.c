@@ -201,6 +201,7 @@ void ResetRun()
 	waiting = 0;
 	booms=0;
 	parity = 0;
+	GPIOB->BSRR = (1 << V1_D0_HIGH_B);
 	if (latch_trains != NULL)
 	{
 		free(latch_trains);

@@ -639,14 +639,14 @@ void EXTI4_IRQHandler(void) {
 				if (waiting) {
 					if (abs(delta) > ADC_THRESHOLD){
 						waiting = 0;
-						GPIOA->BSRR = (1 << SNES_RESET_HIGH_A);
+						GPIOB->BSRR = (1 << V1_D0_HIGH_B);
 					}
 				}
 
 				if (toggleNext == 4) // only trigger wait on zero parity to make sure we're vsync-aligned
 				{
 					waiting = 1;
-					GPIOA->BSRR = (1 << SNES_RESET_LOW_A);
+					GPIOB->BSRR = (1 << V1_D0_LOW_B);
 					toggleNext = 0;
 					sceneBrightness = lastavg;
 				}
