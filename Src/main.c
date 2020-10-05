@@ -86,6 +86,7 @@ UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
 volatile uint8_t jumpToDFU;
+extern double lastavg;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -177,6 +178,7 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  int x = 0;
   while (1)
   {
     /* USER CODE END WHILE */
@@ -193,7 +195,14 @@ int main(void)
 	  // Only run USB playback task if screen has been detected
 	  /*if (screenOK)
 		  USB_Playback_Task();*/
-
+	if(x%20)
+	{
+		char temp[128];
+		sprintf(temp, "%ld\r\n", (int32_t)lastavg);
+		CDC_Transmit_FS(temp, strlen(temp));
+	}
+	x++;
+	my_wait_us(20000);
   }
   /* USER CODE END 3 */
 }

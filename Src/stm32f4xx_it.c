@@ -52,7 +52,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define BLACK_LEVEL 100
+#define BLACK_LEVEL 300
 #define ADC_THRESHOLD 100
 
 const uint8_t P1_D0_HIGH_C = 3;
