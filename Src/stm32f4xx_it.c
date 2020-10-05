@@ -52,6 +52,9 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define BLACK_LEVEL 100
+#define ADC_THRESHOLD 100
+
 const uint8_t P1_D0_HIGH_C = 3;
 const uint8_t P1_D0_LOW_C = 19;
 const uint8_t P1_D1_HIGH_C = 2;
@@ -634,7 +637,7 @@ void EXTI4_IRQHandler(void) {
 				sampleNumber = 0;
 				delta = sceneBrightness - lastavg;
 				if (waiting) {
-					if (abs(delta) > 100){
+					if (abs(delta) > ADC_THRESHOLD){
 						waiting = 0;
 						GPIOA->BSRR = (1 << SNES_RESET_HIGH_A);
 					}
@@ -794,7 +797,7 @@ void TIM4_IRQHandler(void) {
 	HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
 
 	adcReading = HAL_ADC_GetValue(&hadc1);
-	if (adcReading > 1000) {
+	if (adcReading > BLACK_LEVEL) {
 		frameTotal += (double) adcReading;
 		sampleNumber++;
 	}
