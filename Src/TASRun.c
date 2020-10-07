@@ -11,6 +11,7 @@ extern TIM_HandleTypeDef htim6;
 extern TIM_HandleTypeDef htim7;
 extern uint8_t waiting;
 extern uint8_t parity;
+extern uint32_t pollNumber;
 // Local definition of tasrun structure
 TASRun tasruns;
 
@@ -201,6 +202,7 @@ void ResetRun()
 	waiting = 0;
 	booms=0;
 	parity = 0;
+	pollNumber = 0;
 	GPIOB->BSRR = (1 << 7);
 	if (latch_trains != NULL)
 	{

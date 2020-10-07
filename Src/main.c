@@ -171,14 +171,12 @@ int main(void)
   // Only start the input process timer if the screen has been detected
   if (screenOK)
 	  HAL_TIM_Base_Start_IT(&htim2);
-  char msg[10];
   HAL_TIM_Base_Start_IT(&htim4);
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  int x = 0;
   while (1)
   {
     /* USER CODE END WHILE */
@@ -195,14 +193,6 @@ int main(void)
 	  // Only run USB playback task if screen has been detected
 	  /*if (screenOK)
 		  USB_Playback_Task();*/
-	if(x%20)
-	{
-		char temp[128];
-		sprintf(temp, "%ld\r\n", (int32_t)lastavg);
-		CDC_Transmit_FS(temp, strlen(temp));
-	}
-	x++;
-	my_wait_us(20000);
   }
   /* USER CODE END 3 */
 }

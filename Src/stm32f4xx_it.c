@@ -52,8 +52,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define BLACK_LEVEL 300
-#define ADC_THRESHOLD 100
+#define BLACK_LEVEL 200
+#define ADC_THRESHOLD 40
 
 const uint8_t P1_D0_HIGH_C = 3;
 const uint8_t P1_D0_LOW_C = 19;
@@ -563,7 +563,7 @@ double delta = 0;
 uint8_t parity = 0;
 uint32_t sampleNumber = 0; // number of samples taken in the current frame
 double frameTotal = 0; // sum of samples taken in current frame
-
+uint32_t pollNumber = 0;
 /**
  * @brief This function handles EXTI line 4 interrupt.
  */
@@ -628,6 +628,7 @@ void EXTI4_IRQHandler(void) {
 		case 0x400302:
 		case 0x400300:
 		case 0x400301:
+			pollNumber++;
 
 			if (!parity) // hopefully at start of vsync, get average of last frame's brightness measurements
 			{
@@ -652,10 +653,14 @@ void EXTI4_IRQHandler(void) {
 				}
 			}
 
-			if (waiting)
+			if (waiting || pollNumber < 1000)
 				frame = NULL;
 			else
+			{
+				if ((pollNumber - 1000) % 2000 == 1500)
+					GetNextFrame();
 				frame = GetNextFrame();
+			}
 
 			if (frame == NULL) // buffer underflow or waiting
 			{
@@ -670,7 +675,9 @@ void EXTI4_IRQHandler(void) {
 				SendRunDataGC(gc_data); // send blank controller data
 			} else {
 
-				toggleNext = TASRunIncrementFrameCount();
+
+					toggleNext = TASRunIncrementFrameCount();
+
 				frame[0][0][0].gc_data.beginning_one = 1;
 				SendRunDataGC(frame[0][0][0].gc_data);
 			}
