@@ -658,8 +658,19 @@ void EXTI4_IRQHandler(void) {
 			else
 			{
 				if ((pollNumber - 1000) % 2000 == 1500)
+				{
+					frame = GetNextFrame();
 					GetNextFrame();
-				frame = GetNextFrame();
+				}
+				if (pollNumber > 1600 && (pollNumber - 1000) % 2000 == 500)
+				{
+					frame = GetNextFrame();
+					GetNextFrame();
+				}
+				else
+				{
+					frame = GetNextFrame();
+				}
 			}
 
 			if (frame == NULL) // buffer underflow or waiting
@@ -701,7 +712,7 @@ void EXTI4_IRQHandler(void) {
 		case 0x400302: // GC poll
 		case 0x400300: // GC poll
 		case 0x400301: // GC poll
-			if (!waiting)
+			if (!waiting && pollNumber >= 1000)
 				serial_interface_output((uint8_t*) "A", 1);
 
 			if (frame == NULL) // there was a buffer underflow
