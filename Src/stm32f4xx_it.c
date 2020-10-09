@@ -54,6 +54,7 @@
 /* USER CODE BEGIN PD */
 #define BLACK_LEVEL 200
 #define ADC_THRESHOLD 40
+#define LOAD_TIME 970
 
 const uint8_t P1_D0_HIGH_C = 3;
 const uint8_t P1_D0_LOW_C = 19;
@@ -560,7 +561,7 @@ extern ADC_HandleTypeDef hadc1;
 extern uint32_t numIters;
 double lastavg = 0, sceneBrightness = 0;
 double delta = 0;
-uint8_t parity = 0;
+uint8_t parity = 1;
 uint32_t sampleNumber = 0; // number of samples taken in the current frame
 double frameTotal = 0; // sum of samples taken in current frame
 uint32_t pollNumber = 0;
@@ -653,23 +654,27 @@ void EXTI4_IRQHandler(void) {
 				}
 			}
 
-			if (waiting || pollNumber < 1000)
+			if (pollNumber < LOAD_TIME) // still doing bootup
+			{
 				frame = NULL;
+			}
+			else if(waiting) // waiting for another load
+			{
+				frame = NULL; // give blank frame
+
+				// but still keep track of poll numbers
+				if (pollNumber > (LOAD_TIME+600) && (pollNumber - LOAD_TIME) % 1000 == 500)
+				{
+					GetNextFrame(); // skip a frame
+				}
+			}
 			else
 			{
-				if ((pollNumber - 1000) % 2000 == 1500)
+				frame = GetNextFrame();
+
+				if (pollNumber > (LOAD_TIME+600) && (pollNumber - LOAD_TIME) % 1000 == 500)
 				{
-					frame = GetNextFrame();
-					GetNextFrame();
-				}
-				if (pollNumber > 1600 && (pollNumber - 1000) % 2000 == 500)
-				{
-					frame = GetNextFrame();
-					GetNextFrame();
-				}
-				else
-				{
-					frame = GetNextFrame();
+					GetNextFrame(); // skip a frame
 				}
 			}
 
@@ -687,7 +692,7 @@ void EXTI4_IRQHandler(void) {
 			} else {
 
 
-					toggleNext = TASRunIncrementFrameCount();
+				toggleNext = TASRunIncrementFrameCount();
 
 				frame[0][0][0].gc_data.beginning_one = 1;
 				SendRunDataGC(frame[0][0][0].gc_data);
@@ -712,7 +717,7 @@ void EXTI4_IRQHandler(void) {
 		case 0x400302: // GC poll
 		case 0x400300: // GC poll
 		case 0x400301: // GC poll
-			if (!waiting && pollNumber >= 1000)
+			if (!waiting && pollNumber >= LOAD_TIME)
 				serial_interface_output((uint8_t*) "A", 1);
 
 			if (frame == NULL) // there was a buffer underflow
