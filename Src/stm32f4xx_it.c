@@ -561,6 +561,7 @@ extern ADC_HandleTypeDef hadc1;
 extern uint32_t numIters;
 double lastavg = 0, sceneBrightness = 0;
 double delta = 0;
+uint8_t rumblePoll = 0;
 uint8_t parity = 1;
 uint32_t sampleNumber = 0; // number of samples taken in the current frame
 double frameTotal = 0; // sum of samples taken in current frame
@@ -630,6 +631,8 @@ void EXTI4_IRQHandler(void) {
 		case 0x400300:
 		case 0x400301:
 			pollNumber++;
+
+			rumblePoll = cmd & 1; // last bit of request from console indicates rumble state
 
 			if (!parity) // hopefully at start of vsync, get average of last frame's brightness measurements
 			{

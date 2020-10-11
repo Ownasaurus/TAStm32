@@ -21,6 +21,7 @@ MenuType CurrentMenu;
 extern uint32_t booms;
 extern uint32_t numIters;
 extern double lastavg;
+extern uint8_t rumblePoll;
 
 int16_t cursorPos = 0;
 int16_t displayPos = 0;
@@ -161,6 +162,7 @@ void Menu_Display() {
 				ssd1306_Fill(Black);
 				ssd1306_SetCursor(0, 0);
 				sprintf(temp, "No USB");
+				if(rumblePoll) sprintf(temp, "RUMBLEROAR!");
 				ssd1306_WriteString(temp, Font_16x26, White);
 				ssd1306_UpdateScreen();
 			}
