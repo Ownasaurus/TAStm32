@@ -439,6 +439,16 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 						break;
 					}
 				}
+				else if(instance.transition_type == 'R')
+				{
+					if(!AddTransition(TRANSITION_WAIT_RUMBLE, tempVal)) // try adding transition
+					{
+						// adding transition failed
+						instance.state = SERIAL_COMPLETE;
+						serial_interface_output((uint8_t*)"\xFB", 1);
+						break;
+					}
+				}
 
 				instance.state = SERIAL_COMPLETE;
 				break;

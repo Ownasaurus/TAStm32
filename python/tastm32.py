@@ -128,6 +128,9 @@ class TAStm32():
             elif mode == b'W':
                 # Wait audio
                 command = b''.join([b'T', prefix, mode, struct.pack('I', frame)])
+            elif mode == b'R':
+                # Wait rumble
+                command = b''.join([b'T', prefix, mode, struct.pack('I', frame)])
             if command != '':
                 self.write(command)
 
@@ -328,6 +331,8 @@ def main():
                 transition[1] = b'H'
             elif transition[1] == 'W':
                 transition[1] = b'W'
+            elif transition[1] == 'R':
+                transition[1] = b'R'
 
     if args.latchtrain != '':
         args.latchtrain = [int(x) for x in args.latchtrain.split(',')]

@@ -54,7 +54,7 @@
 /* USER CODE BEGIN PD */
 #define BLACK_LEVEL 200
 #define ADC_THRESHOLD 40
-#define LOAD_TIME 970
+#define LOAD_TIME 0
 
 const uint8_t P1_D0_HIGH_C = 3;
 const uint8_t P1_D0_LOW_C = 19;
@@ -634,6 +634,18 @@ void EXTI4_IRQHandler(void) {
 
 			rumblePoll = cmd & 1; // last bit of request from console indicates rumble state
 
+			if (waiting && rumblePoll)
+				waiting = 0;
+
+			if (rumblePoll) booms++;
+
+			if (toggleNext == 5) // only trigger wait on zero parity to make sure we're vsync-aligned
+			{
+				waiting = 1;
+				GPIOB->BSRR = (1 << V1_D0_LOW_B);
+				toggleNext = 0;
+			}
+
 			if (!parity) // hopefully at start of vsync, get average of last frame's brightness measurements
 			{
 				lastavg = frameTotal / (double)sampleNumber;
@@ -642,10 +654,10 @@ void EXTI4_IRQHandler(void) {
 				sampleNumber = 0;
 				delta = sceneBrightness - lastavg;
 				if (waiting) {
-					if (abs(delta) > ADC_THRESHOLD){
+					/*if (abs(delta) > ADC_THRESHOLD){
 						waiting = 0;
 						GPIOB->BSRR = (1 << V1_D0_HIGH_B);
-					}
+					}*/
 				}
 
 				if (toggleNext == 4) // only trigger wait on zero parity to make sure we're vsync-aligned

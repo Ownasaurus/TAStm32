@@ -94,6 +94,9 @@ uint8_t TASRunIncrementFrameCount()
 			case TRANSITION_WAIT_AUDIO:
 				return 4;
 				break;
+			case TRANSITION_WAIT_RUMBLE:
+				return 5;
+				break;
 			}
 		}
 
