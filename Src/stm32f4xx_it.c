@@ -637,12 +637,15 @@ void EXTI4_IRQHandler(void) {
 			if (waiting && rumblePoll)
 				waiting = 0;
 
-			if (rumblePoll) booms++;
+			if (rumblePoll) {
+				HAL_GPIO_TogglePin(V1_DATA_0_GPIO_Port, V1_DATA_0_Pin);
+			}
 
-			if (toggleNext == 5) // only trigger wait on zero parity to make sure we're vsync-aligned
+			if (toggleNext == 5)
 			{
 				waiting = 1;
-				GPIOB->BSRR = (1 << V1_D0_LOW_B);
+				//GPIOB->BSRR = (1 << V1_D0_LOW_B);
+				HAL_GPIO_TogglePin(V1_DATA_0_GPIO_Port, V1_DATA_0_Pin);
 				toggleNext = 0;
 			}
 
