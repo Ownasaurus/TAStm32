@@ -54,7 +54,6 @@
 /* USER CODE BEGIN PD */
 #define BLACK_LEVEL 200
 #define ADC_THRESHOLD 40
-#define LOAD_TIME 0
 
 const uint8_t P1_D0_HIGH_C = 3;
 const uint8_t P1_D0_LOW_C = 19;
@@ -635,7 +634,10 @@ void EXTI4_IRQHandler(void) {
 			rumblePoll = cmd & 1; // last bit of request from console indicates rumble state
 
 			if (waiting && rumblePoll)
+			{
 				waiting = 0;
+				pollNumber = 1;
+			}
 
 			if (rumblePoll) {
 				HAL_GPIO_TogglePin(V1_DATA_0_GPIO_Port, V1_DATA_0_Pin);
@@ -672,28 +674,18 @@ void EXTI4_IRQHandler(void) {
 				}
 			}
 
-			if (pollNumber < LOAD_TIME) // still doing bootup
+			if(waiting)
 			{
 				frame = NULL;
-			}
-			else if(waiting) // waiting for another load
-			{
-				frame = NULL; // give blank frame
-
-				// but still keep track of poll numbers
-				if (pollNumber > (LOAD_TIME+600) && (pollNumber - LOAD_TIME) % 1000 == 500)
-				{
-					GetNextFrame(); // skip a frame
-				}
 			}
 			else
 			{
 				frame = GetNextFrame();
+			}
 
-				if (pollNumber > (LOAD_TIME+600) && (pollNumber - LOAD_TIME) % 1000 == 500)
-				{
-					GetNextFrame(); // skip a frame
-				}
+			if (pollNumber % 1000 == 1)
+			{
+				GetNextFrame(); // skip a frame
 			}
 
 			if (frame == NULL) // buffer underflow or waiting
@@ -735,7 +727,7 @@ void EXTI4_IRQHandler(void) {
 		case 0x400302: // GC poll
 		case 0x400300: // GC poll
 		case 0x400301: // GC poll
-			if (!waiting && pollNumber >= LOAD_TIME)
+			if (!waiting)
 				serial_interface_output((uint8_t*) "A", 1);
 
 			if (frame == NULL) // there was a buffer underflow
