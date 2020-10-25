@@ -13,6 +13,7 @@
 *.sfc
 python/__pycache__/
 python/*.py
+!python/dtm_analyzer.py
 !python/argparse_helper.py
 !python/dtm.py
 !python/m64.py
