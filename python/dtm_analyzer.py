@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import sys
 
 def main():
@@ -11,12 +12,10 @@ def main():
         header = f.read(0x100) #skip the header
         with open('output.dtm', 'wb') as o:
             o.write(header)
-            o.write(f.read(32)) # assume first poll is M. see if this fixes it
-            pollNumber += 1
             while(True):
+                M = f.read(8) # read the M poll of controller 1
+                f.read(24) # dump the M polls of controllers 2-4
                 S = f.read(8) # read the S poll of controller 1
-                f.read(24) # dump the S polls of controllers 2-4
-                M = f.read(8) # read the S poll of controller 1
                 extra = f.read(24) # dump the S polls of controllers 2-4
                 pollNumber += 2
                 if S and M:
