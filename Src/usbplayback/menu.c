@@ -27,6 +27,7 @@ int16_t cursorPos = 0;
 int16_t displayPos = 0;
 bool USBok = 0;
 uint8_t waiting = 0;
+extern uint8_t rumbleSyncState;
 
 char currentFilename[256];
 
@@ -256,7 +257,7 @@ void Menu_Display() {
 		ssd1306_SetCursor(0, 24);
 		ssd1306_WriteString(temp, Font_6x8, White);
 
-		sprintf(temp, "delta: %d", (int32_t)delta);
+		sprintf(temp, "syncstate: %d", rumbleSyncState);
 		ssd1306_SetCursor(0, 32);
 		ssd1306_WriteString(temp, Font_6x8, White);
 

@@ -19,6 +19,8 @@ TASRun tasruns;
 // Global pointer to it
 TASRun *tasrun = &tasruns;
 extern uint32_t booms;
+extern uint8_t rumbleSyncState;
+extern uint8_t rumbleSyncIndex;
 
 RunDataArray *GetNextFrame()
 {
@@ -97,6 +99,10 @@ uint8_t TASRunIncrementFrameCount()
 			case TRANSITION_WAIT_RUMBLE:
 				return 5;
 				break;
+			case TRANSITION_SYNC_M_FRAME:
+				return 6;
+				break;
+
 			}
 		}
 
@@ -208,6 +214,8 @@ void ResetRun()
 	parity = 1;
 	pollNumber = 0;
 	rumblePoll = 0;
+	rumbleSyncState = 0;
+	rumbleSyncIndex = 0;
 	GPIOB->BSRR = (1 << 7);
 	if (latch_trains != NULL)
 	{
