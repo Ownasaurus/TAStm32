@@ -567,12 +567,6 @@ double frameTotal = 0; // sum of samples taken in current frame
 uint32_t pollNumber = 0;
 uint8_t seenRumbleRecently = 0;
 
-
-#define RUMBLESTATE_NONE 0
-#define RUMBLESTATE_STARTING 1
-#define RUMBLESTATE_WAITINGFORDESYNC 2
-#define RUMBLESTATE_WAITINGFORSYNC 3
-
 uint8_t rumbleSyncState = 0;
 uint8_t rumbleSyncIndex = 0;
 
@@ -690,7 +684,13 @@ void EXTI4_IRQHandler(void) {
 				toggleNext = 0;
 			}
 
-
+			// sync M frame
+			else if (toggleNext == 6)
+			{
+				rumbleSyncState = 1;
+				rumbleSyncIndex = 0;
+				toggleNext = 0;
+			}
 
 			if (!parity) // hopefully at start of vsync, get average of last frame's brightness measurements
 			{
@@ -714,13 +714,7 @@ void EXTI4_IRQHandler(void) {
 					sceneBrightness = lastavg;
 				}
 
-				// sync M frame
-				else if (toggleNext == 6 && !parity) // only start S-M-S sync on VSYNC
-				{
-					rumbleSyncState = RUMBLESTATE_WAITINGFORDESYNC;
-					rumbleSyncIndex = 0;
-					toggleNext = 0;
-				}
+
 			}
 
 			if(waiting || rumbleSyncState)
@@ -734,61 +728,24 @@ void EXTI4_IRQHandler(void) {
 
 			if (!rumbleSyncState && pollNumber % 1000 == 1)
 			{
-				//GetNextFrame(); // skip a frame
+				GetNextFrame(); // skip a frame
 			}
 
-
-
+			// If rumble menu syncing, keep spamming A on every other poll until we register a rumble
 			if (rumbleSyncState){
-
-				switch (rumbleSyncState){
-
-				// waiting for desync - keep spamming A until we no longer get rumbles
-				case RUMBLESTATE_WAITINGFORDESYNC:
-
-					// send A every 4 polls of the 16-poll cycle
-					if (rumbleSyncIndex % 4 == 0)
-						sendAPress();
-
-					// All other polls, send blank frame
-					else
-						sendBlankFrame();
-
-					if (rumblePoll)
-						seenRumbleRecently = 1;
-
-					rumbleSyncIndex++;
-					if (rumbleSyncIndex == 16){
-						rumbleSyncIndex = 0;
-						// if we haven't seen a single rumble in the last 16 polls, we must have desynced (good!), move onto next state
-						if (!seenRumbleRecently) rumbleSyncState = RUMBLESTATE_WAITINGFORSYNC;
-						seenRumbleRecently = 0;
-					}
-					break;
-
-				// waiting for sync - spam A every other poll until we see a reply
-				case RUMBLESTATE_WAITINGFORSYNC :
-					if (rumblePoll){
-						// we got a rumble, that means we are now synced to S-M-S transition
-						sendBlankFrame();
-					}
-					else {
-						// send A every other poll
-						if (rumbleSyncIndex == 0)
-							sendAPress();
-						else
-							sendBlankFrame();
-					}
-
-					rumbleSyncIndex++;
-					if (rumbleSyncIndex == 2){
-						rumbleSyncIndex = 0;
-					}
-
-					break;
-
+				if (rumbleSyncIndex == 0){
+					sendAPress();
 				}
+				else {
+					sendBlankFrame();
+				}
+				rumbleSyncIndex = !rumbleSyncIndex;
 
+
+				// If we registered a rumble, we're synced to the transition
+				if (rumblePoll) {
+					rumbleSyncState = 0;
+				}
 			}
 			else if (frame == NULL) // buffer underflow or waiting
 			{
