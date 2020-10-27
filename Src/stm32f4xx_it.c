@@ -54,6 +54,7 @@
 /* USER CODE BEGIN PD */
 #define BLACK_LEVEL 200
 #define ADC_THRESHOLD 40
+#define TRANSITION_RESUME_POINT 100
 
 const uint8_t P1_D0_HIGH_C = 3;
 const uint8_t P1_D0_LOW_C = 19;
@@ -566,9 +567,12 @@ uint32_t sampleNumber = 0; // number of samples taken in the current frame
 double frameTotal = 0; // sum of samples taken in current frame
 uint32_t pollNumber = 0;
 uint8_t seenRumbleRecently = 0;
-
+uint8_t waitingMFrame = 0;
 uint8_t rumbleSyncState = 0;
 uint8_t rumbleSyncIndex = 0;
+uint32_t transitionCycleIndex = 0;
+
+
 
 void sendAPress(){
 	//blank frame
@@ -664,6 +668,11 @@ void EXTI4_IRQHandler(void) {
 		case 0x400301:
 			pollNumber++;
 
+
+			transitionCycleIndex ++;
+			if (transitionCycleIndex == TRANSITION_RESUME_POINT)
+				waitingMFrame = 0;
+
 			rumblePoll = cmd & 1; // last bit of request from console indicates rumble state
 
 			if (waiting && rumblePoll)
@@ -692,6 +701,10 @@ void EXTI4_IRQHandler(void) {
 				toggleNext = 0;
 			}
 
+			else if (toggleNext == 7){
+				waitingMFrame = 1;
+			}
+
 			if (!parity) // hopefully at start of vsync, get average of last frame's brightness measurements
 			{
 				lastavg = frameTotal / (double)sampleNumber;
@@ -714,10 +727,9 @@ void EXTI4_IRQHandler(void) {
 					sceneBrightness = lastavg;
 				}
 
-
 			}
 
-			if(waiting || rumbleSyncState)
+			if(waiting || rumbleSyncState || waitingMFrame)
 			{
 				frame = NULL;
 			}
@@ -745,22 +757,13 @@ void EXTI4_IRQHandler(void) {
 				// If we registered a rumble, we're synced to the transition
 				if (rumblePoll) {
 					rumbleSyncState = 0;
+					transitionCycleIndex = 0;
 				}
 			}
 			else if (frame == NULL) // buffer underflow or waiting
 			{
-				memset(&gc_data, 0, sizeof(gc_data));
-
-				gc_data.a_x_axis = 128;
-				gc_data.a_y_axis = 128;
-				gc_data.c_x_axis = 128;
-				gc_data.c_y_axis = 128;
-				gc_data.beginning_one = 1;
-
-				SendRunDataGC(gc_data); // send blank controller data
+				sendBlankFrame();
 			} else {
-
-
 				toggleNext = TASRunIncrementFrameCount();
 
 				frame[0][0][0].gc_data.beginning_one = 1;
