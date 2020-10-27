@@ -789,7 +789,7 @@ void EXTI4_IRQHandler(void) {
 		case 0x400302: // GC poll
 		case 0x400300: // GC poll
 		case 0x400301: // GC poll
-			if (!waiting && !rumbleSyncState)
+			if (!waiting && !rumbleSyncState && !waitingMFrame)
 				serial_interface_output((uint8_t*) "A", 1);
 
 			if (frame == NULL) // there was a buffer underflow
