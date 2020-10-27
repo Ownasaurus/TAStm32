@@ -758,6 +758,7 @@ void EXTI4_IRQHandler(void) {
 				if (rumblePoll) {
 					rumbleSyncState = 0;
 					transitionCycleIndex = 0;
+					pollNumber = 0;
 				}
 			}
 			else if (frame == NULL) // buffer underflow or waiting
