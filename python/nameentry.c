@@ -2,6 +2,9 @@
 #include <math.h>
 #include <string.h>
 #include <unistd.h>
+#include <fcntl.h>
+#include <termios.h>
+#include <stdlib.h>
 
 /*const char map[6][11] = {
     {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', '*'},
@@ -19,14 +22,14 @@ const char map[6][11] = { //PAL
     {'-', '+', '=', '!', '?', '@', '%', '&', '$', ' ', '*'},
     {'^', '^', '^', '^', '^', '^', '^', '^', '^', '^', '^'}};
 
-const char input_blank[] = {0x00, 0x40, 0x00, 0x00, 0x80, 0x80, 0x80, 0x80};
-const char input_up[] = {0x40, 0x40, 0x00, 0x00, 0x80, 0x80, 0x80, 0x80};
-const char input_down[] = {0x80, 0x40, 0x00, 0x00, 0x80, 0x80, 0x80, 0x80};
-const char input_left[] = {0x00, 0x41, 0x00, 0x00, 0x80, 0x80, 0x80, 0x80};
-const char input_right[] = {0x00, 0x42, 0x00, 0x00, 0x80, 0x80, 0x80, 0x80};
-const char input_start[] = {0x01, 0x40, 0x00, 0x00, 0x80, 0x80, 0x80, 0x80};
-const char input_a[] = {0x02, 0x40, 0x00, 0x00, 0x80, 0x80, 0x80, 0x80};
-const char input_b[] = {0x04, 0x40, 0x00, 0x00, 0x80, 0x80, 0x80, 0x80};
+char input_blank_orig[] = {0x00, 0x40, 0x00, 0x00, 0x80, 0x80, 0x80, 0x80};
+char input_up_orig[] = {0x40, 0x40, 0x00, 0x00, 0x80, 0x80, 0x80, 0x80};
+char input_down_orig[] = {0x80, 0x40, 0x00, 0x00, 0x80, 0x80, 0x80, 0x80};
+char input_left_orig[] = {0x00, 0x41, 0x00, 0x00, 0x80, 0x80, 0x80, 0x80};
+char input_right_orig[] = {0x00, 0x42, 0x00, 0x00, 0x80, 0x80, 0x80, 0x80};
+char input_start_orig[] = {0x01, 0x40, 0x00, 0x00, 0x80, 0x80, 0x80, 0x80};
+char input_a_orig[] = {0x02, 0x40, 0x00, 0x00, 0x80, 0x80, 0x80, 0x80};
+char input_b_orig[] = {0x04, 0x40, 0x00, 0x00, 0x80, 0x80, 0x80, 0x80};
 
 const char substitutions[][2] = {
     " .",
@@ -43,13 +46,22 @@ const char substitutions[][2] = {
     "I1",
     " -",
     " ="};
+    
+char input_blank[8];
+char input_up[8];
+char input_down[8];
+char input_left[8];
+char input_right[8];
+char input_start[8];
+char input_a[8];
+char input_b[8];
 
 char PreviousEntries[24][5];
 int slot = 0;
 
 struct action
 {
-    const char *action;
+    char *action;
     int time;
 } action;
 
@@ -98,21 +110,71 @@ FILE *outfile;
 int x = 0;
 int y = 0;
 
-void press_button(const char *button, int speed)
+int SerialPort;
+
+int prebuffer = 300;
+
+// wait for device to  request data  then send it
+void WriteControl(char *data) {
+
+	char byte = 0;
+	char ay = 'A';
+	if (prebuffer == 0) {
+		while (byte != 'A') {
+			read(SerialPort, &byte, 1);
+			
+		}
+	}
+	else prebuffer--;
+	write(SerialPort, &ay, 1);
+	write(SerialPort, data, 8);
+}
+
+void process_input(char *data, char *new) {
+
+    char old_byte1 = data[0];
+    char old_byte2 = data[1];
+    char new_byte1 = 0;
+    char new_byte2 = 0;
+
+    new[2] = data[4];
+    new[3] = data[5];
+    new[4] = data[6];
+    new[5] = data[7];
+    new[6] = data[2];
+    new[7] = data[3];
+
+    new_byte1 += (old_byte1 & 0x01) << 4;// # start
+    new_byte1 += (old_byte1 & 0x10) >> 1;// # Y
+    new_byte1 += (old_byte1 & 0x08) >> 1;// # X
+    new_byte1 += (old_byte1 & 0x04) >> 1;// # B
+    new_byte1 += (old_byte1 & 0x02) >> 1;// # A
+
+    new_byte2 += (old_byte2 & 0x04) << 4;// # L
+    new_byte2 += (old_byte2 & 0x08) << 2;// # R
+    new_byte2 += (old_byte1 & 0x20) >> 1;// # Z
+    new_byte2 += (old_byte1 & 0x40) >> 3;// # DpadU
+    new_byte2 += (old_byte1 & 0x80) >> 5;// # DpadD
+    new_byte2 += (old_byte2 & 0x02);      //# DpadR
+    new_byte2 += (old_byte2 & 0x01);      //# DpadL
+
+    new[0] = new_byte1;
+    new[1] = new_byte2;
+}
+
+void press_button(char *button, int speed)
 {
     int i;
     for (i = 0; i < speed; i++)
-        fwrite(button, 8, 1, outfile);
-    if (button != input_blank)
-        ;
+        WriteControl(button);
     for (i = 0; i < speed; i++)
-        fwrite(&input_blank, 8, 1, outfile);
+        WriteControl(input_blank);
 }
 
 void press_nothing(int frames)
 {
     for (int i = 0; i < frames; i++)
-        fwrite(&input_blank, 8, 1, outfile);
+        WriteControl(input_blank);
 }
 
 // navigate to and enter a character
@@ -148,11 +210,11 @@ void type_char(char c)
 
     for (int xpos = 0; xpos < abs(xdistance); xpos++)
     {
-        press_button(xdistance < 0 ? &input_left[0] : &input_right[0], 2);
+        press_button(xdistance < 0 ? &input_left[0] : &input_right[0], 3);
     }
     for (int ypos = 0; ypos < abs(ydistance); ypos++)
     {
-        press_button(ydistance < 0 ? &input_up[0] : &input_down[0], 2);
+        press_button(ydistance < 0 ? &input_up[0] : &input_down[0], 3);
     }
     x = x + xdistance;
     y = y + ydistance;
@@ -174,33 +236,6 @@ void add_name(char *name)
     }
 
     press_button(&input_start[0], 10);
-}
-
-// assumes we start with "new" selected on name entry screen
-// also that the screen is full
-void erase_names()
-{
-
-    // 2 down to erase button
-    press_button(&input_down[0], 8);
-    press_button(&input_down[0], 8);
-
-    // press erase
-    press_button(&input_start[0], 16);
-
-    for (int i = 0; i < 24; i++)
-    {
-        // select name at top left
-        press_button(&input_start[0], 4);
-
-        press_nothing(10); // wait for screen to appear
-
-        // 1 left to yes button
-        press_button(&input_left[0], 4);
-
-        // press yes
-        press_button(&input_start[0], 4);
-    }
 }
 
 void RunActionSequence(struct action *seq, int length)
@@ -296,10 +331,11 @@ void ProcessCharacter(char c)
             // if we filled all slots, type a screen of text
             if (slot == 24)
             {
-                
+                RunActionSequence(EraseNames, sizeof(EraseNames)); // erase all the names and start again
+                press_nothing(20);
                 TypeStrings(PreviousEntries);
                 press_nothing(300); // wait a bit
-                RunActionSequence(EraseNames, sizeof(EraseNames)); // erase all the names and start again
+                
                 slot = 0;
             }
         }
@@ -327,40 +363,124 @@ algorithm is -
 
 */
 
+
 int main()
 {
 
     FILE *header;
     char buf;
+    
+    char reset = 'R';
+    char setupstring[] = {'S', 'A', 'G', 0x80, 0x00, '\n'};
+    char retstring[2];
 
-    header = fopen("header.dtm", "r");
-    outfile = fopen("outfile.dtm", "w");
+    //header = fopen("header.dtm", "r");
+    // = fopen("outfile.dtm", "w");
+    
+    char port[20] = "/dev/ttyACM0";
+    speed_t baud = B115200; /* baud rate */
+    
+    process_input(input_blank_orig, input_blank);
+    process_input(input_up_orig, input_up);
+    process_input(input_down_orig, input_down);
+    process_input(input_left_orig, input_left);
+    process_input(input_right_orig, input_right);
+    process_input(input_start_orig, input_start);
+    process_input(input_a_orig, input_a);
+    process_input(input_b_orig, input_b);
+    
+    ; /* connect to port */
+    
+    if ((SerialPort = open(port, O_RDWR)) == -1)
+    {
+    	printf("uh oh\n");
+    	exit(1);
+    }
+    
+    
+    
+
+
+    struct termios settings;
+    tcgetattr(SerialPort, &settings);
+
+    cfsetospeed(&settings, baud); /* baud rate */
+    settings.c_cflag &= ~PARENB; /* no parity */
+    settings.c_cflag &= ~CSTOPB; /* 1 stop bit */
+    settings.c_cflag &= ~CSIZE;
+    settings.c_cflag |= CS8 | CLOCAL; /* 8 bits */
+    settings.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
+    settings.c_oflag &= ~OPOST; /* raw output */
+    settings.c_cc[VMIN]  = 0;
+	settings.c_cc[VTIME] = 10;
+
+    tcsetattr(SerialPort, TCSANOW, &settings); /* apply the settings */
+    tcflush(SerialPort, TCOFLUSH);
+    
+    retstring[0] = 0; retstring[1] = 0;
+    
+    write(SerialPort, &reset, 1);
+    sleep(1);
+    read (SerialPort, &retstring[0], 2);
+    
+    while (!(retstring[0] == 0x01 && retstring[1] == 'R')){
+	write(SerialPort, &reset, 1);
+    	read (SerialPort, &retstring[0], 2);
+    }
+    printf("reset ok\n");
+    sleep(1);
+    tcflush(SerialPort, TCIOFLUSH);
+    sleep(1);
+    tcflush(SerialPort, TCIOFLUSH);
+    
+    write(SerialPort, &setupstring[0], 5);
+    sleep(1);
+    read (SerialPort, &retstring[0], 2);
+    
+    if (!(retstring[0] == 0x01 && retstring[1] == 'S')){
+        printf("oh dear\n", retstring[0], retstring[1]);
+        exit(1);
+    }
+    
+    //printf("ok :%x %x\n",   retstring[0],   retstring[1]);
+    
+    
 
     //             /   |   |   |   /   |   |   |   /   |   |   |   /   |   |   |   /   |   |   |   /   |   |   |   X
     //char *text1 = "WEL COME TO THE SECRET TAS BLOCKWITH OWNASAURUS PRACTICAL   TAS KINGKIRB 64 -   AND RASTERI    -";
-    while (fread(&buf, 1, 1, header) == 1)
-        fwrite(&buf, 1, 1, outfile);
-    fclose(header);
+    /*while (fread(&buf, 1, 1, header) == 1)
+    fwrite(&buf, 1, 1, outfile);
+    fclose(header);*/
+    
 
     int i, j;
 
     //RunActionSequence(GetToNameEntry, sizeof(GetToNameEntry));
-    RunActionSequence(EraseNames, sizeof(EraseNames));
+    //RunActionSequence(EraseNames, sizeof(EraseNames));
 
     /*read(STDIN_FILENO, &buf, 1);
 
     for (i = 0; i < strlen(text2); i+=4){
-        ProcessCharacter(text2+i);
+    ProcessCharacter(text2+i);
     }*/
+
+fcntl(0, F_SETFL, fcntl(0, F_GETFL) | O_NONBLOCK);
+int numread = 0;
 
     while (1)
     {
-        read(STDIN_FILENO, &buf, 1);
-        buf = toupper(buf);
-        if (ValidChar(buf))
-        {
-            printf("Valid : %c\n", buf);
-            ProcessCharacter(buf);
+        numread = read(0, &buf, 1);
+        if (numread == 1){
+		buf = toupper(buf);
+		if (ValidChar(buf))
+		{
+		    printf("Valid : %c\n", buf);
+		    ProcessCharacter(buf);
+		}
+        }
+        else {
+        	press_nothing(1);
+        	printf("nothing\n");
         }
     }
 
