@@ -6,21 +6,59 @@
 #include <termios.h>
 #include <stdlib.h>
 
-/*const char map[6][11] = {
+const char map[6][11] = {
     {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', '*'},
     {'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', '*'},
     {'U', 'V', 'W', 'X', 'Y', 'Z', ' ', ' ', ' ', ' ', '*'},
     {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '*'},
     {'-', '+', '=', '!', '?', '@', '%', '&', '$', '.', '*'},
-    {'^', '^', '^', '^', '^', '^', '^', '^', '^', '^', '^'}};*/
+    {'^', '^', '^', '^', '^', '^', '^', '^', '^', '^', '^'}
+};
 
-const char map[6][11] = { //PAL
+/*const char map[6][11] = { //PAL
     {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', '*'},
     {'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', '*'},
     {'U', 'V', 'W', 'X', 'Y', 'Z', '*', '*', '*', '*', '*'},
     {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '*'},
     {'-', '+', '=', '!', '?', '@', '%', '&', '$', ' ', '*'},
-    {'^', '^', '^', '^', '^', '^', '^', '^', '^', '^', '^'}};
+    {'^', '^', '^', '^', '^', '^', '^', '^', '^', '^', '^'}};*/
+
+
+const char BlankNames[][4] = {
+
+	" ---",
+	"- --",
+	"-- -",
+	//"... ",
+	"   .",
+	".. .",
+	" . .",
+	"  ..",
+	". ..",
+	//" ...",
+	//"....",
+	"--  ",
+	"- - ",
+	" -- ",
+	//"--- ",
+	"-  -",
+	" - -",
+	".  .",
+	"  --",
+	" .. ",
+	". . ",
+	"..  ",
+	" -  ",
+	"-   ",
+	"  - ",
+	"  . ",
+	" .  ",
+	".   ",
+	"   -",
+	//"----",
+	
+};
+
 
 char input_blank_orig[] = {0x00, 0x40, 0x00, 0x00, 0x80, 0x80, 0x80, 0x80};
 char input_up_orig[] = {0x40, 0x40, 0x00, 0x00, 0x80, 0x80, 0x80, 0x80};
@@ -117,7 +155,7 @@ int prebuffer = 300;
 // wait for device to  request data  then send it
 void WriteControl(char *data) {
 
-	char byte = 0;
+	/*char byte = 0;
 	char ay = 'A';
 	if (prebuffer == 0) {
 		while (byte != 'A') {
@@ -127,7 +165,7 @@ void WriteControl(char *data) {
 	}
 	else prebuffer--;
 	write(SerialPort, &ay, 1);
-	write(SerialPort, data, 8);
+	write(SerialPort, data, 8);*/
 }
 
 void process_input(char *data, char *new) {
@@ -251,6 +289,11 @@ void RunActionSequence(struct action *seq, int length)
 
 char PreviouslyUsed()
 {
+	// also trigger on blank entry because they aren't allowed either
+	if (strcmp("    ", PreviousEntries[slot]) == 0) {
+		printf("all blank\n");
+		return 1;
+		}
     for (int k = 0; k < slot; k++)
     {
         if (strcmp(PreviousEntries[k], PreviousEntries[slot]) == 0)
@@ -307,7 +350,6 @@ void TypeStrings()
     }
 }
 
-int row = 0, column = 0;
 
 // character within slot
 int character = 0;
@@ -321,24 +363,26 @@ void ProcessCharacter(char c)
     if (character == 4)
     {
         
-        if (PreviouslyUsed())
-        {
-            // don't add it if we already did
-        }
-        else
-        {
-            slot++;
-            // if we filled all slots, type a screen of text
-            if (slot == 24)
-            {
-                RunActionSequence(EraseNames, sizeof(EraseNames)); // erase all the names and start again
-                press_nothing(20);
-                TypeStrings(PreviousEntries);
-                press_nothing(300); // wait a bit
-                
-                slot = 0;
-            }
-        }
+	if (PreviouslyUsed())
+	{
+		// replace with a blank pattern if this has already been used
+		memcpy(&PreviousEntries[slot][0], &BlankNames[slot][0], 4);
+	}
+
+	slot++;
+	// if we filled all slots, type a screen of text
+	if (slot == 24)
+	{
+		RunActionSequence(EraseNames, sizeof(EraseNames)); // erase all the names and start again
+		press_nothing(20);
+		TypeStrings(PreviousEntries);
+		for (int r=0; r < 24; r++){
+			printf("%c%c%c%c/", PreviousEntries[r][0],PreviousEntries[r][1],PreviousEntries[r][2],PreviousEntries[r][3]);
+			if (r % 4 == 3) printf("\n");
+		}
+		press_nothing(300); // wait a bit
+		slot = 0;
+	}
         
         character = 0;
     }
@@ -357,12 +401,74 @@ char ValidChar(char c)
     return 0;
 }
 
-/*
-algorithm is - 
-1. keep adding characters until we get a sequence with no repeats across 4-character groupings
+char pendingtext[96];
+int row=0; int column=0; int subcolumn=0;
 
-*/
 
+// Add a line of IRC, and maybe type it all out if we have enough to fill a page
+void TypeIRCLine(char *line) {
+
+	int inputchar = 0;
+	while (line[inputchar]){
+	
+		char c = toupper(line[inputchar++]);
+		if (ValidChar(c)){
+			//printf("adding %c\n", c);
+			pendingtext[(row * 16) + (column * 4) + subcolumn] = c;
+			subcolumn++;
+			if (subcolumn == 4){
+				subcolumn = 0;
+				column++;
+				if (column == 4){
+					column = 0;
+					row++;
+					if (row == 6){
+						break;
+					}
+				}
+			}
+		}
+	}
+	
+	// pad to the end of the row, if neccesary
+	while (subcolumn != 0 || column != 0){
+		//printf("padding 1\n");
+		pendingtext[(row * 16) + (column * 4) + (subcolumn)] = ' ';
+		
+		subcolumn++;
+		if (subcolumn == 4){
+			subcolumn = 0;
+			column++;
+			if (column == 4){
+				column = 0;
+				row++;
+			}
+		}
+	}
+	
+	// if we're near the end of a page, pad the rest then get typin'
+	if (row >= 4){
+		int curchar = (row * 16) + (column * 4) + (subcolumn);
+		while (curchar++ < 96){
+			pendingtext[curchar] = ' ';
+		}
+		// print the stuff
+		for (int row=0; row < 6; row++){
+			for (int column=0; column < 4; column++){
+				for (int subcolumn = 0; subcolumn < 4; subcolumn++){
+					//printf("%c", pendingtext[(row * 16) + (column * 4) + (subcolumn)]);
+					ProcessCharacter(pendingtext[(row * 16) + (column * 4) + (subcolumn)]);
+				}
+				printf("/");
+			}
+			printf("\n");
+		}
+		row=0; column = 0; subcolumn=0;
+	}
+	
+}
+
+char linebuf[1024];
 
 int main()
 {
@@ -373,6 +479,7 @@ int main()
     char reset = 'R';
     char setupstring[] = {'S', 'A', 'G', 0x80, 0x00, '\n'};
     char retstring[2];
+    
 
     //header = fopen("header.dtm", "r");
     // = fopen("outfile.dtm", "w");
@@ -391,30 +498,26 @@ int main()
     
     ; /* connect to port */
     
-    if ((SerialPort = open(port, O_RDWR)) == -1)
+    /*if ((SerialPort = open(port, O_RDWR)) == -1)
     {
     	printf("uh oh\n");
     	exit(1);
     }
     
-    
-    
-
-
     struct termios settings;
     tcgetattr(SerialPort, &settings);
 
-    cfsetospeed(&settings, baud); /* baud rate */
-    settings.c_cflag &= ~PARENB; /* no parity */
-    settings.c_cflag &= ~CSTOPB; /* 1 stop bit */
+    cfsetospeed(&settings, baud); 
+    settings.c_cflag &= ~PARENB; 
+    settings.c_cflag &= ~CSTOPB; /
     settings.c_cflag &= ~CSIZE;
-    settings.c_cflag |= CS8 | CLOCAL; /* 8 bits */
+    settings.c_cflag |= CS8 | CLOCAL; 
     settings.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
-    settings.c_oflag &= ~OPOST; /* raw output */
+    settings.c_oflag &= ~OPOST; 
     settings.c_cc[VMIN]  = 0;
 	settings.c_cc[VTIME] = 10;
 
-    tcsetattr(SerialPort, TCSANOW, &settings); /* apply the settings */
+    tcsetattr(SerialPort, TCSANOW, &settings); 
     tcflush(SerialPort, TCOFLUSH);
     
     retstring[0] = 0; retstring[1] = 0;
@@ -440,7 +543,7 @@ int main()
     if (!(retstring[0] == 0x01 && retstring[1] == 'S')){
         printf("oh dear\n", retstring[0], retstring[1]);
         exit(1);
-    }
+    }*/
     
     //printf("ok :%x %x\n",   retstring[0],   retstring[1]);
     
@@ -464,23 +567,42 @@ int main()
     ProcessCharacter(text2+i);
     }*/
 
-fcntl(0, F_SETFL, fcntl(0, F_GETFL) | O_NONBLOCK);
-int numread = 0;
-
+	fcntl(0, F_SETFL, fcntl(0, F_GETFL) | O_NONBLOCK);
+	int numread = 0;
+	
+	char *line = NULL;
+	  size_t len = 0;
+  ssize_t lineSize = 0;
+	int bufferindex = 0;
+	
     while (1)
     {
-        numread = read(0, &buf, 1);
+        /*lineSize = getline(&line, &len, stdin);
+  	printf("You entered %s, which has %zu chars.\n", line, lineSize - 1);
+  	TypeIRCLine(line);
+  	free(line);
+  	line = NULL;
+  	len = 0;
+  	lineSize = 0;*/
+  	
+  	numread = read(0, &buf, 1);
         if (numread == 1){
 		buf = toupper(buf);
 		if (ValidChar(buf))
 		{
-		    printf("Valid : %c\n", buf);
-		    ProcessCharacter(buf);
+			linebuf[bufferindex++] = buf;
+		    //printf("Valid : %c\n", buf);
+		    //ProcessCharacter(buf);
+		}
+		else if (buf == '\n'){
+			linebuf[bufferindex] = 0;
+			TypeIRCLine(linebuf);
+			bufferindex = 0;
 		}
         }
         else {
         	press_nothing(1);
-        	printf("nothing\n");
+        	//printf("nothing\n");
         }
     }
 
