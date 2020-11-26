@@ -59,7 +59,6 @@ const char BlankNames[][4] = {
 	
 };
 
->>>>>>> b447a84ae89c09c156146a29d750cc3f6baa8def
 
 char input_blank_orig[] = {0x00, 0x40, 0x00, 0x00, 0x80, 0x80, 0x80, 0x80};
 char input_up_orig[] = {0x40, 0x40, 0x00, 0x00, 0x80, 0x80, 0x80, 0x80};
@@ -107,7 +106,10 @@ struct action
 struct action GetToNameEntry[] = {
     {input_blank, 600}, // loading, hold B to get to progressive scan menu
     {input_a, 30}, // enable progressive scan
-    {input_blank, 700}, // wait for intro vid to start
+    {input_blank, 400},
+    {input_start, 60}, // no memory card1
+    {input_start, 60}, // no memory card2
+    {input_blank, 300}, // wait for intro vid to start
     {input_start, 8},   // skip intro vid
     {input_blank, 300},  // wait for start screen
     {input_start, 20},   // press start on start screen
@@ -158,7 +160,7 @@ int prebuffer = 300;
 // wait for device to  request data  then send it
 void WriteControl(char *data) {
 
-	/*char byte = 0;
+	char byte = 0;
 	char ay = 'A';
 	if (prebuffer == 0) {
 		while (byte != 'A') {
@@ -168,7 +170,7 @@ void WriteControl(char *data) {
 	}
 	else prebuffer--;
 	write(SerialPort, &ay, 1);
-	write(SerialPort, data, 8);*/
+	write(SerialPort, data, 8);
 }
 
 void process_input(char *data, char *new) {
@@ -501,7 +503,7 @@ int main()
     
     ; /* connect to port */
     
-    /*if ((SerialPort = open(port, O_RDWR)) == -1)
+    if ((SerialPort = open(port, O_RDWR)) == -1)
     {
     	printf("uh oh\n");
     	exit(1);
@@ -512,7 +514,7 @@ int main()
 
     cfsetospeed(&settings, baud); 
     settings.c_cflag &= ~PARENB; 
-    settings.c_cflag &= ~CSTOPB; /
+    settings.c_cflag &= ~CSTOPB;
     settings.c_cflag &= ~CSIZE;
     settings.c_cflag |= CS8 | CLOCAL; 
     settings.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
@@ -546,7 +548,7 @@ int main()
     if (!(retstring[0] == 0x01 && retstring[1] == 'S')){
         printf("oh dear\n", retstring[0], retstring[1]);
         exit(1);
-    }*/
+    }
     
     //printf("ok :%x %x\n",   retstring[0],   retstring[1]);
     
