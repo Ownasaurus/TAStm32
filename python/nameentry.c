@@ -6,21 +6,21 @@
 #include <termios.h>
 #include <stdlib.h>
 
-/*const char map[6][11] = {
+const char map[6][11] = {
     {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', '*'},
     {'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', '*'},
     {'U', 'V', 'W', 'X', 'Y', 'Z', ' ', ' ', ' ', ' ', '*'},
     {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '*'},
     {'-', '+', '=', '!', '?', '@', '%', '&', '$', '.', '*'},
-    {'^', '^', '^', '^', '^', '^', '^', '^', '^', '^', '^'}};*/
+    {'^', '^', '^', '^', '^', '^', '^', '^', '^', '^', '^'}};
 
-const char map[6][11] = { //PAL
+/*const char map[6][11] = { //PAL
     {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', '*'},
     {'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', '*'},
     {'U', 'V', 'W', 'X', 'Y', 'Z', '*', '*', '*', '*', '*'},
     {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '*'},
     {'-', '+', '=', '!', '?', '@', '%', '&', '$', ' ', '*'},
-    {'^', '^', '^', '^', '^', '^', '^', '^', '^', '^', '^'}};
+    {'^', '^', '^', '^', '^', '^', '^', '^', '^', '^', '^'}};*/
 
 char input_blank_orig[] = {0x00, 0x40, 0x00, 0x00, 0x80, 0x80, 0x80, 0x80};
 char input_up_orig[] = {0x40, 0x40, 0x00, 0x00, 0x80, 0x80, 0x80, 0x80};
@@ -66,15 +66,17 @@ struct action
 } action;
 
 struct action GetToNameEntry[] = {
-    {input_blank, 300}, // loading
+    {input_blank, 600}, // loading, hold B to get to progressive scan menu
+    {input_a, 30}, // enable progressive scan
+    {input_blank, 700}, // wait for intro vid to start
     {input_start, 8},   // skip intro vid
-    {input_blank, 50},  // wait for start screen
-    {input_start, 8},   // press start on start screen
-    {input_blank, 250}, // wait for menu
-    {input_down, 8},    // select VS
-    {input_start, 8},   // go into VS menu
-    {input_blank, 25},  // wait for VS menu to load
-    {input_up, 8},      // select name entry
+    {input_blank, 300},  // wait for start screen
+    {input_start, 20},   // press start on start screen
+    {input_blank, 100}, // wait for menu
+    {input_down, 10},    // select VS
+    {input_start, 50},   // go into VS menu
+    {input_blank, 50},  // wait for VS menu to load
+    {input_up, 20},      // select name entry
     {input_start, 8},   // go into name entry
     {input_blank, 50}   // wait for name entry to load
 };
@@ -82,26 +84,26 @@ struct action GetToNameEntry[] = {
 // assumes we're in the name entry menu with "new" higlighted
 struct action EraseNames[] =
     {
-        {input_b, 10},
-        {input_b, 10},
-        {input_down, 4},
-        {input_down, 4},
-        {input_a, 10},
-        {input_up, 4},
-        {input_a, 10},
-        {input_up, 4},
-        {input_a, 20},
-        {input_left, 4},
-        {input_a, 20},
-        {input_left, 4},
-        {input_a, 10},
-        {input_b, 10},
-        {input_b, 10},
-        {input_up, 4},
-        {input_up, 4},
-        {input_a, 10},
-        {input_up, 4},
-        {input_a, 10}
+        {input_b, 15},
+        {input_b, 15},
+        {input_down, 8},
+        {input_down, 8},
+        {input_a, 15},
+        {input_up, 8},
+        {input_a, 15},
+        {input_up, 8},
+        {input_a, 15},
+        {input_left, 8},
+        {input_a, 15},
+        {input_left, 8},
+        {input_a, 15},
+        {input_b, 15},
+        {input_b, 15},
+        {input_up, 8},
+        {input_up, 8},
+        {input_a, 15},
+        {input_up, 8},
+        {input_a, 15}
 
 };
 
@@ -334,7 +336,7 @@ void ProcessCharacter(char c)
                 RunActionSequence(EraseNames, sizeof(EraseNames)); // erase all the names and start again
                 press_nothing(20);
                 TypeStrings(PreviousEntries);
-                press_nothing(300); // wait a bit
+                press_nothing(1000); // wait a bit
                 
                 slot = 0;
             }
@@ -455,7 +457,7 @@ int main()
 
     int i, j;
 
-    //RunActionSequence(GetToNameEntry, sizeof(GetToNameEntry));
+    RunActionSequence(GetToNameEntry, sizeof(GetToNameEntry));
     //RunActionSequence(EraseNames, sizeof(EraseNames));
 
     /*read(STDIN_FILENO, &buf, 1);
