@@ -7,16 +7,16 @@
 #include <stdlib.h>
 #include <string.h>
 
-/*const char map[6][11] = {
+const char map[6][11] = {
     {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', '*'},
     {'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', '*'},
     {'U', 'V', 'W', 'X', 'Y', 'Z', ' ', ' ', ' ', ' ', '*'},
     {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '*'},
     {'-', '+', '=', '!', '?', '@', '%', '&', '$', '.', '*'},
     {'^', '^', '^', '^', '^', '^', '^', '^', '^', '^', '^'}
-};*/
+};
 
-const char map[6][11] = { //PAL
+/*const char map[6][11] = { //PAL
     {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', '*'},
     {'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', '*'},
     {'U', 'V', 'W', 'X', 'Y', 'Z', '.', '*', '*', '*', '*'},
@@ -24,6 +24,7 @@ const char map[6][11] = { //PAL
     {'-', '+', '=', '!', '?', '@', '%', '&', '$', ' ', '*'},
     {'^', '^', '^', '^', '^', '^', '^', '^', '^', '^', '^'}};
 
+*/
 
 const char BlankNames[][4] = {
 
@@ -470,7 +471,7 @@ void ProcessCharacter(char c)
 		}
 		printf("\n\n");
 		TypeStrings(PreviousEntries);
-		press_nothing(300); // wait a bit
+		press_nothing(1800); // wait a bit
 		slot = 0;
 	}
         
@@ -482,6 +483,7 @@ char ValidChars[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 -+=!?@%&$.";
 
 char ValidChar(char c)
 {
+	if (c == 0) return 0;
     int l = strlen(ValidChars);
     while (l--)
     {
@@ -554,6 +556,7 @@ void TypeIRCLine(char *line) {
 			//printf("\n");
 		}
 		row=0; column = 0; subcolumn=0;
+		memset (pendingtext, ' ', 96);
 	}
 	
 }
@@ -590,7 +593,7 @@ int main(int argc, char **argv)
     
     for (int a = 0; a < argc; ++a)
     {
-        if (strcmp(argv[a], "-n")){
+        if (strcmp(argv[a], "-n") == 0){
         	printf("Skipping boot sequence\n");
         	fromBoot = 0;
         }
