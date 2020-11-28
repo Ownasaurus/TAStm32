@@ -1,27 +1,28 @@
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <math.h>
-#include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <termios.h>
 #include <stdlib.h>
+#include <string.h>
 
-const char map[6][11] = {
+/*const char map[6][11] = {
     {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', '*'},
     {'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', '*'},
     {'U', 'V', 'W', 'X', 'Y', 'Z', ' ', ' ', ' ', ' ', '*'},
     {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '*'},
     {'-', '+', '=', '!', '?', '@', '%', '&', '$', '.', '*'},
     {'^', '^', '^', '^', '^', '^', '^', '^', '^', '^', '^'}
-};
+};*/
 
-/*const char map[6][11] = { //PAL
+const char map[6][11] = { //PAL
     {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', '*'},
     {'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', '*'},
-    {'U', 'V', 'W', 'X', 'Y', 'Z', '*', '*', '*', '*', '*'},
+    {'U', 'V', 'W', 'X', 'Y', 'Z', '.', '*', '*', '*', '*'},
     {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '*'},
     {'-', '+', '=', '!', '?', '@', '%', '&', '$', ' ', '*'},
-    {'^', '^', '^', '^', '^', '^', '^', '^', '^', '^', '^'}};*/
+    {'^', '^', '^', '^', '^', '^', '^', '^', '^', '^', '^'}};
 
 
 const char BlankNames[][4] = {
@@ -69,6 +70,89 @@ char input_start_orig[] = {0x01, 0x40, 0x00, 0x00, 0x80, 0x80, 0x80, 0x80};
 char input_a_orig[] = {0x02, 0x40, 0x00, 0x00, 0x80, 0x80, 0x80, 0x80};
 char input_b_orig[] = {0x04, 0x40, 0x00, 0x00, 0x80, 0x80, 0x80, 0x80};
 
+char *swears[] = {
+	"anal",
+	"anus",
+	"arse",
+	"ass",
+	"ballsack",
+	"balls",
+	"bastard",
+	"bitch",
+	"biatch",
+	"bloody",
+	"blowjob",
+	"blow job",
+	"bollock",
+	"bollok",
+	"boner",
+	"boob",
+	"bugger",
+	"butt",
+	"buttplug",
+	"clitoris",
+	"cock",
+	"coon",
+	"crap",
+	"cunt",
+	"damn",
+	"dick",
+	"dildo",
+	"dyke",
+	"fag",
+	"feck",
+	"fellate",
+	"fellatio",
+	"felching",
+	"fuck",
+	"f u c k",
+	"fudgepacker",
+	"fudge packer",
+	"Goddamn",
+	"God damn",
+	"hell",
+	"homo",
+	"jerk",
+	"jizz",
+	"knobend",
+	"knob end",
+	"kike",
+	"kyke",
+	"labia",
+	"lmao",
+	"lmfao",
+	"muff",
+	"nigger",
+	"nigga",
+	"omg",
+	"paki",
+	"penis",
+	"piss",
+	"poop",
+	"prick",
+	"pube",
+	"pussy",
+	"tard",
+	"scrotum",
+	"sex",
+	"shit",
+	"s hit",
+	"sh1t",
+	"slut",
+	"spic",
+	"smegma",
+	"spunk",
+	"tits",
+	"tosser",
+	"turd",
+	"twat",
+	"vagina",
+	"wank",
+	"whore",
+	"wtf",
+	NULL
+};
+
 const char substitutions[][2] = {
     " .",
     "B8",
@@ -104,7 +188,7 @@ struct action
 } action;
 
 struct action GetToNameEntry[] = {
-    {input_blank, 600}, // loading, hold B to get to progressive scan menu
+    {input_blank, 600}, // loading
     {input_a, 30}, // enable progressive scan
     {input_blank, 400},
     {input_start, 60}, // no memory card1
@@ -270,7 +354,7 @@ void add_name(char *name)
 {
 
     press_button(&input_start[0], 10);
-    printf("%c%c%c%c\n", name[0], name[1], name[2], name[3]);
+    //printf("%x,%x,%x,%x\n", name[0], name[1], name[2], name[3]);
     x = 0;
     y = 0;
     for (int i = 0; i < 4; i++)
@@ -296,14 +380,14 @@ char PreviouslyUsed()
 {
 	// also trigger on blank entry because they aren't allowed either
 	if (strcmp("    ", PreviousEntries[slot]) == 0) {
-		printf("all blank\n");
+		//printf("all blank\n");
 		return 1;
 		}
     for (int k = 0; k < slot; k++)
     {
         if (strcmp(PreviousEntries[k], PreviousEntries[slot]) == 0)
         {
-            printf("previously done : %s\n", PreviousEntries[slot]);
+            //printf("previously done : %s\n", PreviousEntries[slot]);
             return 1;
         }
     }
@@ -380,11 +464,12 @@ void ProcessCharacter(char c)
 	{
 		RunActionSequence(EraseNames, sizeof(EraseNames)); // erase all the names and start again
 		press_nothing(20);
-		TypeStrings(PreviousEntries);
 		for (int r=0; r < 24; r++){
 			printf("%c%c%c%c/", PreviousEntries[r][0],PreviousEntries[r][1],PreviousEntries[r][2],PreviousEntries[r][3]);
 			if (r % 4 == 3) printf("\n");
 		}
+		printf("\n\n");
+		TypeStrings(PreviousEntries);
 		press_nothing(300); // wait a bit
 		slot = 0;
 	}
@@ -464,18 +549,34 @@ void TypeIRCLine(char *line) {
 					//printf("%c", pendingtext[(row * 16) + (column * 4) + (subcolumn)]);
 					ProcessCharacter(pendingtext[(row * 16) + (column * 4) + (subcolumn)]);
 				}
-				printf("/");
+				//printf("/");
 			}
-			printf("\n");
+			//printf("\n");
 		}
 		row=0; column = 0; subcolumn=0;
 	}
 	
 }
 
-char linebuf[1024];
+char linebuf[1024], tempbuf[1024];
 
-int main()
+void BleepSwears(char *line){
+	int swearword = 0;
+	char *swearpos;
+	
+	while (swears[swearword] != NULL) { 
+		while (swearpos = strcasestr(line, swears[swearword])) {
+			int swearlen = strlen(swears[swearword]);
+			while (swearlen--) {
+				//printf("%d\n", swearlen);
+				swearpos[swearlen] = '*';
+			}
+		}
+		swearword++;
+	}
+}
+
+int main(int argc, char **argv)
 {
 
     FILE *header;
@@ -484,7 +585,16 @@ int main()
     char reset = 'R';
     char setupstring[] = {'S', 'A', 'G', 0x80, 0x00, '\n'};
     char retstring[2];
+ 
+    char fromBoot = 1;   
     
+    for (int a = 0; a < argc; ++a)
+    {
+        if (strcmp(argv[a], "-n")){
+        	printf("Skipping boot sequence\n");
+        	fromBoot = 0;
+        }
+    }
 
     //header = fopen("header.dtm", "r");
     // = fopen("outfile.dtm", "w");
@@ -556,6 +666,7 @@ int main()
 
     //             /   |   |   |   /   |   |   |   /   |   |   |   /   |   |   |   /   |   |   |   /   |   |   |   X
     //char *text1 = "WEL COME TO THE SECRET TAS BLOCKWITH OWNASAURUS PRACTICAL   TAS KINGKIRB 64 -   AND RASTERI    -";
+    
     /*while (fread(&buf, 1, 1, header) == 1)
     fwrite(&buf, 1, 1, outfile);
     fclose(header);*/
@@ -563,7 +674,8 @@ int main()
 
     int i, j;
 
-    RunActionSequence(GetToNameEntry, sizeof(GetToNameEntry));
+	if (fromBoot)
+    		RunActionSequence(GetToNameEntry, sizeof(GetToNameEntry));
     //RunActionSequence(EraseNames, sizeof(EraseNames));
 
     /*read(STDIN_FILENO, &buf, 1);
@@ -579,6 +691,7 @@ int main()
 	  size_t len = 0;
   ssize_t lineSize = 0;
 	int bufferindex = 0;
+	char linepending = 0;
 	
     while (1)
     {
@@ -591,24 +704,32 @@ int main()
   	lineSize = 0;*/
   	
   	numread = read(0, &buf, 1);
+
         if (numread == 1){
 		buf = toupper(buf);
 		if (ValidChar(buf))
 		{
-			linebuf[bufferindex++] = buf;
+			tempbuf[bufferindex++] = buf;
 		    //printf("Valid : %c\n", buf);
 		    //ProcessCharacter(buf);
 		}
 		else if (buf == '\n'){
-			linebuf[bufferindex] = 0;
-			TypeIRCLine(linebuf);
+			
+			tempbuf[bufferindex] = 0;
+			BleepSwears(tempbuf);
+			strcpy(linebuf, tempbuf);
+			linepending = 1;
 			bufferindex = 0;
 		}
         }
-        else {
-        	press_nothing(1);
-        	//printf("nothing\n");
-        }
+	else if (linepending){
+		printf("Typing : \"%s\"\n", linebuf);
+		TypeIRCLine(linebuf);
+		linepending = 0;
+	}
+	press_nothing(1);
+	//printf("nothing\n");
+
     }
 
     //RunActionSequence(EraseNames, sizeof(EraseNames));
