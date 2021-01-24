@@ -253,11 +253,6 @@ void EXTI0_IRQHandler(void)
 void EXTI1_IRQHandler(void)
 {
   /* USER CODE BEGIN EXTI1_IRQn 0 */
-        if(!(P1_LATCH_GPIO_Port->IDR & P1_LATCH_Pin)) // glitch!
-        {
-             HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_4);
-             return;
-        }
 
 	// P1_LATCH
 	int8_t regbit = 50, databit = -1; // random initial values
