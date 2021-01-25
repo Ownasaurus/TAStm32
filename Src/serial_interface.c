@@ -3,6 +3,7 @@
 #include "stm32f4xx_it.h"
 #include "main.h"
 #include "TASRun.h"
+#include "info.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -41,6 +42,9 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 			case SERIAL_PREFIX:
 				switch(input)
 				{
+					case 'I': // return device info
+						serial_write_InfoBlob();
+						break;
 					case 'U': // set up latch train for a run
 						instance.state = SERIAL_TRAIN_RUN;
 						break;
