@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import serial, time
+import serial, time, json
 import serial_helper
 import argparse_helper
 import tastm32
@@ -71,7 +71,7 @@ def readVarInt(dev):
   byte = 0
   while True:
     cb = readByte(dev)[0]
-    value |= ( cb ^ 0x7f << (7*byte) )
+    value |= ( (cb & 0x7f) << (7*byte) )
     if cb & 0x80:
       byte += 1
       continue
@@ -93,8 +93,8 @@ def readVarArray(dev):
     splitchunks = (chunkremainder+chunk).split(b'\x00')
     chunkremainder = splitchunks.pop()
     for item in splitchunks:
-      #items.append(item.decode('ascii'))
-       items.append(item)
+      items.append(item.decode('utf8'))
+       #items.append(item)
     if arraysize == 0:
       return items
 
@@ -108,6 +108,8 @@ print("--- reading headers")
 headers = readVarArray(dev)
 print("--- reading values")
 values = readVarArray(dev)
-print([*zip(headers,values)])
-fields = dict(*zip(headers, values))
-print("---fields", fields)
+#print(headers)
+#print(values)
+#print([*zip(headers,values)])
+fields = dict([*zip(headers, values)])
+print("---fields", json.dumps(fields, indent=2))
