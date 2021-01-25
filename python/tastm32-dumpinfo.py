@@ -12,11 +12,13 @@ if args.serial == None:
 else:
     dev = tastm32.TAStm32(args.serial)
 
+tastm32.DEBUG = args.debug
+
 def readUntil(dev, char):
   while True:
     try:
       c = dev.read(1)
-      if c == '':
+      if c == b'':
         continue
       if c == char:
         return
@@ -31,7 +33,7 @@ def readByte(dev):
   while True:
     try:
       c = dev.read(1)
-      if c == '':
+      if c == b'':
         continue
       return c
     except serial.SerialException:
@@ -47,7 +49,7 @@ def readBytes(dev, size):
   while True:
     try:
       c = dev.read(1)
-      if c == '':
+      if c == b'':
         continue
       remaining -= 1
       numBytes = dev.ser.inWaiting()
@@ -68,8 +70,8 @@ def readVarInt(dev):
   value = 0
   byte = 0
   while True:
-    cb = readByte(dev)
-    value |= ( cb & 0x7f << (7*byte) )
+    cb = readByte(dev)[0]
+    value |= ( cb ^ 0x7f << (7*byte) )
     if cb & 0x80:
       byte += 1
       continue
@@ -84,14 +86,15 @@ def readVarArray(dev):
     chunk = b''
     if arraysize > 1024:
       arraysize -= 1024
-      chunk = readBytes(1024)
+      chunk = readBytes(dev, 1024)
     else:
-      chunk = readBytes(arraysize)
+      chunk = readBytes(dev, arraysize)
       arraysize = 0
     splitchunks = (chunkremainder+chunk).split(b'\x00')
     chunkremainder = splitchunks.pop()
-    for header in splitchunks:
-      items.push(header.decode('utf8'))
+    for item in splitchunks:
+      #items.append(item.decode('ascii'))
+       items.append(item)
     if arraysize == 0:
       return items
 
@@ -105,6 +108,6 @@ print("--- reading headers")
 headers = readVarArray(dev)
 print("--- reading values")
 values = readVarArray(dev)
-fields = dict(zip(headers, values))
+print([*zip(headers,values)])
+fields = dict(*zip(headers, values))
 print("---fields", fields)
-
