@@ -41,6 +41,9 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 			case SERIAL_PREFIX:
 				switch(input)
 				{
+					case '\xaa': // ping
+						serial_interface_output((uint8_t*)"\x55", 1); // pong
+						break;
 					case 'U': // set up latch train for a run
 						instance.state = SERIAL_TRAIN_RUN;
 						break;
