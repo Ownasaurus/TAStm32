@@ -15,8 +15,6 @@ else:
 # connect to device
 ser = dev
 
-print("--- Sending Ping Command")
-
 def ping(attempt = 0):
   if (attempt < 5):
     dev.ping()
@@ -36,3 +34,5 @@ def ping(attempt = 0):
         print("--- Unhandled Error")
 
 
+print("--- Sending Ping Command")
+ping()

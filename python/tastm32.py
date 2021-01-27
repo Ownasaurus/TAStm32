@@ -121,7 +121,7 @@ class TAStm32():
                 if c == '':
                     continue
                 readCount += 1
-                if c === b'\x55':
+                if c == b'\x55':
                     return 0
                 if readCount > 1000:
                     return -2
@@ -420,7 +420,7 @@ def main():
     # Latch trains
     if args.latchtrain != '':
         dev.send_latchtrain(run_id, args.latchtrain)
-    
+
     run = RunObject(run_id, buffer, fn, blankframe)
     print('Main Loop Start')
     if not args.nobulk:
