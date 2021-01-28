@@ -108,7 +108,7 @@ class TAStm32():
         self.write(b'PH')
 
     def ping(self):
-        self.write(b'\xaa')
+        self.write(b'\xAA')
 
     def waitForPong(self):
         readCount = 0
