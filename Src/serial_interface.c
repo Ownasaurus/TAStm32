@@ -44,6 +44,9 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 				{
 					case 'I': // return device info
 						serial_write_InfoBlob();
+            break;
+					case '\xAA': // ping
+						serial_interface_output((uint8_t*)"\x55", 1); // pong
 						break;
 					case 'U': // set up latch train for a run
 						instance.state = SERIAL_TRAIN_RUN;
