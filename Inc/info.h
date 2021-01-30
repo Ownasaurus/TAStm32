@@ -1,7 +1,10 @@
 /**
-@file vport.h
+@file info.h
 @brief Generates the device info blob and writes it over serial.
 */
+
+#ifndef INFO_H
+#define INFO_H
 
 #pragma once
 #include "TASRun.h"
@@ -15,7 +18,7 @@
 
 /*****This should be defined by the makefile at compile-time.*****/
 #ifndef GIT_HASH
-#define GIT_HASH No Git hash defined at compile time. Are teehats to blame?
+#define GIT_HASH No Git hash defined at compile time - this might be a TrueStudio dev build. Are teehats to blame?
 #endif
 
 /*****Edit the below fields to adjust the info blob parameters.*****/
@@ -74,10 +77,8 @@ static inline void serial_write_InfoBlob()
   for(int i=0; i<ARRLEN(info_field_vals); i++) vals_array_bytes += strlen(info_field_vals[i])+1;
 
   outbuf=malloc(1);
-  bufsize=0;
   outbuf[0]='I';
-  bufsize++;
-
+  bufsize=1;
 
   buffer_write_varint(ARRLEN(info_field_names));
   buffer_write_varint(names_array_bytes);
@@ -101,3 +102,4 @@ static inline void serial_write_InfoBlob()
   serial_interface_output(outbuf, bufsize);
   free(outbuf);
 }
+#endif //INFO_H
