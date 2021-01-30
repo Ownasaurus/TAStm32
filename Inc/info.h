@@ -3,10 +3,10 @@
 @brief Generates the device info blob and writes it over serial.
 */
 
+#pragma once
 #ifndef INFO_H
 #define INFO_H
 
-#pragma once
 #include "TASRun.h"
 #include <string.h>
 #include <stdlib.h>
@@ -103,3 +103,4 @@ static inline void serial_write_InfoBlob()
   free(outbuf);
 }
 #endif //INFO_H
+
