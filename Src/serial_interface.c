@@ -44,7 +44,7 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 				{
 					case 'I': // return device info
 						serial_write_InfoBlob();
-            break;
+						break;
 					case '\xAA': // ping
 						serial_interface_output((uint8_t*)"\x55", 1); // pong
 						break;
@@ -55,7 +55,6 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 						instance.state = SERIAL_LANE;
 						break;
 					case 'R': // Reset/clear all configuration
-
 						ResetRun();
 						serial_interface_output((uint8_t*)"\x01R", 2); // good response for reset
 						instance.state = SERIAL_COMPLETE;
@@ -456,5 +455,5 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 				break;
 		}
 	}
-
 }
+
