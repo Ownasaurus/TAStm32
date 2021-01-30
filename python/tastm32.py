@@ -107,6 +107,29 @@ class TAStm32():
     def power_hard_reset(self):
         self.write(b'PH')
 
+    def ping(self):
+        self.write(b'\xAA')
+
+    def waitForPong(self):
+        readCount = 0
+        start = time.time()
+        while True:
+            try:
+                if time.time() > start+15:
+                    return -1
+                c = self.read(1)
+                if c == '':
+                    continue
+                readCount += 1
+                if c == b'\x55':
+                    return 0
+                if readCount > 1000:
+                    return -2
+            except serial.SerialException:
+                return -3
+            except KeyboardInterrupt:
+                return -4
+
     def set_bulk_data_mode(self, prefix, mode):
         command = b''.join([b'Q', prefix, mode])
         self.write(command)
@@ -397,7 +420,7 @@ def main():
     # Latch trains
     if args.latchtrain != '':
         dev.send_latchtrain(run_id, args.latchtrain)
-    
+
     run = RunObject(run_id, buffer, fn, blankframe)
     print('Main Loop Start')
     if not args.nobulk:

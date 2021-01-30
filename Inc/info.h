@@ -80,7 +80,6 @@ static inline void serial_write_InfoBlob()
   outbuf[0]='I';
   bufsize=1;
 
-
   buffer_write_varint(ARRLEN(info_field_names));
   buffer_write_varint(names_array_bytes);
 
@@ -103,5 +102,4 @@ static inline void serial_write_InfoBlob()
   serial_interface_output(outbuf, bufsize);
   free(outbuf);
 }
-
 #endif //INFO_H
