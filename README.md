@@ -61,11 +61,12 @@ Once you've prepared a movie dump, use it with the TAStm32. Here is one example 
     python3 tastm32.py --console snes --players 1,5 --dpcm --clock 14 --transition 2123 A --blank 1 smb3_agdq.r16m
 
 ### Special Thanks
-#### TheMas3212 - The main contributor to this project. Aided with all things python, designing the serial communication protocol, helping with PCB design, and debugging throughout the whole process.
+#### TheMas3212 - Aided with all things python, designing the serial communication protocol, helping with PCB design, and debugging throughout the whole process.
 #### CraftedCart - Designed the awesome-looking 3D case
 #### total (@tewtal) - Helped with NES/SNES protocol and debugging. Provided his code as a reference
 #### booto (@booto) - Helped fix N64/GC protocols, serial-over-USB, and debugging
-#### rasteri (@rasteri) - Standalone USB playback, SNES multitap
+#### rasteri (@rasteri) - Standalone USB playback, SNES multitap, and more!
+#### Skippy - Pretty much helped a little bit with everything: including software, hardware, advice on proper tools, and more!
 
 dwangoAC (@dwangoac) - warmly accepting me into the TASBot community
 
