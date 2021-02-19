@@ -173,7 +173,7 @@ uint16_t* latch_trains;
 void my_wait_us_asm(int n);
 static uint8_t UART2_OutputFunction(uint8_t *buffer, uint16_t n);
 static HAL_StatusTypeDef Simple_Transmit(UART_HandleTypeDef *huart);
-void GCN64CommandStart(uint8_t player);
+void GCN64_CommandStart(uint8_t player);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -617,7 +617,7 @@ void EXTI4_IRQHandler(void)
 	// Otherwise process as N64 command
 	else
 	{
-		GCN64CommandStart(1);
+		GCN64_CommandStart(1);
 	}
 
   /* USER CODE END EXTI4_IRQn 0 */
@@ -637,7 +637,7 @@ void EXTI9_5_IRQHandler(void)
 
 	if(c == CONSOLE_N64 || c == CONSOLE_GC)
 	{
-		GCN64CommandStart(2);
+		GCN64_CommandStart(2);
 		HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_9); // P2D2
 	}
 	else if(c == CONSOLE_SNES || c == CONSOLE_NES)
@@ -906,7 +906,7 @@ void ResetAndEnableP2ClockTimer()
 	HAL_TIM_Base_Start_IT(&htim7);
 }
 
-void GCN64CommandStart(uint8_t player)
+void GCN64_CommandStart(uint8_t player)
 {
 	GCControllerData gc_data;
 
@@ -914,7 +914,7 @@ void GCN64CommandStart(uint8_t player)
 	uint32_t cmd;
 	RunDataArray *frame = NULL;
 
-	cmd = readCommand();
+	cmd = GCN64_ReadCommand(player);
 
 	my_wait_us_asm(2); // wait a small amount of time before replying
 

@@ -6,25 +6,40 @@
 
 void my_wait_us_asm(int n);
 
-static uint8_t GetMiddleOfPulse();
+static uint8_t GetMiddleOfPulse(uint8_t player);
 static void SendByte(unsigned char b);
 
-// N64 data pin is p1_d2
-#define N64_READ (P1_DATA_2_GPIO_Port->IDR & P1_DATA_2_Pin)
+uint8_t GCN64_ReadBit(uint8_t player)
+{
+	if(player == 1)
+	{
+		return (P1_DATA_2_GPIO_Port->IDR & P1_DATA_2_Pin) ? 1U : 0U;
+	}
+	else if(player == 2)
+	{
+		return (P2_DATA_2_GPIO_Port->IDR & P2_DATA_2_Pin) ? 1U : 0U;
+	}
+	else
+	{
+		return 2U; // unsupported
+	}
+}
 
-uint32_t readCommand()
+uint32_t GCN64_ReadCommand(uint8_t player)
 {
 	uint8_t retVal;
 
 	// we are already at the first falling edge
 	// get middle of first pulse, 2us later
-	my_wait_us_asm(2);
-	uint32_t command = N64_READ ? 1U : 0U, bits_read = 1;
+	my_wait_us_asm(2); 	// consider shortening slightly to account for function call
+						// overhead, ISR overhead, etc. Idea by Sauraen
+
+	uint32_t command = GCN64_ReadBit(player), bits_read = 1;
 
     while(1) // read at least 9 bits (1 byte + stop bit)
     {
         command = command << 1; // make room for the new bit
-        retVal = GetMiddleOfPulse();
+        retVal = GetMiddleOfPulse(player);
         if(retVal == 5) // timeout
         {
         	if(bits_read >= 8)
@@ -49,13 +64,13 @@ uint32_t readCommand()
     }
 }
 
-static uint8_t GetMiddleOfPulse()
+static uint8_t GetMiddleOfPulse(uint8_t player)
 {
 	uint8_t ct = 0;
     // wait for line to go high
     while(1)
     {
-        if(N64_READ) break;
+        if(GCN64_ReadBit(player)) break;
 
         ct++;
         if(ct == 200) // failsafe limit TBD
@@ -67,7 +82,7 @@ static uint8_t GetMiddleOfPulse()
     // wait for line to go low
     while(1)
     {
-        if(!N64_READ) break;
+        if(!GCN64_ReadBit(player)) break;
 
         ct++;
 		if(ct == 200) // failsafe limit TBD
@@ -79,7 +94,7 @@ static uint8_t GetMiddleOfPulse()
     // wait 2 microseconds to be in the middle of the pulse, and read. high --> 1.  low --> 0.
     my_wait_us_asm(2);
 
-    return N64_READ ? 1U : 0U;
+    return GCN64_ReadBit(player);
 }
 
 void SendStop()
