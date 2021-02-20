@@ -906,7 +906,7 @@ void ResetAndEnableP2ClockTimer()
 	HAL_TIM_Base_Start_IT(&htim7);
 }
 
-void GCN64_CommandStart(uint8_t player)
+inline void GCN64_CommandStart(uint8_t player)
 {
 	GCControllerData gc_data;
 
