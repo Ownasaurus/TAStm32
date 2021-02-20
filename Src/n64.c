@@ -9,7 +9,8 @@ void my_wait_us_asm(int n);
 static uint8_t GetMiddleOfPulse(uint8_t player);
 static void SendByte(uint8_t player, unsigned char b);
 
-inline uint8_t GCN64_ReadBit(uint8_t player)
+
+uint8_t GCN64_ReadBit(uint8_t player)
 {
 	if(player == 1)
 	{
