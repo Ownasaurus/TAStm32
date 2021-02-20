@@ -10,7 +10,7 @@ static uint8_t GetMiddleOfPulse(uint8_t player);
 static void SendByte(uint8_t player, unsigned char b);
 
 
-uint8_t GCN64_ReadBit(uint8_t player)
+inline uint8_t GCN64_ReadBit(uint8_t player)
 {
 	if(player == 1)
 	{
@@ -98,7 +98,7 @@ static uint8_t GetMiddleOfPulse(uint8_t player)
     return GCN64_ReadBit(player);
 }
 
-void SendStop(uint8_t player)
+inline void SendStop(uint8_t player)
 {
 	if(player == 1)
 	{
@@ -123,7 +123,7 @@ void SendIdentityN64(uint8_t player)
     SendStop(player);
 }
 
-void write_1(uint8_t player)
+inline void write_1(uint8_t player)
 {
 	if(player == 1)
 	{
@@ -141,7 +141,7 @@ void write_1(uint8_t player)
 	}
 }
 
-void write_0(uint8_t player)
+inline void write_0(uint8_t player)
 {
 	if(player == 1)
 	{
