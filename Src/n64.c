@@ -7,9 +7,9 @@
 void my_wait_us_asm(int n);
 
 static uint8_t GetMiddleOfPulse(uint8_t player);
-static void SendByte(unsigned char b);
+static void SendByte(uint8_t player, unsigned char b);
 
-uint8_t GCN64_ReadBit(uint8_t player)
+inline uint8_t GCN64_ReadBit(uint8_t player)
 {
 	if(player == 1)
 	{
@@ -97,55 +97,84 @@ static uint8_t GetMiddleOfPulse(uint8_t player)
     return GCN64_ReadBit(player);
 }
 
-void SendStop()
+void SendStop(uint8_t player)
 {
-	P1_DATA_2_GPIO_Port->BSRR = P1_DATA_2_Pin<<16;
-	my_wait_us_asm(1);
-	P1_DATA_2_GPIO_Port->BSRR = P1_DATA_2_Pin;
+	if(player == 1)
+	{
+		P1_DATA_2_GPIO_Port->BSRR = P1_DATA_2_Pin<<16;
+		my_wait_us_asm(1);
+		P1_DATA_2_GPIO_Port->BSRR = P1_DATA_2_Pin;
+	}
+	else if(player == 2)
+	{
+		P2_DATA_2_GPIO_Port->BSRR = P2_DATA_2_Pin<<16;
+		my_wait_us_asm(1);
+		P2_DATA_2_GPIO_Port->BSRR = P2_DATA_2_Pin;
+	}
 }
 
-void SendIdentityN64()
+void SendIdentityN64(uint8_t player)
 {
     // reply 0x05, 0x00, 0x02
-    SendByte(0x05);
-    SendByte(0x00);
-    SendByte(0x02);
-    SendStop();
+    SendByte(player, 0x05);
+    SendByte(player, 0x00);
+    SendByte(player, 0x02);
+    SendStop(player);
 }
 
-void write_1()
+void write_1(uint8_t player)
 {
-	P1_DATA_2_GPIO_Port->BSRR = P1_DATA_2_Pin<<16;
-	my_wait_us_asm(1);
-	P1_DATA_2_GPIO_Port->BSRR = P1_DATA_2_Pin;
-    my_wait_us_asm(3);
+	if(player == 1)
+	{
+		P1_DATA_2_GPIO_Port->BSRR = P1_DATA_2_Pin<<16;
+		my_wait_us_asm(1);
+		P1_DATA_2_GPIO_Port->BSRR = P1_DATA_2_Pin;
+		my_wait_us_asm(3);
+	}
+	else if(player == 2)
+	{
+		P2_DATA_2_GPIO_Port->BSRR = P2_DATA_2_Pin<<16;
+		my_wait_us_asm(1);
+		P2_DATA_2_GPIO_Port->BSRR = P2_DATA_2_Pin;
+		my_wait_us_asm(3);
+	}
 }
 
-void write_0()
+void write_0(uint8_t player)
 {
-	P1_DATA_2_GPIO_Port->BSRR = P1_DATA_2_Pin<<16;
-	my_wait_us_asm(3);
-	P1_DATA_2_GPIO_Port->BSRR = P1_DATA_2_Pin;
-    my_wait_us_asm(1);
+	if(player == 1)
+	{
+		P1_DATA_2_GPIO_Port->BSRR = P1_DATA_2_Pin<<16;
+		my_wait_us_asm(3);
+		P1_DATA_2_GPIO_Port->BSRR = P1_DATA_2_Pin;
+		my_wait_us_asm(1);
+	}
+	else if(player == 2)
+	{
+		P2_DATA_2_GPIO_Port->BSRR = P2_DATA_2_Pin<<16;
+		my_wait_us_asm(1);
+		P2_DATA_2_GPIO_Port->BSRR = P2_DATA_2_Pin;
+		my_wait_us_asm(3);
+	}
 }
 
 // send a byte from LSB to MSB (proper serialization)
-static void SendByte(unsigned char b)
+static void SendByte(uint8_t player, unsigned char b)
 {
     for(int i = 7;i >= 0;i--) // send all 8 bits, one at a time
     {
         if((b >> i) & 1)
         {
-            write_1();
+            write_1(player);
         }
         else
         {
-            write_0();
+            write_0(player);
         }
     }
 }
 
-void SendRunDataN64(N64ControllerData n64data)
+void SendRunDataN64(uint8_t player, N64ControllerData n64data)
 {
 	unsigned long data = 0;
 	memcpy(&data,&n64data,sizeof(data));
@@ -158,19 +187,19 @@ void SendRunDataN64(N64ControllerData n64data)
     	{
 			if((data >> (b+(i*8)) & 1))
 			{
-				write_1();
+				write_1(player);
 			}
 			else
 			{
-				write_0();
+				write_0(player);
 			}
     	}
     }
 
-    SendStop();
+    SendStop(player);
 }
 
-void SendControllerDataN64(unsigned long data)
+void SendControllerDataN64(uint8_t player, unsigned long data)
 {
     // send one byte at a time from MSB to LSB
 	unsigned int size = sizeof(data); // should be 4 bytes
@@ -181,19 +210,19 @@ void SendControllerDataN64(unsigned long data)
     	{
 			if((data >> (b+(i*8)) & 1))
 			{
-				write_1();
+				write_1(player);
 			}
 			else
 			{
-				write_0();
+				write_0(player);
 			}
     	}
     }
 
-    SendStop();
+    SendStop(player);
 }
 
-void SendRunDataGC(GCControllerData gcdata)
+void SendRunDataGC(uint8_t player, GCControllerData gcdata)
 {
 	uint64_t data = 0;
 	memcpy(&data,&gcdata,sizeof(data));
@@ -206,19 +235,19 @@ void SendRunDataGC(GCControllerData gcdata)
 		{
 			if((data >> (b+(i*8)) & 1))
 			{
-				write_1();
+				write_1(player);
 			}
 			else
 			{
-				write_0();
+				write_0(player);
 			}
 		}
 	}
 
-    SendStop();
+    SendStop(player);
 }
 
-void SendControllerDataGC(uint64_t data)
+void SendControllerDataGC(uint8_t player, uint64_t data)
 {
     unsigned int size = sizeof(data); // should be 8 bytes
 
@@ -228,27 +257,27 @@ void SendControllerDataGC(uint64_t data)
 		{
 			if((data >> (b+(i*8)) & 1))
 			{
-				write_1();
+				write_1(player);
 			}
 			else
 			{
-				write_0();
+				write_0(player);
 			}
 		}
 	}
 
-    SendStop();
+    SendStop(player);
 }
 
-void SendIdentityGC()
+void SendIdentityGC(uint8_t player)
 {
-    SendByte(0x09);
-    SendByte(0x00);
-    SendByte(0x30);
-    SendStop();
+    SendByte(player, 0x09);
+    SendByte(player, 0x00);
+    SendByte(player, 0x30);
+    SendStop(player);
 }
 
-void SendOriginGC()
+void SendOriginGC(uint8_t player)
 {
 	GCControllerData gc_data;
 
@@ -273,16 +302,16 @@ void SendOriginGC()
 		{
 			if((data >> (b+(i*8)) & 1))
 			{
-				write_1();
+				write_1(player);
 			}
 			else
 			{
-				write_0();
+				write_0(player);
 			}
 		}
 	}
 
-	SendByte(0x00);
-	SendByte(0x00);
-	SendStop();
+	SendByte(player, 0x00);
+	SendByte(player, 0x00);
+	SendStop(player);
 }

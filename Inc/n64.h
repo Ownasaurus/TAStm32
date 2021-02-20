@@ -58,12 +58,12 @@ typedef struct __attribute__((packed))
 
 void initialize_n64_buffer();
 uint32_t GCN64_ReadCommand(uint8_t player);
-void SendIdentityN64();
-void SendIdentityGC();
-void SendOriginGC();
-void SendRunDataN64(N64ControllerData data);
-void SendControllerDataN64(unsigned long data);
-void SendRunDataGC(GCControllerData gcdata);
-void SendControllerDataGC(uint64_t data);
+void SendIdentityN64(uint8_t player);
+void SendIdentityGC(uint8_t player);
+void SendOriginGC(uint8_t player);
+void SendRunDataN64(uint8_t player, N64ControllerData data);
+void SendControllerDataN64(uint8_t player, unsigned long data);
+void SendRunDataGC(uint8_t player, GCControllerData gcdata);
+void SendControllerDataGC(uint8_t player, uint64_t data);
 
 #endif

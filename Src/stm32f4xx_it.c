@@ -919,41 +919,49 @@ void GCN64_CommandStart(uint8_t player)
 	my_wait_us_asm(2); // wait a small amount of time before replying
 
 	//-------- SEND RESPONSE
-	SetN64OutputMode();
+	SetN64OutputMode(player);
 
 	switch(cmd)
 	{
 	  case 0x00: // identity
 		  if(tasrun->console == CONSOLE_N64)
 		  {
-			  SendIdentityN64();
+			  SendIdentityN64(player);
 		  }
 		  else if(tasrun->console == CONSOLE_GC)
 		  {
-			  SendIdentityGC();
+			  SendIdentityGC(player);
 		  }
 		  break;
 	  case 0xFF: // N64 reset
-		  SendIdentityN64();
+		  SendIdentityN64(player);
 		  break;
 	  case 0x01: // poll for N64 state
-		  frame = GetNextFrame();
+		  if(player == 1) // only advance frame on p1 poll
+		  {
+			  frame = GetNextFrame();
+		  }
+
 		  if(frame == NULL) // buffer underflow
 		  {
-			  SendControllerDataN64(0); // send blank controller data
+			  SendControllerDataN64(player, 0); // send blank controller data
 		  }
 		  else
 		  {
-			  SendRunDataN64(frame[0][0][0].n64_data);
+			  SendRunDataN64(player, frame[0][(player-1)][0].n64_data);
 		  }
 		  break;
 	  case 0x41: //gamecube origin call
-		  SendOriginGC();
+		  SendOriginGC(player);
 		  break;
 	  case 0x400302:
 	  case 0x400300:
 	  case 0x400301:
-		  frame = GetNextFrame();
+		  if(player == 1)
+		  {
+			  frame = GetNextFrame();
+		  }
+
 		  if(frame == NULL) // buffer underflow
 		  {
 				memset(&gc_data, 0, sizeof(gc_data));
@@ -964,12 +972,12 @@ void GCN64_CommandStart(uint8_t player)
 				gc_data.c_y_axis = 128;
 				gc_data.beginning_one = 1;
 
-				SendRunDataGC(gc_data); // send blank controller data
+				SendRunDataGC(player, gc_data); // send blank controller data
 		  }
 		  else
 		  {
-			  frame[0][0][0].gc_data.beginning_one = 1;
-			  SendRunDataGC(frame[0][0][0].gc_data);
+			  frame[0][(player-1)][0].gc_data.beginning_one = 1;
+			  SendRunDataGC(player, frame[0][(player-1)][0].gc_data);
 		  }
 		  break;
 	  case 0x02:
@@ -980,23 +988,26 @@ void GCN64_CommandStart(uint8_t player)
 	}
 	//-------- DONE SENDING RESPOSE
 
-	SetN64InputMode();
+	SetN64InputMode(player);
 
 	__enable_irq();
 
-	switch(cmd)
+	if(player == 1)
 	{
-		case 0x01: // N64 poll
-			UpdateN64VisBoards(frame[0][0][0].n64_data);
-		case 0x400302: // GC poll
-		case 0x400300: // GC poll
-		case 0x400301: // GC poll
-			serial_interface_output((uint8_t*)"A", 1);
+		switch(cmd)
+		{
+			case 0x01: // N64 poll
+				UpdateN64VisBoards(frame[0][0][0].n64_data); //TODO: consider P1 vs P2
+			case 0x400302: // GC poll
+			case 0x400300: // GC poll
+			case 0x400301: // GC poll
+				serial_interface_output((uint8_t*)"A", 1);
 
 
-			if(frame == NULL) // there was a buffer underflow
-				serial_interface_output((uint8_t*)"\xB2", 1);
-		break;
+				if(frame == NULL) // there was a buffer underflow
+					serial_interface_output((uint8_t*)"\xB2", 1);
+			break;
+		}
 	}
 }
 
