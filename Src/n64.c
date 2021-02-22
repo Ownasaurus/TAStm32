@@ -9,7 +9,6 @@ void my_wait_us_asm(int n);
 static uint8_t GetMiddleOfPulse(uint8_t player);
 static void SendByte(uint8_t player, unsigned char b);
 
-
 inline uint8_t GCN64_ReadBit(uint8_t player)
 {
 	if(player == 1)
@@ -114,7 +113,7 @@ inline void SendStop(uint8_t player)
 	}
 }
 
-void SendIdentityN64(uint8_t player)
+inline void SendIdentityN64(uint8_t player)
 {
     // reply 0x05, 0x00, 0x02
     SendByte(player, 0x05);
@@ -160,7 +159,7 @@ inline void write_0(uint8_t player)
 }
 
 // send a byte from LSB to MSB (proper serialization)
-static void SendByte(uint8_t player, unsigned char b)
+inline void SendByte(uint8_t player, unsigned char b)
 {
     for(int i = 7;i >= 0;i--) // send all 8 bits, one at a time
     {
@@ -270,7 +269,7 @@ void SendControllerDataGC(uint8_t player, uint64_t data)
     SendStop(player);
 }
 
-void SendIdentityGC(uint8_t player)
+inline void SendIdentityGC(uint8_t player)
 {
     SendByte(player, 0x09);
     SendByte(player, 0x00);
@@ -278,7 +277,7 @@ void SendIdentityGC(uint8_t player)
     SendStop(player);
 }
 
-void SendOriginGC(uint8_t player)
+inline void SendOriginGC(uint8_t player)
 {
 	GCControllerData gc_data;
 
