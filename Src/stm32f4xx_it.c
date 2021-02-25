@@ -937,7 +937,7 @@ inline void GCN64_CommandStart(uint8_t player)
 		  SendIdentityN64(player);
 		  break;
 	  case 0x01: // poll for N64 state
-		  if(player == 1) // only advance frame on p1 poll
+		  if(player == tasrun->numControllers) // only advance frame on p1 poll
 		  {
 			  frame = GetNextFrame();
 		  }
@@ -957,7 +957,7 @@ inline void GCN64_CommandStart(uint8_t player)
 	  case 0x400302:
 	  case 0x400300:
 	  case 0x400301:
-		  if(player == 1)
+		  if(player == tasrun->numControllers)
 		  {
 			  frame = GetNextFrame();
 		  }
