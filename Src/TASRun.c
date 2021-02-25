@@ -336,7 +336,7 @@ void SetN64Mode()
 {
 	GPIO_InitTypeDef GPIO_InitStruct = { 0 };
 
-	GPIO_InitStruct.Pin = P1_DATA_2_Pin;
+	GPIO_InitStruct.Pin = P1_DATA_2_Pin, P2_DATA_2_Pin;
 	GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
 	GPIO_InitStruct.Pull = GPIO_NOPULL;
 

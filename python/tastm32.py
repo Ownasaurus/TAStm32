@@ -20,7 +20,7 @@ latches_per_bulk_command = 28
 packets = 4
 
 VALID_PLAYERS = {
-    "n64": (1,),
+    "n64": (1,2,),
     "snes": (1,2,3,4,5,6,7,8,),
     "nes": (1,5,),
     "gc": (1,),
