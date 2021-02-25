@@ -5,6 +5,7 @@
 #include "main.h"
 
 void my_wait_us_asm(int n);
+void my_wait_100ns_asm(int n);
 
 static uint8_t GetMiddleOfPulse(uint8_t player);
 static void SendByte(uint8_t player, unsigned char b);
@@ -31,8 +32,10 @@ uint32_t GCN64_ReadCommand(uint8_t player)
 
 	// we are already at the first falling edge
 	// get middle of first pulse, 2us later
-	my_wait_us_asm(2); 	// consider shortening slightly to account for function call
-						// overhead, ISR overhead, etc. Idea by Sauraen
+	// HOWEVER, shorten the delay slightly to account for function call
+	// overhead, ISR overhead, etc.
+	// Fix by Sauraen
+	my_wait_100ns_asm(15);
 
 	uint32_t command = GCN64_ReadBit(player), bits_read = 1;
 

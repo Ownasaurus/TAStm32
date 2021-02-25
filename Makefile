@@ -112,7 +112,8 @@ ASM_SOURCES =  \
 startup/startup_stm32f446xx.s
 
 MORE_ASM_SOURCES = \
-Src/my_wait_us_asm.S
+Src/my_wait_us_asm.S \
+Src/my_wait_100ns_asm.S
 
 #######################################
 # binaries
