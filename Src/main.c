@@ -586,7 +586,7 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin : SNES_RESET_Pin */
   GPIO_InitStruct.Pin = SNES_RESET_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(SNES_RESET_GPIO_Port, &GPIO_InitStruct);
