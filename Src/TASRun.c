@@ -161,6 +161,7 @@ void ResetRun()
 	while (HAL_NVIC_GetPendingIRQ(EXTI9_5_IRQn))
 	{
 		__HAL_GPIO_EXTI_CLEAR_IT(P2_CLOCK_Pin);
+		__HAL_GPIO_EXTI_CLEAR_IT(P2_DATA_2_Pin);
 		HAL_NVIC_ClearPendingIRQ(EXTI9_5_IRQn);
 	}
 	while (HAL_NVIC_GetPendingIRQ(TIM3_IRQn))
