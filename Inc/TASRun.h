@@ -92,7 +92,7 @@ maybe_unused static void SetN64InputMode(uint8_t player)
 		const uint32_t MODER_NEW_VALUE = GPIO_MODE_INPUT * MODER_SLOT;
 		P1_DATA_2_GPIO_Port->MODER = (P1_DATA_2_GPIO_Port->MODER & ~MODER_MASK) | MODER_NEW_VALUE;
 	}
-	if(player == 2)
+	else if(player == 2)
 	{
 		const uint32_t MODER_SLOT = (P2_DATA_2_Pin*P2_DATA_2_Pin);
 		const uint32_t MODER_MASK = 0b11 * MODER_SLOT;
