@@ -907,7 +907,7 @@ void ResetAndEnableP2ClockTimer()
 	HAL_TIM_Base_Start_IT(&htim7);
 }
 
-inline void GCN64_CommandStart(uint8_t player)
+void GCN64_CommandStart(uint8_t player)
 {
 	GCControllerData gc_data;
 
@@ -1002,8 +1002,20 @@ inline void GCN64_CommandStart(uint8_t player)
 			case 0x400302: // GC poll
 			case 0x400300: // GC poll
 			case 0x400301: // GC poll
-				serial_interface_output((uint8_t*)"A", 1);
-
+				if(bulk_mode)
+				{
+					if(!request_pending && tasrun->size <= (MAX_SIZE-28)) // not full enough
+					{
+						if(serial_interface_output((uint8_t*)"a", 1) == USBD_OK)
+						{
+							request_pending = 1;
+						}
+					}
+				}
+				else
+				{
+					serial_interface_output((uint8_t*)"A", 1);
+				}
 
 				if(frame == NULL) // there was a buffer underflow
 					serial_interface_output((uint8_t*)"\xB2", 1);
