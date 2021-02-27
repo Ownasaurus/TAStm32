@@ -993,7 +993,7 @@ void GCN64_CommandStart(uint8_t player)
 
 	__enable_irq();
 
-	if(player == tasrun->numControllers)
+	if(player == 1)
 	{
 		switch(cmd)
 		{
