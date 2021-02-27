@@ -571,7 +571,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pin : P1_DATA_2_Pin */
-  GPIO_InitStruct.Pin = P1_DATA_2_Pin, P2_DATA_2_Pin;
+  GPIO_InitStruct.Pin = P1_DATA_2_Pin | P2_DATA_2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(P1_DATA_2_GPIO_Port, &GPIO_InitStruct);

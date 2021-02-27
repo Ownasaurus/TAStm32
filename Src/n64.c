@@ -9,6 +9,11 @@ void my_wait_100ns_asm(int n);
 
 static uint8_t GetMiddleOfPulse(uint8_t player);
 static void SendByte(uint8_t player, unsigned char b);
+uint8_t GCN64_ReadBit(uint8_t player);
+void SendIdentityN64(uint8_t player);
+void write_0(uint8_t player);
+void write_1(uint8_t player);
+void SendStop(uint8_t player);
 
 inline uint8_t GCN64_ReadBit(uint8_t player)
 {
@@ -155,9 +160,9 @@ inline void write_0(uint8_t player)
 	else if(player == 2)
 	{
 		P2_DATA_2_GPIO_Port->BSRR = P2_DATA_2_Pin<<16;
-		my_wait_us_asm(1);
-		P2_DATA_2_GPIO_Port->BSRR = P2_DATA_2_Pin;
 		my_wait_us_asm(3);
+		P2_DATA_2_GPIO_Port->BSRR = P2_DATA_2_Pin;
+		my_wait_us_asm(1);
 	}
 }
 

@@ -913,7 +913,7 @@ inline void GCN64_CommandStart(uint8_t player)
 
 	__disable_irq();
 	uint32_t cmd;
-	RunDataArray *frame = NULL;
+	static RunDataArray *frame = NULL;
 
 	cmd = GCN64_ReadCommand(player);
 
@@ -949,7 +949,7 @@ inline void GCN64_CommandStart(uint8_t player)
 		  }
 		  else
 		  {
-			  SendRunDataN64(player, ((*frame)[(player-1)][0]).n64_data);
+			  SendRunDataN64(player, frame[0][(player-1)][0].n64_data);
 		  }
 		  break;
 	  case 0x41: //gamecube origin call
