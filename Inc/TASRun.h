@@ -82,23 +82,42 @@ extern TASRun tasruns;
 
 #define maybe_unused  __attribute__((unused))
 
-maybe_unused static void SetN64InputMode()
+maybe_unused static void SetN64InputMode(uint8_t player)
 {
-	// port C4 to input mode
-	const uint32_t MODER_SLOT = (P1_DATA_2_Pin*P1_DATA_2_Pin);
-	const uint32_t MODER_MASK = 0b11 * MODER_SLOT;
-	const uint32_t MODER_NEW_VALUE = GPIO_MODE_INPUT * MODER_SLOT;
-
-	P1_DATA_2_GPIO_Port->MODER = (P1_DATA_2_GPIO_Port->MODER & ~MODER_MASK) | MODER_NEW_VALUE;
+	if(player == 1)
+	{
+		// port C4 to input mode
+		const uint32_t MODER_SLOT = (P1_DATA_2_Pin*P1_DATA_2_Pin);
+		const uint32_t MODER_MASK = 0b11 * MODER_SLOT;
+		const uint32_t MODER_NEW_VALUE = GPIO_MODE_INPUT * MODER_SLOT;
+		P1_DATA_2_GPIO_Port->MODER = (P1_DATA_2_GPIO_Port->MODER & ~MODER_MASK) | MODER_NEW_VALUE;
+	}
+	else if(player == 2)
+	{
+		const uint32_t MODER_SLOT = (P2_DATA_2_Pin*P2_DATA_2_Pin);
+		const uint32_t MODER_MASK = 0b11 * MODER_SLOT;
+		const uint32_t MODER_NEW_VALUE = GPIO_MODE_INPUT * MODER_SLOT;
+		P2_DATA_2_GPIO_Port->MODER = (P2_DATA_2_GPIO_Port->MODER & ~MODER_MASK) | MODER_NEW_VALUE;
+	}
 }
 
-maybe_unused static void SetN64OutputMode()
+maybe_unused static void SetN64OutputMode(uint8_t player)
 {
-	// port C4 to output mode
-	const uint32_t MODER_SLOT = (P1_DATA_2_Pin*P1_DATA_2_Pin);
-	const uint32_t MODER_MASK = 0b11 * MODER_SLOT;
-	const uint32_t MODER_NEW_VALUE = GPIO_MODE_OUTPUT_PP * MODER_SLOT;
-	P1_DATA_2_GPIO_Port->MODER = (P1_DATA_2_GPIO_Port->MODER & ~MODER_MASK) | MODER_NEW_VALUE;
+	if(player == 1)
+	{
+		// port C4 to output mode
+		const uint32_t MODER_SLOT = (P1_DATA_2_Pin*P1_DATA_2_Pin);
+		const uint32_t MODER_MASK = 0b11 * MODER_SLOT;
+		const uint32_t MODER_NEW_VALUE = GPIO_MODE_OUTPUT_PP * MODER_SLOT;
+		P1_DATA_2_GPIO_Port->MODER = (P1_DATA_2_GPIO_Port->MODER & ~MODER_MASK) | MODER_NEW_VALUE;
+	}
+	else if(player == 2)
+	{
+		const uint32_t MODER_SLOT = (P2_DATA_2_Pin*P2_DATA_2_Pin);
+		const uint32_t MODER_MASK = 0b11 * MODER_SLOT;
+		const uint32_t MODER_NEW_VALUE = GPIO_MODE_OUTPUT_PP * MODER_SLOT;
+		P2_DATA_2_GPIO_Port->MODER = (P2_DATA_2_GPIO_Port->MODER & ~MODER_MASK) | MODER_NEW_VALUE;
+	}
 }
 
 // Functions below here are complex enough to not try to inline

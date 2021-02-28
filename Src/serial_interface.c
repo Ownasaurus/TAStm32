@@ -246,6 +246,7 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 					else if(c == CONSOLE_N64 || c == CONSOLE_GC)
 					{
 						HAL_NVIC_EnableIRQ(EXTI4_IRQn);
+						HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
 					}
 					else if(c == CONSOLE_GEN)
 					{

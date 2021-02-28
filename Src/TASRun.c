@@ -161,6 +161,7 @@ void ResetRun()
 	while (HAL_NVIC_GetPendingIRQ(EXTI9_5_IRQn))
 	{
 		__HAL_GPIO_EXTI_CLEAR_IT(P2_CLOCK_Pin);
+		__HAL_GPIO_EXTI_CLEAR_IT(P2_DATA_2_Pin);
 		HAL_NVIC_ClearPendingIRQ(EXTI9_5_IRQn);
 	}
 	while (HAL_NVIC_GetPendingIRQ(TIM3_IRQn))
@@ -336,7 +337,7 @@ void SetN64Mode()
 {
 	GPIO_InitTypeDef GPIO_InitStruct = { 0 };
 
-	GPIO_InitStruct.Pin = P1_DATA_2_Pin;
+	GPIO_InitStruct.Pin = P1_DATA_2_Pin | P2_DATA_2_Pin;
 	GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
 	GPIO_InitStruct.Pull = GPIO_NOPULL;
 

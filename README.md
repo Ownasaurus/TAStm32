@@ -82,7 +82,7 @@ Serisium (@serisium) - helped with debugging and PCB design
 
 rcombs (@rcombs) - helped with optimizing the N64 protocol
 
-Sauraen (@sauraen) - Linux setup and installation notes, along with additional work on the GC/N64 protocol.
+Sauraen (@sauraen) - Linux setup and installation notes, multiplayer GC/N64 support, misc. GC/N64 improvements
 
 Derf - worked on debugging the genesis protocol together
 

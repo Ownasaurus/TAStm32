@@ -173,6 +173,7 @@ uint16_t* latch_trains;
 void my_wait_us_asm(int n);
 static uint8_t UART2_OutputFunction(uint8_t *buffer, uint16_t n);
 static HAL_StatusTypeDef Simple_Transmit(UART_HandleTypeDef *huart);
+void GCN64_CommandStart(uint8_t player);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -598,8 +599,10 @@ void EXTI4_IRQHandler(void)
 
 	// If this is a SNES run, this means SEL is going LOW so tell clock interrupts
 	// to start using the second words of multitap frame
-	if (tasrun->console == CONSOLE_SNES) {
-		if (tasrun->multitap){
+	if (tasrun->console == CONSOLE_SNES)
+	{
+		if (tasrun->multitap)
+		{
 			multitapSel = 0;
 			p1_current_bit = p2_current_bit = 1;
 
@@ -612,98 +615,9 @@ void EXTI4_IRQHandler(void)
 	}
 
 	// Otherwise process as N64 command
-	else {
-
-		GCControllerData gc_data;
-
-		__disable_irq();
-		uint32_t cmd;
-		RunDataArray *frame = NULL;
-
-		cmd = readCommand();
-
-		my_wait_us_asm(2); // wait a small amount of time before replying
-
-		//-------- SEND RESPONSE
-		SetN64OutputMode();
-
-		switch(cmd)
-		{
-		  case 0x00: // identity
-			  if(tasrun->console == CONSOLE_N64)
-			  {
-				  SendIdentityN64();
-			  }
-			  else if(tasrun->console == CONSOLE_GC)
-			  {
-				  SendIdentityGC();
-			  }
-			  break;
-		  case 0xFF: // N64 reset
-			  SendIdentityN64();
-			  break;
-		  case 0x01: // poll for N64 state
-			  frame = GetNextFrame();
-			  if(frame == NULL) // buffer underflow
-			  {
-				  SendControllerDataN64(0); // send blank controller data
-			  }
-			  else
-			  {
-				  SendRunDataN64(frame[0][0][0].n64_data);
-			  }
-			  break;
-		  case 0x41: //gamecube origin call
-			  SendOriginGC();
-			  break;
-		  case 0x400302:
-		  case 0x400300:
-		  case 0x400301:
-			  frame = GetNextFrame();
-			  if(frame == NULL) // buffer underflow
-			  {
-					memset(&gc_data, 0, sizeof(gc_data));
-
-					gc_data.a_x_axis = 128;
-					gc_data.a_y_axis = 128;
-					gc_data.c_x_axis = 128;
-					gc_data.c_y_axis = 128;
-					gc_data.beginning_one = 1;
-
-					SendRunDataGC(gc_data); // send blank controller data
-			  }
-			  else
-			  {
-				  frame[0][0][0].gc_data.beginning_one = 1;
-				  SendRunDataGC(frame[0][0][0].gc_data);
-			  }
-			  break;
-		  case 0x02:
-		  case 0x03:
-		  default:
-			  // we do not process the read and write commands (memory pack)
-			  break;
-		}
-		//-------- DONE SENDING RESPOSE
-
-		SetN64InputMode();
-
-		__enable_irq();
-
-		switch(cmd)
-		{
-			case 0x01: // N64 poll
-				UpdateN64VisBoards(frame[0][0][0].n64_data);
-			case 0x400302: // GC poll
-			case 0x400300: // GC poll
-			case 0x400301: // GC poll
-				serial_interface_output((uint8_t*)"A", 1);
-
-
-				if(frame == NULL) // there was a buffer underflow
-					serial_interface_output((uint8_t*)"\xB2", 1);
-			break;
-		}
+	else
+	{
+		GCN64_CommandStart(1);
 	}
 
   /* USER CODE END EXTI4_IRQn 0 */
@@ -719,29 +633,39 @@ void EXTI4_IRQHandler(void)
 void EXTI9_5_IRQHandler(void)
 {
   /* USER CODE BEGIN EXTI9_5_IRQn 0 */
-	// P2_CLOCK
+	Console c = tasrun->console;
 
-	if(!p2_clock_filtered)
+	if(c == CONSOLE_N64 || c == CONSOLE_GC)
 	{
-		if(clockFix)
-		{
-			my_wait_us_asm(2); // necessary to prevent switching too fast in DPCM fix mode
-		}
-
-		uint32_t p2_data = multitapSel ? P2_GPIOC_current[p2_current_bit] : P2_GPIOC_current_multitap[p2_current_bit];
-		GPIOC->BSRR = p2_data;
-
-		ResetAndEnableP2ClockTimer();
-		if(p2_current_bit < 16)
-		{
-			p2_current_bit++;
-		}
+		GCN64_CommandStart(2);
 	}
-  /* USER CODE END EXTI9_5_IRQn 0 */
-  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_5);
-  /* USER CODE BEGIN EXTI9_5_IRQn 1 */
+	else if(c == CONSOLE_SNES || c == CONSOLE_NES)
+	{
+		// P2_CLOCK
+		if(!p2_clock_filtered)
+		{
+			if(clockFix)
+			{
+				my_wait_us_asm(2); // necessary to prevent switching too fast in DPCM fix mode
+			}
 
-  /* USER CODE END EXTI9_5_IRQn 1 */
+			uint32_t p2_data = multitapSel ? P2_GPIOC_current[p2_current_bit] : P2_GPIOC_current_multitap[p2_current_bit];
+			GPIOC->BSRR = p2_data;
+
+			ResetAndEnableP2ClockTimer();
+			if(p2_current_bit < 16)
+			{
+				p2_current_bit++;
+			}
+		}
+
+	}
+
+	/* USER CODE END EXTI9_5_IRQn 0 */
+	HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_5);
+	HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_9); // P2D2
+	/* USER CODE BEGIN EXTI9_5_IRQn 1 */
+	/* USER CODE END EXTI9_5_IRQn 1 */
 }
 
 /**
@@ -981,6 +905,123 @@ void ResetAndEnableP2ClockTimer()
 	p2_clock_filtered = 1;
 
 	HAL_TIM_Base_Start_IT(&htim7);
+}
+
+void GCN64_CommandStart(uint8_t player)
+{
+	GCControllerData gc_data;
+
+	__disable_irq();
+	uint32_t cmd;
+	static RunDataArray *frame = NULL;
+
+	cmd = GCN64_ReadCommand(player);
+
+	my_wait_us_asm(2); // wait a small amount of time before replying
+
+	//-------- SEND RESPONSE
+	SetN64OutputMode(player);
+
+	switch(cmd)
+	{
+	  case 0x00: // identity
+		  if(tasrun->console == CONSOLE_N64)
+		  {
+			  N64_SendIdentity(player);
+		  }
+		  else if(tasrun->console == CONSOLE_GC)
+		  {
+			  GC_SendIdentity(player);
+		  }
+		  break;
+	  case 0xFF: // N64 reset
+		  N64_SendIdentity(player);
+		  break;
+	  case 0x01: // poll for N64 state
+		  if(player == tasrun->numControllers) // only advance frame on highest controller poll
+		  {
+			  frame = GetNextFrame();
+		  }
+
+		  if(frame == NULL) // buffer underflow
+		  {
+			  N64_SendControllerData(player, 0); // send blank controller data
+		  }
+		  else
+		  {
+			  N64_SendRunData(player, frame[0][(player-1)][0].n64_data);
+		  }
+		  break;
+	  case 0x41: //gamecube origin call
+		  GC_SendOrigin(player);
+		  break;
+	  case 0x400302:
+	  case 0x400300:
+	  case 0x400301:
+		  if(player == tasrun->numControllers)
+		  {
+			  frame = GetNextFrame();
+		  }
+
+		  if(frame == NULL) // buffer underflow
+		  {
+				memset(&gc_data, 0, sizeof(gc_data));
+
+				gc_data.a_x_axis = 128;
+				gc_data.a_y_axis = 128;
+				gc_data.c_x_axis = 128;
+				gc_data.c_y_axis = 128;
+				gc_data.beginning_one = 1;
+
+				GC_SendRunData(player, gc_data); // send blank controller data
+		  }
+		  else
+		  {
+			  frame[0][(player-1)][0].gc_data.beginning_one = 1;
+			  GC_SendRunData(player, frame[0][(player-1)][0].gc_data);
+		  }
+		  break;
+	  case 0x02:
+	  case 0x03:
+	  default:
+		  // we do not process the read and write commands (memory pack)
+		  break;
+	}
+	//-------- DONE SENDING RESPOSE
+
+	SetN64InputMode(player);
+
+	__enable_irq();
+
+	if(player == 1)
+	{
+		switch(cmd)
+		{
+			case 0x01: // N64 poll
+				UpdateN64VisBoards(frame[0][0][0].n64_data); //TODO: consider P1 vs P2
+			case 0x400302: // GC poll
+			case 0x400300: // GC poll
+			case 0x400301: // GC poll
+				if(bulk_mode)
+				{
+					if(!request_pending && tasrun->size <= (MAX_SIZE-28)) // not full enough
+					{
+						if(serial_interface_output((uint8_t*)"a", 1) == USBD_OK)
+						{
+							request_pending = 1;
+						}
+					}
+				}
+				else
+				{
+					serial_interface_output((uint8_t*)"A", 1);
+				}
+
+				if(frame == NULL) // there was a buffer underflow
+					serial_interface_output((uint8_t*)"\xB2", 1);
+			break;
+		}
+	}
 }
 
 inline void UpdateVisBoards()

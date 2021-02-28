@@ -28,7 +28,12 @@ def read_header(data):
     header['description'] = header['description'].decode('utf8').rstrip('\x00')
     return header
 
-def read_input(data, header=None):
+PLAYER_MAP = {
+    1: 0,
+    5: 1
+}
+
+def read_input(data, players=[1], header=None):
     if header == None:
         header = read_header(data)
     if header['version'] == 1 or header['version'] == 2:
@@ -41,7 +46,10 @@ def read_input(data, header=None):
     input_iter = input_struct.iter_unpack(data[start:])
     input_data = []
     for frame in input_iter:
-        input_data.append(frame[0])
+        fd = b''
+        for player in players:
+            fd += frame[PLAYER_MAP[player]]
+        input_data.append(fd)
     return input_data
 
 def main():

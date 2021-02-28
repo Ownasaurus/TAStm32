@@ -56,14 +56,13 @@ typedef struct __attribute__((packed))
 
 } GCControllerData; // all bits are in the correct order... except for the analog
 
-void initialize_n64_buffer();
-uint32_t readCommand();
-void SendIdentityN64();
-void SendIdentityGC();
-void SendOriginGC();
-void SendRunDataN64(N64ControllerData data);
-void SendControllerDataN64(unsigned long data);
-void SendRunDataGC(GCControllerData gcdata);
-void SendControllerDataGC(uint64_t data);
+uint32_t GCN64_ReadCommand(uint8_t player);
+void N64_SendIdentity(uint8_t player);
+void GC_SendIdentity(uint8_t player);
+void GC_SendOrigin(uint8_t player);
+void N64_SendRunData(uint8_t player, N64ControllerData data);
+void N64_SendControllerData(uint8_t player, unsigned long data);
+void GC_SendRunData(uint8_t player, GCControllerData gcdata);
+void GC_SendControllerData(uint8_t player, uint64_t data);
 
 #endif

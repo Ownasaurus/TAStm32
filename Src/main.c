@@ -543,7 +543,7 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pins : P1_DATA_1_Pin P1_DATA_0_Pin P2_LATCH_Pin P2_DATA_1_Pin
                            P2_DATA_0_Pin P2_DATA_2_Pin */
   GPIO_InitStruct.Pin = P1_DATA_1_Pin|P1_DATA_0_Pin|P2_LATCH_Pin|P2_DATA_1_Pin
-                          |P2_DATA_0_Pin|P2_DATA_2_Pin;
+                          |P2_DATA_0_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -571,7 +571,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pin : P1_DATA_2_Pin */
-  GPIO_InitStruct.Pin = P1_DATA_2_Pin;
+  GPIO_InitStruct.Pin = P1_DATA_2_Pin | P2_DATA_2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(P1_DATA_2_GPIO_Port, &GPIO_InitStruct);
@@ -708,6 +708,7 @@ void JumpToBootLoader(void) {
 	while (HAL_NVIC_GetPendingIRQ(EXTI9_5_IRQn))
 	{
 		__HAL_GPIO_EXTI_CLEAR_IT(P2_CLOCK_Pin);
+		__HAL_GPIO_EXTI_CLEAR_IT(P2_DATA_2_Pin);
 		HAL_NVIC_ClearPendingIRQ(EXTI9_5_IRQn);
 	}
 	while (HAL_NVIC_GetPendingIRQ(TIM3_IRQn))
