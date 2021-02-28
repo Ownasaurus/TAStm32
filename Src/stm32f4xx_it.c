@@ -927,15 +927,15 @@ void GCN64_CommandStart(uint8_t player)
 	  case 0x00: // identity
 		  if(tasrun->console == CONSOLE_N64)
 		  {
-			  SendIdentityN64(player);
+			  N64_SendIdentity(player);
 		  }
 		  else if(tasrun->console == CONSOLE_GC)
 		  {
-			  SendIdentityGC(player);
+			  GC_SendIdentity(player);
 		  }
 		  break;
 	  case 0xFF: // N64 reset
-		  SendIdentityN64(player);
+		  N64_SendIdentity(player);
 		  break;
 	  case 0x01: // poll for N64 state
 		  if(player == tasrun->numControllers) // only advance frame on highest controller poll
@@ -945,15 +945,15 @@ void GCN64_CommandStart(uint8_t player)
 
 		  if(frame == NULL) // buffer underflow
 		  {
-			  SendControllerDataN64(player, 0); // send blank controller data
+			  N64_SendControllerData(player, 0); // send blank controller data
 		  }
 		  else
 		  {
-			  SendRunDataN64(player, frame[0][(player-1)][0].n64_data);
+			  N64_SendRunData(player, frame[0][(player-1)][0].n64_data);
 		  }
 		  break;
 	  case 0x41: //gamecube origin call
-		  SendOriginGC(player);
+		  GC_SendOrigin(player);
 		  break;
 	  case 0x400302:
 	  case 0x400300:
@@ -973,12 +973,12 @@ void GCN64_CommandStart(uint8_t player)
 				gc_data.c_y_axis = 128;
 				gc_data.beginning_one = 1;
 
-				SendRunDataGC(player, gc_data); // send blank controller data
+				GC_SendRunData(player, gc_data); // send blank controller data
 		  }
 		  else
 		  {
 			  frame[0][(player-1)][0].gc_data.beginning_one = 1;
-			  SendRunDataGC(player, frame[0][(player-1)][0].gc_data);
+			  GC_SendRunData(player, frame[0][(player-1)][0].gc_data);
 		  }
 		  break;
 	  case 0x02:

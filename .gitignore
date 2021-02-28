@@ -2,7 +2,7 @@
 /.metadata/
 /Debug/
 /Release/
-!/Release/TAStm32.binary
+/.settings/language.settings.xml
 *.r08
 *.r16m
 *.dtm

@@ -10,7 +10,7 @@ void my_wait_100ns_asm(int n);
 static uint8_t GetMiddleOfPulse(uint8_t player);
 static void SendByte(uint8_t player, unsigned char b);
 uint8_t GCN64_ReadBit(uint8_t player);
-void SendIdentityN64(uint8_t player);
+void N64_SendIdentity(uint8_t player);
 void write_0(uint8_t player);
 void write_1(uint8_t player);
 void SendStop(uint8_t player);
@@ -121,7 +121,7 @@ inline void SendStop(uint8_t player)
 	}
 }
 
-inline void SendIdentityN64(uint8_t player)
+inline void N64_SendIdentity(uint8_t player)
 {
     // reply 0x05, 0x00, 0x02
     SendByte(player, 0x05);
@@ -182,7 +182,7 @@ inline void SendByte(uint8_t player, unsigned char b)
     }
 }
 
-void SendRunDataN64(uint8_t player, N64ControllerData n64data)
+void N64_SendRunData(uint8_t player, N64ControllerData n64data)
 {
 	unsigned long data = 0;
 	memcpy(&data,&n64data,sizeof(data));
@@ -207,7 +207,7 @@ void SendRunDataN64(uint8_t player, N64ControllerData n64data)
     SendStop(player);
 }
 
-void SendControllerDataN64(uint8_t player, unsigned long data)
+void N64_SendControllerData(uint8_t player, unsigned long data)
 {
     // send one byte at a time from MSB to LSB
 	unsigned int size = sizeof(data); // should be 4 bytes
@@ -230,7 +230,7 @@ void SendControllerDataN64(uint8_t player, unsigned long data)
     SendStop(player);
 }
 
-void SendRunDataGC(uint8_t player, GCControllerData gcdata)
+void GC_SendRunData(uint8_t player, GCControllerData gcdata)
 {
 	uint64_t data = 0;
 	memcpy(&data,&gcdata,sizeof(data));
@@ -255,7 +255,7 @@ void SendRunDataGC(uint8_t player, GCControllerData gcdata)
     SendStop(player);
 }
 
-void SendControllerDataGC(uint8_t player, uint64_t data)
+void GC_SendControllerData(uint8_t player, uint64_t data)
 {
     unsigned int size = sizeof(data); // should be 8 bytes
 
@@ -277,7 +277,7 @@ void SendControllerDataGC(uint8_t player, uint64_t data)
     SendStop(player);
 }
 
-inline void SendIdentityGC(uint8_t player)
+inline void GC_SendIdentity(uint8_t player)
 {
     SendByte(player, 0x09);
     SendByte(player, 0x00);
@@ -285,7 +285,7 @@ inline void SendIdentityGC(uint8_t player)
     SendStop(player);
 }
 
-inline void SendOriginGC(uint8_t player)
+inline void GC_SendOrigin(uint8_t player)
 {
 	GCControllerData gc_data;
 
