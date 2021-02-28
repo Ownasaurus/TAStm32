@@ -3,19 +3,30 @@ on:
     branches:
       - master
 
-name: Create and Update Latest Release
+name: Create and Update Latest Release & Merge TAStm32GUI
 
 jobs:
   build:
     name: Create Release
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Checkout our code
         uses: actions/checkout@v2
-      - run: sudo apt-get install gcc-arm-none-eabi binutils-arm-none-eabi
-      - run: make
-      - run: cp build/*.bin build/tastm32.bin
-      - run: cp build/*.hex build/tastm32.hex
+      - name: Checkout TAStm32GUI code and merge into our python folder
+        run: |
+          git clone https://github.com/Zayitskin/TAStm32GUI/
+          cp TAStm32GUI/hook.py python/
+          cp TAStm32GUI/main.py python/
+          cp TAStm32GUI/tasfile.py python/
+          cp TAStm32GUI/widgets.py python/
+      - name: Build and Rename Release Binaries
+        run: |
+          sudo apt-get install gcc-arm-none-eabi binutils-arm-none-eabi
+          make
+          cp build/*.bin build/tastm32.bin
+          cp build/*.hex build/tastm32.hex
+      - name: Create Python Asset
+        run: zip -j python.zip python/*
       - name: Create Latest Release
         id: create_release
         uses: GongT/actions-recreate-release@v1
@@ -47,3 +58,13 @@ jobs:
           asset_path: ./build/tastm32.hex
           asset_name: tastm32.hex
           asset_content_type: application/octet-stream
+      - name: Upload Python Release Asset
+        id: upload-release-asset-python
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+          asset_path: ./python.zip
+          asset_name: python.zip
+          asset_content_type: application/zip
