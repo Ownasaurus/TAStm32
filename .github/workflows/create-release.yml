@@ -1,8 +1,7 @@
 on:
   push:
     branches:
-      - main
-      - github-actions-dev
+      - master
 
 name: Create and Update Latest Release
 
