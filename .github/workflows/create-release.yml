@@ -15,7 +15,7 @@ jobs:
         uses: actions/checkout@v2
       - run: sudo apt-get install gcc-arm-none-eabi binutils-arm-none-eabi
       - run: make
-      - run: REL="tastm32-$(git rev-parse --short HEAD)"
+      - run: cp build/*.bin build/tastm32.bin
       - name: Create Latest Release
         id: create_release
         uses: GongT/actions-recreate-release@v1
@@ -32,9 +32,8 @@ jobs:
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REL: ${{ $REL }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-          asset_path: ./build/$REL.bin
-          asset_name: $REL.bin
+          asset_path: ./build/tastm32.bin
+          asset_name: tastm32.bin
           asset_content_type: application/octet-stream
