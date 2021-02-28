@@ -13,10 +13,7 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-      - name: Build using arm-none-eabi-gcc
-        uses: fiam/arm-none-eabi-gcc@v1.0.2
-        with:
-          release: '9-2019-q4'
+      - run: apt install gcc-arm-none-eabi binutils-arm-none-eabi
       - run: make
       - name: Fake Build project # This would actually build your project, using zip for an example artifact
         run: |
