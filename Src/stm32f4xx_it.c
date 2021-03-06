@@ -914,6 +914,7 @@ void GCN64_CommandStart(uint8_t player)
 	__disable_irq();
 	uint32_t cmd;
 	static RunDataArray *frame = NULL;
+	static RunDataArray *prev = NULL;
 
 	cmd = GCN64_ReadCommand(player);
 
@@ -945,11 +946,12 @@ void GCN64_CommandStart(uint8_t player)
 
 		  if(frame == NULL) // buffer underflow
 		  {
-			  N64_SendControllerData(player, 0); // send blank controller data
+			  N64_SendRunData(player, prev[0][(player-1)][0].n64_data); // repeat last frame of data
 		  }
 		  else
 		  {
 			  N64_SendRunData(player, frame[0][(player-1)][0].n64_data);
+			  prev = frame;
 		  }
 		  break;
 	  case 0x41: //gamecube origin call
@@ -999,6 +1001,7 @@ void GCN64_CommandStart(uint8_t player)
 		{
 			case 0x01: // N64 poll
 				UpdateN64VisBoards(frame[0][0][0].n64_data); //TODO: consider P1 vs P2
+				//TODO: update with prev logic
 			case 0x400302: // GC poll
 			case 0x400300: // GC poll
 			case 0x400301: // GC poll
