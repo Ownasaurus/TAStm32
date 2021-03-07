@@ -914,7 +914,6 @@ void GCN64_CommandStart(uint8_t player)
 	__disable_irq();
 	uint32_t cmd;
 	static RunDataArray *frame = NULL;
-	static RunDataArray *prev = NULL;
 
 	cmd = GCN64_ReadCommand(player);
 
@@ -946,12 +945,11 @@ void GCN64_CommandStart(uint8_t player)
 
 		  if(frame == NULL) // buffer underflow
 		  {
-			  N64_SendRunData(player, prev[0][(player-1)][0].n64_data); // repeat last frame of data
+			  N64_SendControllerData(player, 0); // send blank controller data
 		  }
 		  else
 		  {
 			  N64_SendRunData(player, frame[0][(player-1)][0].n64_data);
-			  prev = frame;
 		  }
 		  break;
 	  case 0x41: //gamecube origin call

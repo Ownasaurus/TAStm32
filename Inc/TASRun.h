@@ -69,6 +69,7 @@ typedef struct
 	uint8_t input_data_size;
 	uint32_t moder_firstLatch;
 
+	uint8_t controller_mode;
 	uint8_t multitap;
 	int32_t blank;
 	char inputFile[256];

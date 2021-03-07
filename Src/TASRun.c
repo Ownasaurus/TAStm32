@@ -21,6 +21,10 @@ extern RunDataArray *dataptr;
 
 RunDataArray *GetNextFrame()
 {
+	if(tasrun->controller_mode == 1)
+	{
+		return tasrun->runData;
+	}
 	if (tasrun->size == 0) // in case of buffer underflow
 	{
 		return NULL; // buffer underflow
@@ -122,6 +126,7 @@ void ClearRunData()
 	tasruns.buf = tasruns.runData;
 	tasruns.current = tasruns.runData;
 	tasruns.end = &(tasruns.runData[MAX_SIZE - 1]);
+	tasruns.controller_mode = 1; //TODO: This should be 0. Serial command can set it to 0 or 1
 }
 
 void ResetRun()
@@ -308,6 +313,11 @@ int ExtractDataAndAddFrame(uint8_t *buffer, uint32_t n)
 		}
 	}
 
+	if (tasrun->controller_mode == 1) // ignore buffer. place at beginning of array
+	{
+		memcpy(tasrun->runData, frame, sizeof(frame));
+		return 1;
+	}
 	if (tasrun->size == MAX_SIZE)
 	{
 		return 0;
