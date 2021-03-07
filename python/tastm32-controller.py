@@ -61,7 +61,8 @@ time.sleep(0.1)
 ser.ser.reset_input_buffer()
 
 TRIGGER_THRESHOLD = 125
-XBOX_ANALOG_THRESHOLD = 20000
+XBOX_R_ANALOG_THRESHOLD = 20000
+N64_DEADZONE = 20
 
 btn_codes = {
     'BTN_NORTH' : 0x00020000, #Y
@@ -86,7 +87,7 @@ ser.write(bytes([65,0,0,0,0]))
 
 numGamepads = len(devices.gamepads)
 chosenGamepad = 0
-if len == 1:
+if numGamepads == 1:
     chosenGamepad = 0
 else:
     for i in range(len(devices.gamepads)):
@@ -127,24 +128,26 @@ while 1:
             elif event.code == 'ABS_X':
                 N64_X_val = (event.state) // 384
                 abs_X_val = abs(N64_X_val)
-                sign_X_val = 0
-                if N64_X_val < 0:
-                    sign_X_val = 1
-                    abs_X_val = 128 - abs_X_val
                 data_to_tastm32 &= 0xFFFF00FF
-                data_to_tastm32 |= ((abs_X_val << 8) | (sign_X_val << 15))
+                if abs_X_val >= N64_DEADZONE: # out of neutral position
+                    sign_X_val = 0
+                    if N64_X_val < 0:
+                        sign_X_val = 1
+                        abs_X_val = 128 - abs_X_val
+                    data_to_tastm32 |= ((abs_X_val << 8) | (sign_X_val << 15))
             elif event.code == 'ABS_Y':
                 N64_Y_val = (event.state) // 384
                 abs_Y_val = abs(N64_Y_val)
-                sign_Y_val = 0
-                if N64_Y_val < 0:
-                    sign_Y_val = 1
-                    abs_Y_val = 128 - abs_Y_val
                 data_to_tastm32 &= 0xFFFFFF00
-                data_to_tastm32 |= (abs_Y_val | (sign_Y_val << 7))
+                if abs_Y_val >= N64_DEADZONE: # out of neutral position
+                    sign_Y_val = 0
+                    if N64_Y_val < 0:
+                        sign_Y_val = 1
+                        abs_Y_val = 128 - abs_Y_val
+                    data_to_tastm32 |= (abs_Y_val | (sign_Y_val << 7))
             elif event.code == 'ABS_RX':
                 abs_X_val = abs(event.state)
-                if abs_X_val < XBOX_ANALOG_THRESHOLD: # Neutral position
+                if abs_X_val < XBOX_R_ANALOG_THRESHOLD: # Neutral position
                     data_to_tastm32 &= 0xFFFCFFFF
                 else:
                     if event.state < 0: # Left
@@ -153,7 +156,7 @@ while 1:
                         data_to_tastm32 |= 0x00010000
             elif event.code == 'ABS_RY':
                 abs_Y_val = abs(event.state)
-                if abs_Y_val < XBOX_ANALOG_THRESHOLD: # Neutral position
+                if abs_Y_val < XBOX_R_ANALOG_THRESHOLD: # Neutral position
                     data_to_tastm32 &= 0xFFF3FFFF
                 else:
                     if event.state < 0: # Down
