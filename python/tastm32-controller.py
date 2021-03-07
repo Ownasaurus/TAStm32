@@ -79,7 +79,6 @@ btn_codes = {
 
 N64_Z = 0x20000000
 
-frame_start = time.time()
 data_to_tastm32 = 0
 prev_data = 0
 
@@ -165,10 +164,7 @@ while 1:
                         data_to_tastm32 |= 0x00080000
         
         # prepare and send message to the replay device
-        new_time = time.time()
-        if new_time > frame_start+(1/30): # slightly less than 30 hz polling to ensure no input queuing
-            if data_to_tastm32 != prev_data:
-                output_string = b'A' + data_to_tastm32.to_bytes(4, "big")
-                ser.write(output_string)
-                frame_start = new_time
-                prev_data = data_to_tastm32
+        if data_to_tastm32 != prev_data:
+            output_string = b'A' + data_to_tastm32.to_bytes(4, "big")
+            ser.write(output_string)
+            prev_data = data_to_tastm32
