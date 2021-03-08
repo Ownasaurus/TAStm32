@@ -75,6 +75,9 @@ def init():
     cmd = ser.read(2)
     print(bytes(cmd))
 
+    # make sure nothing is buffered
+    ser.enable_controller()
+
     # set up the N64 correctly
     ser.write(b'SAM\x80\x00')
     time.sleep(0.1)

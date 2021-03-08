@@ -126,7 +126,6 @@ void ClearRunData()
 	tasruns.buf = tasruns.runData;
 	tasruns.current = tasruns.runData;
 	tasruns.end = &(tasruns.runData[MAX_SIZE - 1]);
-	tasruns.controller_mode = 1; //TODO: This should be 0. Serial command can set it to 0 or 1
 }
 
 void ResetRun()
@@ -146,6 +145,13 @@ void ResetRun()
 	GPIO_InitStruct.Pin = P1_DATA_0_Pin | P1_DATA_1_Pin | P1_DATA_2_Pin  | P2_DATA_0_Pin | P2_DATA_1_Pin | P2_DATA_2_Pin;
 	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
 	HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+	// Ensure the reset pin is set to OD mode
+	GPIO_InitStruct.Pin = SNES_RESET_Pin;
+	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+	HAL_GPIO_Init(SNES_RESET_GPIO_Port, &GPIO_InitStruct);
 
 	// clear all interrupts
 	while (HAL_NVIC_GetPendingIRQ(EXTI0_IRQn))

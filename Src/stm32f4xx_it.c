@@ -999,7 +999,6 @@ void GCN64_CommandStart(uint8_t player)
 		{
 			case 0x01: // N64 poll
 				UpdateN64VisBoards(frame[0][0][0].n64_data); //TODO: consider P1 vs P2
-				//TODO: update with prev logic
 			case 0x400302: // GC poll
 			case 0x400300: // GC poll
 			case 0x400301: // GC poll
