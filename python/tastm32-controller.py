@@ -115,19 +115,18 @@ def main():
                         data_to_tastm32 &= ~N64_Z
                 if event.code == 'ABS_HAT0Y':
                     if event.state == -1: # up
-                        print(event.ev_type, event.code, event.state)
-                        data_to_tastm32 |= 0x01000000
-                    elif event.state == 1: #down
-                        data_to_tastm32 |= 0x02000000
-                    elif event.state == 0: # neutral
-                        data_to_tastm32 &= 0xFCFFFFFF
-                elif event.code == 'ABS_HAT0X':
-                    if event.state == -1: # left
-                        data_to_tastm32 |= 0x04000000
-                    elif event.state == 1: #right
                         data_to_tastm32 |= 0x08000000
+                    elif event.state == 1: # down
+                        data_to_tastm32 |= 0x04000000
                     elif event.state == 0: # neutral
                         data_to_tastm32 &= 0xF3FFFFFF
+                elif event.code == 'ABS_HAT0X':
+                    if event.state == -1: # left
+                        data_to_tastm32 |= 0x02000000
+                    elif event.state == 1: # right
+                        data_to_tastm32 |= 0x01000000
+                    elif event.state == 0: # neutral
+                        data_to_tastm32 &= 0xFCFFFFFF
                 elif event.code == 'ABS_X':
                     N64_X_val = (event.state) // 384
                     abs_X_val = abs(N64_X_val)
