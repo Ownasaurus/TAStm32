@@ -40,9 +40,8 @@ btn_codes = {
 }
 N64_Z = 0x20000000
 
-chosenGamepad = 0
-
 def init():
+    global chosenGamepad
     global ser
     # try and connect to the TAStm32
     parser = argparse_helper.audio_parser()
@@ -94,6 +93,7 @@ def init():
 
 def main():
     global ser
+    global chosenGamepad
     # keep track of controller state
     data_to_tastm32 = 0
     prev_data = 0
