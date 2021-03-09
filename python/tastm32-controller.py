@@ -3,6 +3,7 @@ import serial_helper
 import argparse_helper
 import tastm32
 import time
+import multiprocessing
 from inputs import devices
 
 #Triggers: 0-255
@@ -41,7 +42,7 @@ btn_codes = {
 N64_Z = 0x20000000
 
 def init():
-    global chosenGamepad
+    global players
     global ser
     # try and connect to the TAStm32
     parser = argparse_helper.audio_parser()
@@ -54,18 +55,27 @@ def init():
     ser = dev
 
     # BEGIN player selection
+    numPlayers = int(input("How many players (1 or 2)? "))
+    if numPlayers != 1 and numPlayers != 2:
+        print("ERROR: Invalid number of players! Exiting....")
+        exit()
     # END player selection
 
     # BEGIN USB controller selection
+    players = []
     numGamepads = len(devices.gamepads)
-    if numGamepads == 1:
-        chosenGamepad = 0
-    elif numGamepads > 1:
-        for i in range(len(devices.gamepads)):
-            print(f"{i}) --{devices.gamepads[i]}--")
-        chosenGamepad = int(input("Which device is your gamepad? "))
+    if numGamepads >= numPlayers:
+        for p in range(numPlayers):
+            for i in range(len(devices.gamepads)):
+                print(f"{i}) --{devices.gamepads[i]}--")
+            chosenGamepad = int(input(f"Player {p+1}: Which device is your gamepad? "))
+            players.insert(p, chosenGamepad)
     else:
-        print("ERROR: No gamepads found! Exiting....")
+        print(f"ERROR: Not enough gamepads found (only found {numGamepads})! Exiting....")
+        exit()
+    # make sure p1 and p2 are not mapped to the same gamepad
+    if len(players) == 2 and players[0] == players[1]:
+        print("ERROR: P1 and P2 cannot use the same gamepad! Exiting....")
         exit()
     # END USB controller selection
 
@@ -79,7 +89,13 @@ def init():
     ser.enable_controller()
 
     # set up the N64 correctly
-    ser.write(b'SAM\x80\x00')
+    if numPlayers == 1:
+        ser.write(b'SAM\x80\x00')
+    elif numPlayers == 2:
+        ser.write(b'SAM\x88\x00')
+    else:
+        print("ERROR: It should be impossible to reach this line of code! Exiting....")
+        exit(0)
     time.sleep(0.1)
     cmd = ser.read(2)
     print(bytes(cmd))
@@ -92,87 +108,96 @@ def init():
     ser.ser.reset_input_buffer()
     
     # start with gamepad neutral
-    ser.write(bytes([65,0,0,0,0]))
+    if len(players) == 1:
+        ser.write(bytes([65,0,0,0,0]))
+    elif len(players) == 2:
+        ser.write(bytes([65,0,0,0,0,0,0,0,0]))
+
+#TODO: make this async with multiprocessing
+def async_read_controller(player):
+    devices.gamepads[player].read()
 
 def main():
     global ser
-    global chosenGamepad
+    global players
     # keep track of controller state
-    data_to_tastm32 = 0
-    prev_data = 0
-    
+    data_to_tastm32 = []
+    for p in range(len(players)):
+        data_to_tastm32.insert(p, 0)
+
     # BEGIN main loop
     while 1:
-        events = devices.gamepads[chosenGamepad].read()
-        for event in events:
-            if event.ev_type == 'Key': # handle button presses
-                if event.state == 1: # pressed
-                    data_to_tastm32 |= btn_codes[event.code]
-                elif event.state == 0: # released
-                    data_to_tastm32 &= ~btn_codes[event.code]
-            elif event.ev_type == 'Absolute': # handle analog inputs
-                if event.code == 'ABS_Z' or event.code == 'ABS_RZ':
-                    if event.state >= TRIGGER_THRESHOLD:
-                        data_to_tastm32 |= N64_Z
-                    else:
-                        data_to_tastm32 &= ~N64_Z
-                if event.code == 'ABS_HAT0Y':
-                    if event.state == -1: # up
-                        data_to_tastm32 |= 0x08000000
-                    elif event.state == 1: # down
-                        data_to_tastm32 |= 0x04000000
-                    elif event.state == 0: # neutral
-                        data_to_tastm32 &= 0xF3FFFFFF
-                elif event.code == 'ABS_HAT0X':
-                    if event.state == -1: # left
-                        data_to_tastm32 |= 0x02000000
-                    elif event.state == 1: # right
-                        data_to_tastm32 |= 0x01000000
-                    elif event.state == 0: # neutral
-                        data_to_tastm32 &= 0xFCFFFFFF
-                elif event.code == 'ABS_X':
-                    N64_X_val = (event.state) // 384
-                    abs_X_val = abs(N64_X_val)
-                    data_to_tastm32 &= 0xFFFF00FF
-                    if abs_X_val >= N64_DEADZONE: # out of neutral position
-                        sign_X_val = 0
-                        if N64_X_val < 0:
-                            sign_X_val = 1
-                            abs_X_val = 128 - abs_X_val
-                        data_to_tastm32 |= ((abs_X_val << 8) | (sign_X_val << 15))
-                elif event.code == 'ABS_Y':
-                    N64_Y_val = (event.state) // 384
-                    abs_Y_val = abs(N64_Y_val)
-                    data_to_tastm32 &= 0xFFFFFF00
-                    if abs_Y_val >= N64_DEADZONE: # out of neutral position
-                        sign_Y_val = 0
-                        if N64_Y_val < 0:
-                            sign_Y_val = 1
-                            abs_Y_val = 128 - abs_Y_val
-                        data_to_tastm32 |= (abs_Y_val | (sign_Y_val << 7))
-                elif event.code == 'ABS_RX':
-                    abs_X_val = abs(event.state)
-                    if abs_X_val < XBOX_R_ANALOG_THRESHOLD: # Neutral position
-                        data_to_tastm32 &= 0xFFFCFFFF
-                    else:
-                        if event.state < 0: # Left
-                            data_to_tastm32 |= 0x00020000
-                        else: # Right
-                            data_to_tastm32 |= 0x00010000
-                elif event.code == 'ABS_RY':
-                    abs_Y_val = abs(event.state)
-                    if abs_Y_val < XBOX_R_ANALOG_THRESHOLD: # Neutral position
-                        data_to_tastm32 &= 0xFFF3FFFF
-                    else:
-                        if event.state < 0: # Down
-                            data_to_tastm32 |= 0x00040000
-                        else: # Up
-                            data_to_tastm32 |= 0x00080000
-            # prepare and send message to the replay device
-            if data_to_tastm32 != prev_data:
-                output_string = b'A' + data_to_tastm32.to_bytes(4, "big")
-                ser.write(output_string)
-                prev_data = data_to_tastm32
+        output_string = b'A' # reset output string to just have the prefix
+        for p, player in enumerate(players):
+            events = async_read_controller(player)
+            for event in events:
+                if event.ev_type == 'Key': # handle button presses
+                    if event.state == 1: # pressed
+                        data_to_tastm32[p] |= btn_codes[event.code]
+                    elif event.state == 0: # released
+                        data_to_tastm32[p] &= ~btn_codes[event.code]
+                elif event.ev_type == 'Absolute': # handle analog inputs
+                    if event.code == 'ABS_Z' or event.code == 'ABS_RZ':
+                        if event.state >= TRIGGER_THRESHOLD:
+                            data_to_tastm32[p] |= N64_Z
+                        else:
+                            data_to_tastm32[p] &= ~N64_Z
+                    if event.code == 'ABS_HAT0Y':
+                        if event.state == -1: # up
+                            data_to_tastm32[p] |= 0x08000000
+                        elif event.state == 1: # down
+                            data_to_tastm32[p] |= 0x04000000
+                        elif event.state == 0: # neutral
+                            data_to_tastm32[p] &= 0xF3FFFFFF
+                    elif event.code == 'ABS_HAT0X':
+                        if event.state == -1: # left
+                            data_to_tastm32[p] |= 0x02000000
+                        elif event.state == 1: # right
+                            data_to_tastm32[p] |= 0x01000000
+                        elif event.state == 0: # neutral
+                            data_to_tastm32[p] &= 0xFCFFFFFF
+                    elif event.code == 'ABS_X':
+                        N64_X_val = (event.state) // 384
+                        abs_X_val = abs(N64_X_val)
+                        data_to_tastm32[p] &= 0xFFFF00FF
+                        if abs_X_val >= N64_DEADZONE: # out of neutral position
+                            sign_X_val = 0
+                            if N64_X_val < 0:
+                                sign_X_val = 1
+                                abs_X_val = 128 - abs_X_val
+                            data_to_tastm32[p] |= ((abs_X_val << 8) | (sign_X_val << 15))
+                    elif event.code == 'ABS_Y':
+                        N64_Y_val = (event.state) // 384
+                        abs_Y_val = abs(N64_Y_val)
+                        data_to_tastm32[p] &= 0xFFFFFF00
+                        if abs_Y_val >= N64_DEADZONE: # out of neutral position
+                            sign_Y_val = 0
+                            if N64_Y_val < 0:
+                                sign_Y_val = 1
+                                abs_Y_val = 128 - abs_Y_val
+                            data_to_tastm32[p] |= (abs_Y_val | (sign_Y_val << 7))
+                    elif event.code == 'ABS_RX':
+                        abs_X_val = abs(event.state)
+                        if abs_X_val < XBOX_R_ANALOG_THRESHOLD: # Neutral position
+                            data_to_tastm32[p] &= 0xFFFCFFFF
+                        else:
+                            if event.state < 0: # Left
+                                data_to_tastm32[p] |= 0x00020000
+                            else: # Right
+                                data_to_tastm32[p] |= 0x00010000
+                    elif event.code == 'ABS_RY':
+                        abs_Y_val = abs(event.state)
+                        if abs_Y_val < XBOX_R_ANALOG_THRESHOLD: # Neutral position
+                            data_to_tastm32[p] &= 0xFFF3FFFF
+                        else:
+                            if event.state < 0: # Down
+                                data_to_tastm32[p] |= 0x00040000
+                            else: # Up
+                                data_to_tastm32[p] |= 0x00080000
+            # prepare message to the replay device
+            output_string += data_to_tastm32[p].to_bytes(4, "big")
+        ser.write(output_string) # send it!
+        print(output_string)
     # END main loop
 
 if __name__ == "__main__":
