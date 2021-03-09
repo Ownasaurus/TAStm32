@@ -3,7 +3,8 @@ import serial_helper
 import argparse_helper
 import tastm32
 import time
-import multiprocessing
+import multiprocessing as mp
+import queue
 from inputs import devices
 
 #Triggers: 0-255
@@ -113,9 +114,15 @@ def init():
     elif len(players) == 2:
         ser.write(bytes([65,0,0,0,0,0,0,0,0]))
 
-#TODO: make this async with multiprocessing
-def async_read_controller(player):
-    devices.gamepads[player].read()
+def readController(controller_id, queue):
+    controller = devices.gamepads[controller_id]
+    while True:
+        events = []
+        for event in controller.read():
+            events.append({"ev_type": event.ev_type,
+                           "code": event.code,
+                           "state": event.state})
+        queue.put(events)
 
 def main():
     global ser
@@ -124,81 +131,101 @@ def main():
     data_to_tastm32 = []
     for p in range(len(players)):
         data_to_tastm32.insert(p, 0)
+    
+    # set up multiprocessing
+    processes = []
+    controllers = []
+    
+    for controller_id in players:
+        q = mp.Queue()
+        p = mp.Process(target = readController,
+                                   args = (controller_id, q,))
+        p.start()
+        processes.append(p)
+        controllers.append(q)
 
     # BEGIN main loop
-    while 1:
-        output_string = b'A' # reset output string to just have the prefix
-        for p, player in enumerate(players):
-            events = async_read_controller(player)
-            for event in events:
-                if event.ev_type == 'Key': # handle button presses
-                    if event.state == 1: # pressed
-                        data_to_tastm32[p] |= btn_codes[event.code]
-                    elif event.state == 0: # released
-                        data_to_tastm32[p] &= ~btn_codes[event.code]
-                elif event.ev_type == 'Absolute': # handle analog inputs
-                    if event.code == 'ABS_Z' or event.code == 'ABS_RZ':
-                        if event.state >= TRIGGER_THRESHOLD:
-                            data_to_tastm32[p] |= N64_Z
-                        else:
-                            data_to_tastm32[p] &= ~N64_Z
-                    if event.code == 'ABS_HAT0Y':
-                        if event.state == -1: # up
-                            data_to_tastm32[p] |= 0x08000000
-                        elif event.state == 1: # down
-                            data_to_tastm32[p] |= 0x04000000
-                        elif event.state == 0: # neutral
-                            data_to_tastm32[p] &= 0xF3FFFFFF
-                    elif event.code == 'ABS_HAT0X':
-                        if event.state == -1: # left
-                            data_to_tastm32[p] |= 0x02000000
-                        elif event.state == 1: # right
-                            data_to_tastm32[p] |= 0x01000000
-                        elif event.state == 0: # neutral
-                            data_to_tastm32[p] &= 0xFCFFFFFF
-                    elif event.code == 'ABS_X':
-                        N64_X_val = (event.state) // 384
-                        abs_X_val = abs(N64_X_val)
-                        data_to_tastm32[p] &= 0xFFFF00FF
-                        if abs_X_val >= N64_DEADZONE: # out of neutral position
-                            sign_X_val = 0
-                            if N64_X_val < 0:
-                                sign_X_val = 1
-                                abs_X_val = 128 - abs_X_val
-                            data_to_tastm32[p] |= ((abs_X_val << 8) | (sign_X_val << 15))
-                    elif event.code == 'ABS_Y':
-                        N64_Y_val = (event.state) // 384
-                        abs_Y_val = abs(N64_Y_val)
-                        data_to_tastm32[p] &= 0xFFFFFF00
-                        if abs_Y_val >= N64_DEADZONE: # out of neutral position
-                            sign_Y_val = 0
-                            if N64_Y_val < 0:
-                                sign_Y_val = 1
-                                abs_Y_val = 128 - abs_Y_val
-                            data_to_tastm32[p] |= (abs_Y_val | (sign_Y_val << 7))
-                    elif event.code == 'ABS_RX':
-                        abs_X_val = abs(event.state)
-                        if abs_X_val < XBOX_R_ANALOG_THRESHOLD: # Neutral position
-                            data_to_tastm32[p] &= 0xFFFCFFFF
-                        else:
-                            if event.state < 0: # Left
-                                data_to_tastm32[p] |= 0x00020000
-                            else: # Right
-                                data_to_tastm32[p] |= 0x00010000
-                    elif event.code == 'ABS_RY':
-                        abs_Y_val = abs(event.state)
-                        if abs_Y_val < XBOX_R_ANALOG_THRESHOLD: # Neutral position
-                            data_to_tastm32[p] &= 0xFFF3FFFF
-                        else:
-                            if event.state < 0: # Down
-                                data_to_tastm32[p] |= 0x00040000
-                            else: # Up
-                                data_to_tastm32[p] |= 0x00080000
-            # prepare message to the replay device
-            output_string += data_to_tastm32[p].to_bytes(4, "big")
-        ser.write(output_string) # send it!
-        print(output_string)
-    # END main loop
+    try:
+        while 1:
+            output_string = b'A' # reset output string to just have the prefix
+            for p, controller in enumerate(controllers):
+                try:
+                    events = controllers[p].get_nowait()
+                except queue.Empty:
+                    output_string += data_to_tastm32[p].to_bytes(4, "big")
+                    continue
+                for event in events:
+                    if event["ev_type"] == 'Key': # handle button presses
+                        if event["state"] == 1: # pressed
+                            data_to_tastm32[p] |= btn_codes[event["code"]]
+                        elif event["state"] == 0: # released
+                            data_to_tastm32[p] &= ~btn_codes[event["code"]]
+                    elif event["ev_type"] == 'Absolute': # handle analog inputs
+                        if event["code"] == 'ABS_Z' or event["code"] == 'ABS_RZ':
+                            if event["state"] >= TRIGGER_THRESHOLD:
+                                data_to_tastm32[p] |= N64_Z
+                            else:
+                                data_to_tastm32[p] &= ~N64_Z
+                        if event["code"] == 'ABS_HAT0Y':
+                            if event["state"] == -1: # up
+                                data_to_tastm32[p] |= 0x08000000
+                            elif event["state"] == 1: # down
+                                data_to_tastm32[p] |= 0x04000000
+                            elif event["state"] == 0: # neutral
+                                data_to_tastm32[p] &= 0xF3FFFFFF
+                        elif event["code"] == 'ABS_HAT0X':
+                            if event["state"] == -1: # left
+                                data_to_tastm32[p] |= 0x02000000
+                            elif event["state"] == 1: # right
+                                data_to_tastm32[p] |= 0x01000000
+                            elif event["state"] == 0: # neutral
+                                data_to_tastm32[p] &= 0xFCFFFFFF
+                        elif event["code"] == 'ABS_X':
+                            N64_X_val = (event["state"]) // 384
+                            abs_X_val = abs(N64_X_val)
+                            data_to_tastm32[p] &= 0xFFFF00FF
+                            if abs_X_val >= N64_DEADZONE: # out of neutral position
+                                sign_X_val = 0
+                                if N64_X_val < 0:
+                                    sign_X_val = 1
+                                    abs_X_val = 128 - abs_X_val
+                                data_to_tastm32[p] |= ((abs_X_val << 8) | (sign_X_val << 15))
+                        elif event["code"] == 'ABS_Y':
+                            N64_Y_val = (event["state"]) // 384
+                            abs_Y_val = abs(N64_Y_val)
+                            data_to_tastm32[p] &= 0xFFFFFF00
+                            if abs_Y_val >= N64_DEADZONE: # out of neutral position
+                                sign_Y_val = 0
+                                if N64_Y_val < 0:
+                                    sign_Y_val = 1
+                                    abs_Y_val = 128 - abs_Y_val
+                                data_to_tastm32[p] |= (abs_Y_val | (sign_Y_val << 7))
+                        elif event["code"] == 'ABS_RX':
+                            abs_X_val = abs(event["state"])
+                            if abs_X_val < XBOX_R_ANALOG_THRESHOLD: # Neutral position
+                                data_to_tastm32[p] &= 0xFFFCFFFF
+                            else:
+                                if event["state"] < 0: # Left
+                                    data_to_tastm32[p] |= 0x00020000
+                                else: # Right
+                                    data_to_tastm32[p] |= 0x00010000
+                        elif event["code"] == 'ABS_RY':
+                            abs_Y_val = abs(event["state"])
+                            if abs_Y_val < XBOX_R_ANALOG_THRESHOLD: # Neutral position
+                                data_to_tastm32[p] &= 0xFFF3FFFF
+                            else:
+                                if event["state"] < 0: # Down
+                                    data_to_tastm32[p] |= 0x00040000
+                                else: # Up
+                                    data_to_tastm32[p] |= 0x00080000
+                # prepare message to the replay device
+                output_string += data_to_tastm32[p].to_bytes(4, "big")
+            ser.write(output_string) # send it!
+        # END main loop
+    except KeyboardInterrupt:
+        pass
+    for process in processes:
+        process.terminate()
 
 if __name__ == "__main__":
     # execute only if run as a script
