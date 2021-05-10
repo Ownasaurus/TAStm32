@@ -68,17 +68,22 @@ static const char* CHARACTERS[CHARACTERS_NUM] =
     "roy" // 24
 };
 
-static uint8_t CHARBUFS[CHARACTERS_NUM][84054];
+static uint8_t CHARBUFS[921654][CHARACTERS_NUM];
 
 void loadpics (){
 
 	FILE *f;
 	char fname[100];
+	int result;
 
-	for (int i=0; i < CHARACTERS_NUM; i++){
-		sprintf(fname, "%s.raw", CHARACTERS[i]);
+	for (uint32_t i=0; i < CHARACTERS_NUM; i++){
+		sprintf(fname, "%s.bmp", CHARACTERS[i]);
 		f = fopen (fname, "r");
-		fread (&CHARBUFS[i][0], 1, 84054, f);
+		if ((result = fread (&CHARBUFS[0][i], 1, 921654, f)) != 921654){
+			printf("%d\n", result);
+			 exit(1);
+		}
+		
 		fclose(f);
 	}
 	
@@ -435,10 +440,10 @@ int determine_character()
     
     double output_val = 999999;
     
-    static uint8_t buffah[84054];
+    static uint8_t buffah[921654];
 
-	f = fopen ("current.raw", "r");
-	fread (buffah, 84054, 1, f);
+	f = fopen ("current.bmp", "r");
+	fread (buffah, 921654, 1, f);
 	fclose(f);
     
 //    double ImageDiff(char *buf1, *buf2){
