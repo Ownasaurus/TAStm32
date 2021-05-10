@@ -6,6 +6,23 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <pthread.h>
+// run this in background : 
+// "ffmpeg -i /dev/video0 -filter:v "crop=140:200:60:250" -update 1 -atomic_writing 1 -y current.bmp"
+// Square a number
+float S(float i)
+{
+	return i * i;
+}
+
+double ImageDiff(uint8_t *buf1, uint8_t *buf2){
+	double totalscore = 0;
+	
+	for (uint32_t pix = 0; pix < 84054; pix++){
+		totalscore += S(buf1[pix] - buf2[pix]);
+	}
+	
+	return totalscore;
+}
 
 #define PROCESS(x) process_input(x##_orig, x)
 
@@ -50,6 +67,22 @@ static const char* CHARACTERS[CHARACTERS_NUM] =
     "mrt", // 23
     "roy" // 24
 };
+
+static uint8_t CHARBUFS[CHARACTERS_NUM][84054];
+
+void loadpics (){
+
+	FILE *f;
+	char fname[100];
+
+	for (int i=0; i < CHARACTERS_NUM; i++){
+		sprintf(fname, "%s.raw", CHARACTERS[i]);
+		f = fopen (fname, "r");
+		fread (&CHARBUFS[i][0], 1, 84054, f);
+		fclose(f);
+	}
+	
+}
 
 /*{ 11, 10, 12, 5, 16, 19, 21, 12, 22 };
 
@@ -215,7 +248,6 @@ int GetImageScore(char *filename){
     return output_val;
 }
 
-
 void process_input(char *data, char *new)
 {
     char old_byte1 = data[0];
@@ -376,7 +408,7 @@ void RunActionSequence(struct action *seqorig, int lengthorig)
         seq++;
     }
 }
-
+//60,250 - 200,460
 bool check_sequence(uint32_t seed, int clist[9])
 {
     int i;
@@ -397,16 +429,24 @@ bool check_sequence(uint32_t seed, int clist[9])
 
 int determine_character()
 {
-    
+    FILE *f;
     int min_index = -1;
-    int min_compare = 999999;
+    double min_compare = 999999;
     
-    int output_val = 999999;
+    double output_val = 999999;
+    
+    static uint8_t buffah[84054];
+
+	f = fopen ("current.raw", "r");
+	fread (buffah, 84054, 1, f);
+	fclose(f);
+    
+//    double ImageDiff(char *buf1, *buf2){
 
     for(int i = 0;i < CHARACTERS_NUM;i++)
     {
         // run the image analysis
-        output_val = GetImageScore(CHARACTERS[i]);
+        output_val = ImageDiff(&CHARBUFS[i][0], &buffah[0]);
 
         //compare and update min index
         if(output_val < min_compare)
@@ -616,6 +656,7 @@ uint32_t FindSeedDistance(uint32_t our_seed, uint32_t target_seed, uint32_t max_
 int main(int argc, char **argv)
 {
     printf("\e[1;1H\e[2J");
+    loadpics();
     Connect();
     char power_msg[] = {'P', '0'};
     // At this point, we're all connected to the TAStm32 and ready to rock
