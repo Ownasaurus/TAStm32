@@ -6,10 +6,11 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <pthread.h>
+#include <float.h>
 // run this in background : 
-// "ffmpeg -i /dev/video0 -filter:v "crop=140:200:60:250" -update 1 -atomic_writing 1 -y current.bmp"
+// "ffmpeg -i /dev/video2 -update 1 -atomic_writing 1 -y current.bmp"
 // Square a number
-float S(float i)
+double S(double i)
 {
 	return i * i;
 }
@@ -17,9 +18,24 @@ float S(float i)
 double ImageDiff(uint8_t *buf1, uint8_t *buf2){
 	double totalscore = 0;
 	
-	for (uint32_t pix = 0; pix < 84054; pix++){
-		totalscore += S(buf1[pix] - buf2[pix]);
+	/*for (uint32_t pix = 450054; pix < 921654; pix+=3){
+		double diff = sqrt(
+			S((double)buf1[pix] - (double)(buf2[pix])) + 
+			S((double)buf1[pix+1] - (double)(buf2[pix+1])) + 
+			S((double)buf1[pix+2] - (double)(buf2[pix+2]))
+			);
+		if (diff > 300)
+			totalscore++;
+	}*/
+	
+	for (uint32_t pix = 0; pix < 450000; pix++){
+		double diff = sqrt(
+			S((double)buf1[pix] - (double)(buf2[pix]))
+			);
+		if (diff > 150)
+			totalscore++;
 	}
+	
 	
 	return totalscore;
 }
@@ -68,7 +84,7 @@ static const char* CHARACTERS[CHARACTERS_NUM] =
     "roy" // 24
 };
 
-static uint8_t CHARBUFS[921654][CHARACTERS_NUM];
+static uint8_t CHARBUFS[CHARACTERS_NUM][921654];
 
 void loadpics (){
 
@@ -79,7 +95,7 @@ void loadpics (){
 	for (uint32_t i=0; i < CHARACTERS_NUM; i++){
 		sprintf(fname, "%s.bmp", CHARACTERS[i]);
 		f = fopen (fname, "r");
-		if ((result = fread (&CHARBUFS[0][i], 1, 921654, f)) != 921654){
+		if ((result = fread (&CHARBUFS[i][0], 1, 921654, f)) != 921654){
 			printf("%d\n", result);
 			 exit(1);
 		}
@@ -174,15 +190,15 @@ typedef struct action
 
 struct action GetToVsModeCPU[] =
 {
-    {input_b, 300, "-"}, // loading
+/*    {input_b, 300, "-"}, // loading
     {input_a, 30, "1p60sel"}, // enable PAL60 or NTSC progressive mode
     {input_start, 8, "2intro"},   // skip intro vid
-    {input_blank, 50, "3start"},   // wait for start screen to fully load
+    {input_blank, 15, "3start"},   // wait for start screen to fully load
     {input_start, 50, "-"},   // press start on start screen
     {input_blank, 20, "4mainmenu"},   // wait for menu to fully load
     {input_down, 20, "-"},    // select VS
     {input_start, 50, "-"},   // go into VS menu*/
-    //{input_b, 300, "-"},   // go back to previous menu, uncomment if skipping rest
+    {input_b, 300, "-"},   // go back to previous menu, uncomment if skipping rest
     {input_start, 50, "-"},   // choose MELEE
     {input_analog_up, 42, "5css"},   // GO STRAIGHT UP TO RANDOM AREA
     {input_blank, 10, "-"}
@@ -366,11 +382,11 @@ void press_and_release_button_sync(char *button, int speed)
     }
 }
 
-void press__button(char *button, int polls)
+void press_button(char *button, int polls)
 {
     int i;
     for (i = 0; i < polls; i++)
-        WriteControl(button);
+        WriteControlNoWait(button);
 }
 
 void RunActionSequence(struct action *seqorig, int lengthorig)
@@ -436,7 +452,7 @@ int determine_character()
 {
     FILE *f;
     int min_index = -1;
-    double min_compare = 999999;
+    double min_compare = DBL_MAX;
     
     double output_val = 999999;
     
@@ -452,6 +468,7 @@ int determine_character()
     {
         // run the image analysis
         output_val = ImageDiff(&CHARBUFS[i][0], &buffah[0]);
+        //printf("%f\n", output_val);
 
         //compare and update min index
         if(output_val < min_compare)
@@ -594,9 +611,12 @@ void GetCharacterList(){
     for(int peek = 0;peek < 9;peek++)
     {
 	//tcflush(SerialPort, TCIFLUSH);
-        press_and_release_button_sync(input_a, 10); // place P1 coin
+        press_and_release_button_sync(input_a, 7); // place P1 coin
+        press_button(input_b, 3);
+        press_button(input_blank, 1);
         clist[peek] = determine_character();
-        press_and_release_button_sync(input_b, 5); // recall P1 coin
+        press_and_release_button_sync(input_blank, 1);
+        //press_and_release_button_sync(input_b, 3); // recall P1 coin - TODO this could perhaps be made non-sync and moved before determine character to buffer the next character while the algorithm is running
     }
     printf("\n");
 }
@@ -662,6 +682,9 @@ int main(int argc, char **argv)
 {
     printf("\e[1;1H\e[2J");
     loadpics();
+    /*while(1){
+    	GetCharacterList();
+    }*/
     Connect();
     char power_msg[] = {'P', '0'};
     // At this point, we're all connected to the TAStm32 and ready to rock
