@@ -38,7 +38,8 @@ typedef enum
 	TRANSITION_NORMAL,
 	TRANSITION_ACE,
 	TRANSITION_RESET_SOFT,
-	TRANSITION_RESET_HARD
+	TRANSITION_RESET_HARD,
+	TRANSITION_WAIT_RUMBLE
 } TransitionType;
 
 typedef struct
@@ -69,6 +70,7 @@ typedef struct
 	uint8_t input_data_size;
 	uint32_t moder_firstLatch;
 
+	uint8_t waiting; // if we're waiting on a rumble
 	uint8_t multitap;
 	int32_t blank;
 	char inputFile[256];
