@@ -77,6 +77,9 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 					case 'P': // Power controls
 						instance.state = SERIAL_POWER;
 						break;
+					case 'M': // Enable Melee polling bug mitigation
+						tasrun->meleeMitigation = 1;
+						break;
 					case '\xDF':
 						jumpToDFU = 1;
 						break;

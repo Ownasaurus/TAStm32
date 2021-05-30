@@ -958,9 +958,18 @@ void GCN64_CommandStart(uint8_t player)
 	  case 0x400302:
 	  case 0x400300:
 	  case 0x400301:
+
 		  if(player == tasrun->numControllers)
 		  {
 			  frame = GetNextFrame();
+			  	  tasrun->pollNumber++;
+
+		      if (cmd & 1)
+		      	  tasrun->pollNumber = 1;
+
+			  // Skip one out of every thousand frames to work around Melee polling bug
+		      if (tasrun->meleeMitigation && tasrun->pollNumber % 1000 == 1)
+		          GetNextFrame();
 		  }
 
 		  if(frame == NULL) // buffer underflow

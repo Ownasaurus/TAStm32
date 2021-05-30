@@ -68,6 +68,8 @@ typedef struct
 	uint8_t console_data_size;
 	uint8_t input_data_size;
 	uint32_t moder_firstLatch;
+	uint8_t meleeMitigation;
+	uint32_t pollNumber;
 
 	uint8_t multitap;
 	int32_t blank;
