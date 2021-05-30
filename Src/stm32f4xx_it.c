@@ -959,6 +959,13 @@ void GCN64_CommandStart(uint8_t player)
 	  case 0x400300:
 	  case 0x400301:
 
+		if (toggleNext == 4)
+		{
+			tasrun->waiting = 1;
+			//GPIOB->BSRR = (1 << V1_D0_LOW_B);
+			toggleNext = 0;
+		}
+
 		// stop waiting if we recieved a rumble
 		// (LSB of command indicates rumble state)
 		if (tasrun->waiting && (cmd & 1))
@@ -976,7 +983,7 @@ void GCN64_CommandStart(uint8_t player)
 			frame = GetNextFrame();
 		}
 
-		if(frame == NULL) // buffer underflow
+		if(frame == NULL) // buffer underflow or waiting
 		{
 			memset(&gc_data, 0, sizeof(gc_data));
 
@@ -990,6 +997,7 @@ void GCN64_CommandStart(uint8_t player)
 		}
 		else
 		{
+			toggleNext = TASRunIncrementFrameCount();
 			frame[0][(player-1)][0].gc_data.beginning_one = 1;
 			GC_SendRunData(player, frame[0][(player-1)][0].gc_data);
 		}

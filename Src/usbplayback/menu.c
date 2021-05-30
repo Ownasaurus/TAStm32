@@ -88,13 +88,13 @@ void Menu_Display() {
 	static FILINFO fno;
 
 	unsigned char lineNo = 0;
-
+	CurrentMenu = MENUTYPE_TASSTATS;
 	switch (CurrentMenu) {
 	case MENUTYPE_BROWSER:
 
 		// if USB host initiated run, switch menu
 		if (tasrun->initialized){
-			CurrentMenu = MENUTYPE_TASINPUTS;
+			CurrentMenu = MENUTYPE_TASSTATS;
 			break;
 		}
 
@@ -264,6 +264,11 @@ void Menu_Display() {
 		sprintf(temp, "Buffer: %d", tasrun->size);
 		ssd1306_SetCursor(0, 16);
 		ssd1306_WriteString(temp, Font_6x8, White);
+
+		sprintf(temp, "Waiting: %d", tasrun->waiting);
+		ssd1306_SetCursor(0, 24);
+		ssd1306_WriteString(temp, Font_6x8, White);
+
 
 		ssd1306_UpdateScreen();
 		break;
