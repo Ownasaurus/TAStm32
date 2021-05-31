@@ -914,6 +914,7 @@ void GCN64_CommandStart(uint8_t player)
 	__disable_irq();
 	uint32_t cmd;
 	static RunDataArray *frame = NULL;
+	uint8_t bufferUnderflow = 0;
 
 	cmd = GCN64_ReadCommand(player);
 
@@ -945,6 +946,7 @@ void GCN64_CommandStart(uint8_t player)
 
 		  if(frame == NULL) // buffer underflow
 		  {
+			  bufferUnderflow = 1;
 			  N64_SendControllerData(player, 0); // send blank controller data
 		  }
 		  else
@@ -981,6 +983,8 @@ void GCN64_CommandStart(uint8_t player)
 		else if(player == tasrun->numControllers)
 		{
 			frame = GetNextFrame();
+			if (frame == NULL)
+			    bufferUnderflow = 1;
 		}
 
 		if(frame == NULL) // buffer underflow or waiting
@@ -1035,7 +1039,7 @@ void GCN64_CommandStart(uint8_t player)
 				}
 				else
 				{
-					if(frame == NULL) // there was a buffer underflow
+					if(bufferUnderflow) // there was a buffer underflow
 						serial_interface_output((uint8_t*)"A\xB2", 2);
 					else
 						serial_interface_output((uint8_t*)"A", 1);
