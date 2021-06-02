@@ -395,7 +395,7 @@ def main():
         blankframe = b'\x00\x00' * len(args.players)
 
     if args.melee:
-        self.write(b'M')
+        dev.write(b'M')
 
     # Transitions
     if args.transition != None:
