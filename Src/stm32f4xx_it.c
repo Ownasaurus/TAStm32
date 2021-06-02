@@ -961,8 +961,9 @@ void GCN64_CommandStart(uint8_t player)
 	  case 0x400300:
 	  case 0x400301:
 
-		tasrun->pollNumber++;
-		
+		if(player == tasrun->numControllers)
+			tasrun->pollNumber++;
+
 		// stop waiting if we recieved a rumble
 		// (LSB of command indicates rumble state)
 		if (tasrun->waiting && (cmd & 1))
