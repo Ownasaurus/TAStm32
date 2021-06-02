@@ -961,6 +961,8 @@ void GCN64_CommandStart(uint8_t player)
 	  case 0x400300:
 	  case 0x400301:
 
+		tasrun->pollNumber++;
+		
 		// stop waiting if we recieved a rumble
 		// (LSB of command indicates rumble state)
 		if (tasrun->waiting && (cmd & 1))
@@ -984,7 +986,7 @@ void GCN64_CommandStart(uint8_t player)
 		else if(player == tasrun->numControllers)
 		{
 			frame = GetNextFrame();
-			tasrun->pollNumber++;
+			
 
 			// Skip one out of every thousand frames to work around Melee polling bug
 			if (tasrun->meleeMitigation && tasrun->pollNumber % 1000 == 1){
