@@ -914,6 +914,7 @@ void GCN64_CommandStart(uint8_t player)
 	__disable_irq();
 	uint32_t cmd;
 	static RunDataArray *frame = NULL;
+	uint8_t bufferUnderflow = 0;
 
 	cmd = GCN64_ReadCommand(player);
 
@@ -945,6 +946,7 @@ void GCN64_CommandStart(uint8_t player)
 
 		  if(frame == NULL) // buffer underflow
 		  {
+			  bufferUnderflow = 1;
 			  N64_SendControllerData(player, 0); // send blank controller data
 		  }
 		  else
@@ -958,29 +960,62 @@ void GCN64_CommandStart(uint8_t player)
 	  case 0x400302:
 	  case 0x400300:
 	  case 0x400301:
-		  if(player == tasrun->numControllers)
-		  {
-			  frame = GetNextFrame();
-		  }
 
-		  if(frame == NULL) // buffer underflow
-		  {
-				memset(&gc_data, 0, sizeof(gc_data));
+		if(player == tasrun->numControllers)
+			tasrun->pollNumber++;
 
-				gc_data.a_x_axis = 128;
-				gc_data.a_y_axis = 128;
-				gc_data.c_x_axis = 128;
-				gc_data.c_y_axis = 128;
-				gc_data.beginning_one = 1;
+		// stop waiting if we recieved a rumble
+		// (LSB of command indicates rumble state)
+		if (tasrun->waiting && (cmd & 1))
+		{
+			tasrun->waiting = 0;
+			tasrun->pollNumber = 1;
+		}
 
-				GC_SendRunData(player, gc_data); // send blank controller data
-		  }
-		  else
-		  {
-			  frame[0][(player-1)][0].gc_data.beginning_one = 1;
-			  GC_SendRunData(player, frame[0][(player-1)][0].gc_data);
-		  }
-		  break;
+		// start waiting if the previous iteration told us to
+		if (toggleNext == 4)
+		{
+			tasrun->waiting = 1;
+			toggleNext = 0;
+		}
+
+		// Send blank frame if we're waiting on a rumble
+	  	if (tasrun->waiting)
+		{
+			frame = NULL;
+		}
+		else if(player == tasrun->numControllers)
+		{
+			frame = GetNextFrame();
+			
+
+			// Skip one out of every thousand frames to work around Melee polling bug
+			if (tasrun->meleeMitigation && tasrun->pollNumber % 1000 == 1){
+				GetNextFrame();
+			}
+			if (frame == NULL)
+			    bufferUnderflow = 1;
+		}
+
+		if(frame == NULL) // buffer underflow or waiting
+		{
+			memset(&gc_data, 0, sizeof(gc_data));
+
+			gc_data.a_x_axis = 128;
+			gc_data.a_y_axis = 128;
+			gc_data.c_x_axis = 128;
+			gc_data.c_y_axis = 128;
+			gc_data.beginning_one = 1;
+
+			GC_SendRunData(player, gc_data); // send blank controller data
+		}
+		else
+		{
+			toggleNext = TASRunIncrementFrameCount();
+			frame[0][(player-1)][0].gc_data.beginning_one = 1;
+			GC_SendRunData(player, frame[0][(player-1)][0].gc_data);
+		}
+		break;
 	  case 0x02:
 	  case 0x03:
 	  default:
@@ -1014,11 +1049,13 @@ void GCN64_CommandStart(uint8_t player)
 				}
 				else
 				{
-					serial_interface_output((uint8_t*)"A", 1);
+					if(bufferUnderflow) // there was a buffer underflow
+						serial_interface_output((uint8_t*)"A\xB2", 2);
+					else
+						serial_interface_output((uint8_t*)"A", 1);
 				}
 
-				if(frame == NULL) // there was a buffer underflow
-					serial_interface_output((uint8_t*)"\xB2", 1);
+
 			break;
 		}
 	}

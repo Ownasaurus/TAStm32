@@ -77,6 +77,9 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 					case 'P': // Power controls
 						instance.state = SERIAL_POWER;
 						break;
+					case 'M': // Enable Melee polling bug mitigation
+						tasrun->meleeMitigation = 1;
+						break;
 					case '\xDF':
 						jumpToDFU = 1;
 						break;
@@ -442,6 +445,16 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 				else if(instance.transition_type == 'H')
 				{
 					if(!AddTransition(TRANSITION_RESET_HARD, tempVal)) // try adding transition
+					{
+						// adding transition failed
+						instance.state = SERIAL_COMPLETE;
+						serial_interface_output((uint8_t*)"\xFB", 1);
+						break;
+					}
+				}
+				else if(instance.transition_type == 'R')
+				{
+					if(!AddTransition(TRANSITION_WAIT_RUMBLE, tempVal)) // try adding transition
 					{
 						// adding transition failed
 						instance.state = SERIAL_COMPLETE;
