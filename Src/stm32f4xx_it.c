@@ -969,6 +969,7 @@ void GCN64_CommandStart(uint8_t player)
 			tasrun->pollNumber = 1;
 		}
 
+		// start waiting if the previous iteration told us to
 		if (toggleNext == 4)
 		{
 			tasrun->waiting = 1;
@@ -983,7 +984,7 @@ void GCN64_CommandStart(uint8_t player)
 		else if(player == tasrun->numControllers)
 		{
 			frame = GetNextFrame();
-				tasrun->pollNumber++;
+			tasrun->pollNumber++;
 
 			// Skip one out of every thousand frames to work around Melee polling bug
 			if (tasrun->meleeMitigation && tasrun->pollNumber % 1000 == 1){
