@@ -88,7 +88,7 @@ void Menu_Display() {
 	static FILINFO fno;
 
 	unsigned char lineNo = 0;
-	CurrentMenu = MENUTYPE_TASSTATS;
+
 	switch (CurrentMenu) {
 	case MENUTYPE_BROWSER:
 
@@ -263,14 +263,6 @@ void Menu_Display() {
 
 		sprintf(temp, "Buffer: %d", tasrun->size);
 		ssd1306_SetCursor(0, 16);
-		ssd1306_WriteString(temp, Font_6x8, White);
-
-		sprintf(temp, "Skipped: %d", tasrun->skipped);
-		ssd1306_SetCursor(0, 24);
-		ssd1306_WriteString(temp, Font_6x8, White);
-
-		sprintf(temp, "pollnumber: %d", tasrun->pollNumber);
-		ssd1306_SetCursor(0, 32);
 		ssd1306_WriteString(temp, Font_6x8, White);
 
 		ssd1306_UpdateScreen();

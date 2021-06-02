@@ -988,7 +988,6 @@ void GCN64_CommandStart(uint8_t player)
 
 			// Skip one out of every thousand frames to work around Melee polling bug
 			if (tasrun->meleeMitigation && tasrun->pollNumber % 1000 == 1){
-				tasrun->skipped++;
 				GetNextFrame();
 			}
 			if (frame == NULL)
