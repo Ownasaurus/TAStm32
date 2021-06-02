@@ -24,6 +24,7 @@ def setup_parser_full():
     parser.add_argument('--transition', help='Add a transition', nargs=2, action='append')
     parser.add_argument('--latchtrain', help='Configure latch train', default='')
     parser.add_argument('--nobulk', help='Disable Bulk Transfer Mode', action='store_true')
+    parser.add_argument('--melee', help='Enable Super Smash Bros. Melee poll bug mitigation', action='store_true')
     # parser.add_argument('--window', help='Set window mode', type=float, default=0)
     parser.add_argument('movie', help='Path to the movie file to play')
     return parser

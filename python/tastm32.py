@@ -399,6 +399,9 @@ def main():
         buffer = rgen.read_input(data, args.players)
         blankframe = b'\x00\x00' * len(args.players)
 
+    if args.melee:
+        dev.write(b'M')
+
     # Transitions
     if args.transition != None:
         for transition in args.transition:
