@@ -256,16 +256,6 @@ void EXTI1_IRQHandler(void)
 	// P1_LATCH
 	int8_t regbit = 50, databit = -1; // random initial values
 
-
-	// set relevant data ports as output if this is the first latch
-	// NO! Do this AFTER we have set up the pin state otherwise it might glitch
-	/*if(firstLatch && (EXTI->PR & P1_LATCH_Pin))
-	{
-		// D0/D1 buffers should already be set as output, just need to enable them
-		HAL_GPIO_WritePin(OUTPUTS_ENABLE_GPIO_Port, OUTPUTS_ENABLE_Pin, GPIO_PIN_RESET);
-
-		firstLatch = 0;
-	}*/
 	if(tasrun->console == CONSOLE_GEN)
 	{
 		// comment format below: [PIN1 PIN2 PIN3 PIN4 PIN5 PIN6 PIN7 PIN8 PIN9]
@@ -355,14 +345,6 @@ void EXTI1_IRQHandler(void)
 				// Assume sel is high, this should perhaps be being being reset by the EXT4 interrupt if it was set to trigger both edges
 				multitapSel = 1;
 			}
-
-
-
-			/*if (overreadflag > 1)
-				serial_interface_output((uint8_t*)"\xF1", 1);
-			if (underreadflag)
-				serial_interface_output((uint8_t*)"\xF2", 1);
-			overreadflag = underreadflag = 0;*/
 
 			// now prepare for the next frame!
 
