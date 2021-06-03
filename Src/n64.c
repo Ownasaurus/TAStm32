@@ -3,7 +3,7 @@
 #include "n64.h"
 #include "stm32f4xx_hal.h"
 #include "main.h"
-#include "tasrun.h"
+#include "TASRun.h"
 
 void my_wait_us_asm(int n);
 void my_wait_100ns_asm(int n);
