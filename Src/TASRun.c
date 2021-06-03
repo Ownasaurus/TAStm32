@@ -370,19 +370,22 @@ int ExtractDataAndAddFrame(uint8_t *buffer, uint32_t n)
 
 void SetN64Mode()
 {
+	// MCU D2 input, triggered on falling edge
+	#ifdef BOARDV3
+	SetupPin(P1_DATA_2_GPIO_Port, P1_DATA_2_Pin | P2_DATA_2_Pin, GPIO_MODE_IT_FALLING, GPIO_NOPULL, GPIO_PIN_SET);
+	#endif
 
-	//v4 below here
-	// Buffer P1D2 is input
-	//HAL_GPIO_WritePin(DIR_P1P2D2D3_GPIO_Port, DIR_P1P2D2D3_Pin, GPIO_PIN_RESET);
+	#ifdef BOARDV4
 
-	// Buffer Enable P1D2
-	//HAL_GPIO_WritePin(ENABLE_P1D2D3_GPIO_Port, ENABLE_P1D2D3_Pin, GPIO_PIN_RESET);
+	// MCU D2 input, triggered on falling edge
+	SetupPin(P1_DATA_2_GPIO_Port, P1_DATA_2_Pin | P2_DATA_2_Pin, GPIO_MODE_IT_FALLING, GPIO_NOPULL, GPIO_PIN_SET);
 
-	// MCU P1D2 input, triggered on falling edge
-	SetupPin(P1_DATA_2_GPIO_Port, P1_DATA_2_Pin, GPIO_MODE_IT_FALLING, GPIO_NOPULL, GPIO_PIN_RESET);
+	// Set D2/D3 out LOW before anything else, since we're driving open drain (by wiggling enable)
+	SetupPin(P1_DATA_2_OUT_GPIO_Port, P1_DATA_2_OUT_Pin, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_PIN_RESET);
+	SetupPin(P2_DATA_2_OUT_GPIO_Port, P2_DATA_2_OUT_Pin, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_PIN_RESET);
 
-	// Output but high so disabled
-	SetupPin(P1_DATA_2_OUT_GPIO_Port, P1_DATA_2_OUT_Pin, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_PIN_SET);
+	// Buffers will already be disabled
+	#endif
 }
 
 // quick function to init pin

@@ -3,6 +3,7 @@
 #include "n64.h"
 #include "stm32f4xx_hal.h"
 #include "main.h"
+#include "tasrun.h"
 
 void my_wait_us_asm(int n);
 void my_wait_100ns_asm(int n);
@@ -109,6 +110,7 @@ static uint8_t GetMiddleOfPulse(uint8_t player)
 inline void SendStop(uint8_t player)
 {
 
+	#ifdef BOARDV3
 	if(player == 1)
 	{
 		P1_DATA_2_GPIO_Port->BSRR = P1_DATA_2_Pin<<16;
@@ -121,16 +123,22 @@ inline void SendStop(uint8_t player)
 		my_wait_us_asm(1);
 		P2_DATA_2_GPIO_Port->BSRR = P2_DATA_2_Pin;
 	}
-//v4 below here
-	P1_DATA_2_OUT_GPIO_Port->BSRR = P1_DATA_2_OUT_Pin<<16;
-	my_wait_us_asm(1);
-	P1_DATA_2_OUT_GPIO_Port->BSRR = P1_DATA_2_OUT_Pin;
-	/*P1_DATA_2_GPIO_Port->BSRR = P1_DATA_2_Pin<<16;
-	my_wait_us_asm(1);
-	P1_DATA_2_GPIO_Port->BSRR = P1_DATA_2_Pin;*/
-	//HAL_GPIO_WritePin(ENABLE_P1D2D3_GPIO_Port, ENABLE_P1D2D3_Pin, GPIO_PIN_RESET);
-	my_wait_us_asm(1);
-	//HAL_GPIO_WritePin(ENABLE_P1D2D3_GPIO_Port, ENABLE_P1D2D3_Pin, GPIO_PIN_SET);
+	#endif
+
+	#ifdef BOARDV4
+	if(player == 1)
+	{
+		ENABLE_P1D2D3_GPIO_Port->BSRR = ENABLE_P1D2D3_Pin<<16;
+		my_wait_us_asm(1);
+		ENABLE_P1D2D3_GPIO_Port->BSRR = ENABLE_P1D2D3_Pin;
+	}
+	else if(player == 2)
+	{
+		ENABLE_P2D2D3_GPIO_Port->BSRR = ENABLE_P2D2D3_Pin<<16;
+		my_wait_us_asm(1);
+		ENABLE_P2D2D3_GPIO_Port->BSRR = ENABLE_P2D2D3_Pin;
+	}
+	#endif
 
 }
 
@@ -145,7 +153,7 @@ inline void N64_SendIdentity(uint8_t player)
 
 inline void write_1(uint8_t player)
 {
-
+	#ifdef BOARDV3
 	if(player == 1)
 	{
 		P1_DATA_2_GPIO_Port->BSRR = P1_DATA_2_Pin<<16;
@@ -160,25 +168,28 @@ inline void write_1(uint8_t player)
 		P2_DATA_2_GPIO_Port->BSRR = P2_DATA_2_Pin;
 		my_wait_us_asm(3);
 	}
-//v4 below here
-	P1_DATA_2_OUT_GPIO_Port->BSRR = P1_DATA_2_OUT_Pin<<16;
-	my_wait_us_asm(1);
-	P1_DATA_2_OUT_GPIO_Port->BSRR = P1_DATA_2_OUT_Pin;
-	my_wait_us_asm(3);
-	/*P1_DATA_2_GPIO_Port->BSRR = P1_DATA_2_Pin<<16;
-	my_wait_us_asm(1);
-	P1_DATA_2_GPIO_Port->BSRR = P1_DATA_2_Pin;
-    my_wait_us_asm(3);*/
-	//HAL_GPIO_WritePin(ENABLE_P1D2D3_GPIO_Port, ENABLE_P1D2D3_Pin, GPIO_PIN_RESET);
-	//my_wait_us_asm(1);
-	//HAL_GPIO_WritePin(ENABLE_P1D2D3_GPIO_Port, ENABLE_P1D2D3_Pin, GPIO_PIN_SET);
-	//my_wait_us_asm(3);
-
+	#endif
+	#ifdef BOARDV4
+	if(player == 1)
+	{
+		ENABLE_P1D2D3_GPIO_Port->BSRR = ENABLE_P1D2D3_Pin<<16;
+		my_wait_us_asm(1);
+		ENABLE_P1D2D3_GPIO_Port->BSRR = ENABLE_P1D2D3_Pin;
+		my_wait_us_asm(3);
+	}
+	else if(player == 2)
+	{
+		ENABLE_P2D2D3_GPIO_Port->BSRR = ENABLE_P2D2D3_Pin<<16;
+		my_wait_us_asm(1);
+		ENABLE_P2D2D3_GPIO_Port->BSRR = ENABLE_P2D2D3_Pin;
+		my_wait_us_asm(3);
+	}
+	#endif
 }
 
 inline void write_0(uint8_t player)
 {
-
+	#ifdef BOARDV3
 	if(player == 1)
 	{
 		P1_DATA_2_GPIO_Port->BSRR = P1_DATA_2_Pin<<16;
@@ -193,15 +204,24 @@ inline void write_0(uint8_t player)
 		P2_DATA_2_GPIO_Port->BSRR = P2_DATA_2_Pin;
 		my_wait_us_asm(1);
 	}
-// v4 below here
-	//HAL_GPIO_WritePin(ENABLE_P1D2D3_GPIO_Port, ENABLE_P1D2D3_Pin, GPIO_PIN_RESET);
-	//my_wait_us_asm(3);
-	//HAL_GPIO_WritePin(ENABLE_P1D2D3_GPIO_Port, ENABLE_P1D2D3_Pin, GPIO_PIN_SET);
-	//my_wait_us_asm(1);
-	P1_DATA_2_OUT_GPIO_Port->BSRR = P1_DATA_2_OUT_Pin<<16;
-	my_wait_us_asm(3);
-	P1_DATA_2_OUT_GPIO_Port->BSRR = P1_DATA_2_OUT_Pin;
-    my_wait_us_asm(1);
+	#endif
+
+	#ifdef BOARDV4
+	if(player == 1)
+	{
+		ENABLE_P1D2D3_GPIO_Port->BSRR = ENABLE_P1D2D3_Pin<<16;
+		my_wait_us_asm(3);
+		ENABLE_P1D2D3_GPIO_Port->BSRR = ENABLE_P1D2D3_Pin;
+		my_wait_us_asm(1);
+	}
+	else if(player == 2)
+	{
+		ENABLE_P2D2D3_GPIO_Port->BSRR = ENABLE_P2D2D3_Pin<<16;
+		my_wait_us_asm(3);
+		ENABLE_P2D2D3_GPIO_Port->BSRR = ENABLE_P2D2D3_Pin;
+		my_wait_us_asm(1);
+	}
+	#endif
 
 }
 
