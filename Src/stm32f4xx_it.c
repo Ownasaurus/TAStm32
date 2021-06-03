@@ -172,7 +172,6 @@ uint16_t* latch_trains;
 /* USER CODE BEGIN PFP */
 void my_wait_us_asm(int n);
 static uint8_t UART2_OutputFunction(uint8_t *buffer, uint16_t n);
-static HAL_StatusTypeDef Simple_Transmit(UART_HandleTypeDef *huart);
 void GCN64_CommandStart(uint8_t player);
 /* USER CODE END PFP */
 
@@ -189,7 +188,6 @@ extern TIM_HandleTypeDef htim3;
 extern TIM_HandleTypeDef htim6;
 extern TIM_HandleTypeDef htim7;
 extern TIM_HandleTypeDef htim10;
-extern UART_HandleTypeDef huart2;
 /* USER CODE BEGIN EV */
 /* USER CODE END EV */
 
@@ -258,13 +256,16 @@ void EXTI1_IRQHandler(void)
 	// P1_LATCH
 	int8_t regbit = 50, databit = -1; // random initial values
 
-	// set relevant data ports as output if this is the first latch
-	if(firstLatch && (EXTI->PR & P1_LATCH_Pin))
-	{
-		GPIOC->MODER = (GPIOC->MODER & MODER_DATA_MASK) | tasrun->moder_firstLatch;
-		firstLatch = 0;
-	}
 
+	// set relevant data ports as output if this is the first latch
+	// NO! Do this AFTER we have set up the pin state otherwise it might glitch
+	/*if(firstLatch && (EXTI->PR & P1_LATCH_Pin))
+	{
+		// D0/D1 buffers should already be set as output, just need to enable them
+		HAL_GPIO_WritePin(OUTPUTS_ENABLE_GPIO_Port, OUTPUTS_ENABLE_Pin, GPIO_PIN_RESET);
+
+		firstLatch = 0;
+	}*/
 	if(tasrun->console == CONSOLE_GEN)
 	{
 		// comment format below: [PIN1 PIN2 PIN3 PIN4 PIN5 PIN6 PIN7 PIN8 PIN9]
@@ -311,12 +312,36 @@ void EXTI1_IRQHandler(void)
 			uint32_t all_data = (p1_data | p2_data);
 			GPIOC->BSRR = all_data;
 
+			// enable data outputs if not already so
+			if(firstLatch && (EXTI->PR & P1_LATCH_Pin))
+			{
+				#ifdef BOARDV3
+				GPIOC->MODER = (GPIOC->MODER & MODER_DATA_MASK) | tasrun->moder_firstLatch;
+				#endif //BOARDV3
+
+				#ifdef BOARDV4
+				// D0/D1 buffers should be set as output, so just need to enable them
+				HAL_GPIO_WritePin(ENABLE_D0D1_GPIO_Port, ENABLE_D0D1_Pin, GPIO_PIN_RESET);
+
+				// Only enable D2/D3 for NES, SNES inputs will be taken care of by the input buffers
+				if(tasrun->console == CONSOLE_NES)
+				{
+					HAL_GPIO_WritePin(ENABLE_P1D2D3_GPIO_Port, ENABLE_P1D2D3_Pin, GPIO_PIN_RESET);
+					HAL_GPIO_WritePin(ENABLE_P2D2D3_GPIO_Port, ENABLE_P2D2D3_Pin, GPIO_PIN_RESET);
+				}
+				#endif //BOARDV4
+
+				firstLatch = 0;
+			}
+
 			// copy the 2nd bit over too
 			__disable_irq();
 			P1_GPIOC_current[1] = P1_GPIOC_next[1];
 			P2_GPIOC_current[1] = P2_GPIOC_next[1];
 			p1_current_bit = p2_current_bit = 1; // set the next bit to be read
 			__enable_irq();
+
+
 
 			// copy the rest of the bits. do not copy the overread since it will never change
 			// P2 comes before P1 in NES, so copy P2 first
@@ -330,6 +355,14 @@ void EXTI1_IRQHandler(void)
 				// Assume sel is high, this should perhaps be being being reset by the EXT4 interrupt if it was set to trigger both edges
 				multitapSel = 1;
 			}
+
+
+
+			/*if (overreadflag > 1)
+				serial_interface_output((uint8_t*)"\xF1", 1);
+			if (underreadflag)
+				serial_interface_output((uint8_t*)"\xF2", 1);
+			overreadflag = underreadflag = 0;*/
 
 			// now prepare for the next frame!
 
@@ -716,48 +749,6 @@ void TIM3_IRQHandler(void)
 }
 
 /**
-  * @brief This function handles USART2 global interrupt.
-  */
-void USART2_IRQHandler(void)
-{
-  /* USER CODE BEGIN USART2_IRQn 0 */
-	uint32_t isrflags   = READ_REG(huart2.Instance->SR);
-	uint32_t cr1its     = READ_REG(huart2.Instance->CR1);
-	/* UART in mode Transmitter ------------------------------------------------*/
-	if (((isrflags & USART_SR_TXE) != RESET) && ((cr1its & USART_CR1_TXEIE) != RESET))
-	{
-		Simple_Transmit(&huart2);
-		return;
-	}
-
-	/* UART in mode Transmitter end --------------------------------------------*/
-	if (((isrflags & USART_SR_TC) != RESET) && ((cr1its & USART_CR1_TCIE) != RESET))
-	{
-		/* Disable the UART Transmit Complete Interrupt */
-		__HAL_UART_DISABLE_IT(&huart2, UART_IT_TC);
-
-		/* Tx process is ended, restore huart->gState to Ready */
-		huart2.gState = HAL_UART_STATE_READY;
-		return;
-	}
-
-	if(((isrflags & USART_SR_RXNE) != RESET) && ((cr1its & USART_CR1_RXNEIE) != RESET))
-	{
-		// PROCESS USART2 Rx IRQ HERE
-		uint8_t input = ((huart2.Instance)->DR) & (uint8_t)0xFF; // get the last byte from the data register
-
-		serial_interface_set_output_function(UART2_OutputFunction);
-		serial_interface_consume(&input, 1);
-		return;
-	}
-  /* USER CODE END USART2_IRQn 0 */
-  HAL_UART_IRQHandler(&huart2);
-  /* USER CODE BEGIN USART2_IRQn 1 */
-
-  /* USER CODE END USART2_IRQn 1 */
-}
-
-/**
   * @brief This function handles TIM6 global interrupt and DAC1, DAC2 underrun error interrupts.
   */
 void TIM6_DAC_IRQHandler(void)
@@ -818,28 +809,6 @@ void OTG_HS_IRQHandler(void)
 }
 
 /* USER CODE BEGIN 1 */
-static HAL_StatusTypeDef Simple_Transmit(UART_HandleTypeDef *huart)
-{
-  /* Check that a Tx process is ongoing */
-  if (huart->gState == HAL_UART_STATE_BUSY_TX)
-  {
-    huart->Instance->DR = (uint8_t)(*huart->pTxBuffPtr++ & (uint8_t)0x00FF);
-
-    if (--huart->TxXferCount == 0U)
-    {
-      /* Disable the UART Transmit Complete Interrupt */
-      __HAL_UART_DISABLE_IT(huart, UART_IT_TXE);
-
-      /* Enable the UART Transmit Complete Interrupt */
-      __HAL_UART_ENABLE_IT(huart, UART_IT_TC);
-    }
-    return HAL_OK;
-  }
-  else
-  {
-    return HAL_BUSY;
-  }
-}
 
 void DisableTrainTimer()
 {
@@ -1322,9 +1291,5 @@ inline void UpdateN64VisBoards(N64ControllerData n64data)
 	GPIOB->BSRR = (1 << V1_LATCH_LOW_B);
 }
 
-static uint8_t UART2_OutputFunction(uint8_t *buffer, uint16_t n)
-{
-	return HAL_UART_Transmit_IT(&huart2, buffer, n);
-}
 /* USER CODE END 1 */
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

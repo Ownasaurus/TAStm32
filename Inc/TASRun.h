@@ -13,6 +13,41 @@
 #define MAX_DATA_LANES 4
 #define MAX_TRANSITIONS 5
 
+#define BOARDV3
+//#define BOARDV4
+
+#ifdef BOARDV3
+
+#define SWITCH1_Pin GPIO_PIN_6
+#define SWITCH1_GPIO_Port GPIOA
+
+#define SWITCH2_Pin GPIO_PIN_7
+#define SWITCH2_GPIO_Port GPIOA
+
+#define SWITCH3_Pin GPIO_PIN_14
+#define SWITCH3_GPIO_Port GPIOC
+
+#define SWITCH4_Pin GPIO_PIN_13
+#define SWITCH4_GPIO_Port GPIOC
+
+#endif //BOARDV3
+
+#ifdef BOARDV4
+
+#define SWITCH1_Pin GPIO_PIN_12
+#define SWITCH1_GPIO_Port GPIOB
+
+#define SWITCH2_Pin GPIO_PIN_13
+#define SWITCH2_GPIO_Port GPIOB
+
+#define SWITCH3_Pin GPIO_PIN_8
+#define SWITCH3_GPIO_Port GPIOA
+
+#define SWITCH4_Pin GPIO_PIN_10
+#define SWITCH4_GPIO_Port GPIOA
+
+#endif //BOARDV4
+
 
 typedef enum
 {
@@ -84,7 +119,7 @@ extern TASRun tasruns;
 // inlining easier
 
 #define maybe_unused  __attribute__((unused))
-
+void SetupPin(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin, uint32_t Mode, uint32_t Pull, GPIO_PinState PinState);
 maybe_unused static void SetN64InputMode(uint8_t player)
 {
 	if(player == 1)
@@ -102,6 +137,25 @@ maybe_unused static void SetN64InputMode(uint8_t player)
 		const uint32_t MODER_NEW_VALUE = GPIO_MODE_INPUT * MODER_SLOT;
 		P2_DATA_2_GPIO_Port->MODER = (P2_DATA_2_GPIO_Port->MODER & ~MODER_MASK) | MODER_NEW_VALUE;
 	}
+//v4 below here
+	// Buffer disable P1D2 in case it was enabled for some reason
+	//HAL_GPIO_WritePin(ENABLE_P1D2D3_GPIO_Port, ENABLE_P1D2D3_Pin, GPIO_PIN_SET);
+
+	// Buffer direction in
+	//HAL_GPIO_WritePin(DIR_P1P2D2D3_GPIO_Port, DIR_P1P2D2D3_Pin, GPIO_PIN_RESET);
+
+	// MCU P1D2 input, triggered on falling edge
+	SetupPin(P1_DATA_2_GPIO_Port, P1_DATA_2_Pin, GPIO_MODE_IT_FALLING, GPIO_NOPULL, GPIO_PIN_RESET);
+
+	// Buffer Enable P1D2
+	//HAL_GPIO_WritePin(ENABLE_P1D2D3_GPIO_Port, ENABLE_P1D2D3_Pin, GPIO_PIN_RESET);
+
+	// port C4 to input mode
+	/*const uint32_t MODER_SLOT = (P1_DATA_2_Pin*P1_DATA_2_Pin);
+	const uint32_t MODER_MASK = 0b11 * MODER_SLOT;
+	const uint32_t MODER_NEW_VALUE = GPIO_MODE_INPUT * MODER_SLOT;
+
+	P1_DATA_2_GPIO_Port->MODER = (P1_DATA_2_GPIO_Port->MODER & ~MODER_MASK) | MODER_NEW_VALUE;*/
 }
 
 maybe_unused static void SetN64OutputMode(uint8_t player)
@@ -121,6 +175,22 @@ maybe_unused static void SetN64OutputMode(uint8_t player)
 		const uint32_t MODER_NEW_VALUE = GPIO_MODE_OUTPUT_PP * MODER_SLOT;
 		P2_DATA_2_GPIO_Port->MODER = (P2_DATA_2_GPIO_Port->MODER & ~MODER_MASK) | MODER_NEW_VALUE;
 	}
+	//v4 below here
+	// Disable buffer output - we're pretending to be open drain
+	//HAL_GPIO_WritePin(ENABLE_P1D2D3_GPIO_Port, ENABLE_P1D2D3_Pin, GPIO_PIN_SET);
+
+	// Buffer direction out
+	//HAL_GPIO_WritePin(DIR_P1P2D2D3_GPIO_Port, DIR_P1P2D2D3_Pin, GPIO_PIN_SET);
+
+	// Make MCU pin output and LOW
+	SetupPin(P1_DATA_2_GPIO_Port, P1_DATA_2_Pin, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_PIN_RESET);
+
+
+	// port C4 to output mode
+	/*const uint32_t MODER_SLOT = (P1_DATA_2_Pin*P1_DATA_2_Pin);
+	const uint32_t MODER_MASK = 0b11 * MODER_SLOT;
+	const uint32_t MODER_NEW_VALUE = GPIO_MODE_OUTPUT_PP * MODER_SLOT;
+	P1_DATA_2_GPIO_Port->MODER = (P1_DATA_2_GPIO_Port->MODER & ~MODER_MASK) | MODER_NEW_VALUE;*/
 }
 
 // Functions below here are complex enough to not try to inline
@@ -145,8 +215,11 @@ RunDataArray *GetNextFrame();
 int ExtractDataAndAddFrame(uint8_t *buffer, uint32_t n);
 
 void SetN64Mode();
+void SetNESMode();
 void SetSNESMode();
 void SetGENMode();
 void SetMultitapMode();
 void ResetRun();
+void ResetGPIO(void);
+
 #endif

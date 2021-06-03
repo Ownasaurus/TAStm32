@@ -60,7 +60,7 @@ void USB_Start_Tas(char *file) {
 
 		TASRunSetConsole(CONSOLE_NES);
 		tasfile = file;
-		SetSNESMode();
+		SetNESMode();
 		TASRunSetNumControllers(2);
 		TASRunSetNumDataLanes(1);
 

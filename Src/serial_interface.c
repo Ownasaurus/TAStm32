@@ -284,7 +284,7 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 						break;
 					case 'N': // setup NES
 						TASRunSetConsole(CONSOLE_NES);
-						SetSNESMode();
+						SetNESMode();
 						instance.state = SERIAL_NUM_CONTROLLERS;
 						break;
 					default: // Error: console type not understood

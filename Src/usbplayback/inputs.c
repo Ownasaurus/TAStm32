@@ -4,6 +4,8 @@
 #include "usbplayback/menu.h"
 #include "usbplayback/inputs.h"
 #include "main.h"
+#include "TASRun.h"
+
 
 static void IOevent(ButtonType pin, IOEvent eventType) {
 	if (eventType == IOEVENT_PRESS) {

@@ -76,7 +76,7 @@ int do_parse_event(struct parser_state *s, yaml_event_t *event) {
 					TASRunSetNumDataLanes(4);
 				} else if (strcmp(s->value, "nes") == 0) {
 					TASRunSetConsole(CONSOLE_NES);
-					SetSNESMode();
+					SetNESMode();
 					TASRunSetNumControllers(2);
 					TASRunSetNumDataLanes(1);
 				} else if (strcmp(s->value, "n64") == 0) {

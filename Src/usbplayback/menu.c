@@ -22,12 +22,15 @@ MenuType CurrentMenu;
 int16_t cursorPos = 0;
 int16_t displayPos = 0;
 bool USBok = 0;
+extern uint8_t firstLatch;
 
 char currentFilename[256];
 
 FATFS TASDrive;
 
 unsigned long stepNextThink = 0;
+
+extern uint32_t menuNextThink;
 
 // Input menu event handlers
 void Menu_Enter() {
@@ -80,6 +83,7 @@ void Menu_Settings(){
 		CurrentMenu = MENUTYPE_TASINPUTS;
 }
 
+
 void Menu_Display() {
 	static char temp[23];
 	static FRESULT res;
@@ -94,7 +98,7 @@ void Menu_Display() {
 
 		// if USB host initiated run, switch menu
 		if (tasrun->initialized){
-			CurrentMenu = MENUTYPE_TASINPUTS;
+			CurrentMenu = MENUTYPE_TASSTATS;
 			break;
 		}
 
@@ -264,6 +268,7 @@ void Menu_Display() {
 		sprintf(temp, "Buffer: %d", tasrun->size);
 		ssd1306_SetCursor(0, 16);
 		ssd1306_WriteString(temp, Font_6x8, White);
+
 
 		ssd1306_UpdateScreen();
 		break;
