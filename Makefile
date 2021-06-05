@@ -192,8 +192,9 @@ LIBS = -lc -lm -lnosys
 LIBDIR =
 LDFLAGS = $(MCU) -T$(LDSCRIPT) $(LIBDIR) $(LIBS) -Wl,-Map=$(BUILD_DIR)/$(TARGET).map,--cref -Wl,--gc-sections
 
-Nothing:
+all:
 	$(info *****Please run either "make v3" or "make v4" depending on which version of the hardware you have!*****)
+	@:
 
 v3: C_DEFS = -DUSE_HAL_DRIVER -DSTM32F446xx -DBOARDV3
 v3: $(BUILD_DIR)/$(TARGET).elf $(BUILD_DIR)/$(TARGET).hex $(BUILD_DIR)/$(TARGET).bin
