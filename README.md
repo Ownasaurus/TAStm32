@@ -26,13 +26,21 @@ Then install the required python modules with the following command:
 
 #### Linux
     apt install gcc-arm-none-eabi binutils-arm-none-eabi libnewlib-arm-none-eabi
-OR the equivalent in your distribution
+OR the equivalent in your distribution.
 
-    make
+Then : 
+
+    make v3
+    
+Or : 
+
+    make v4
+    
+Depending on if you have a v3 or v4 board. (v4s came out around July 2021)
 
 #### Windows
 
-1. Right-click on the project > Build Configurations > Set Active > Release.
+1. Right-click on the project > Build Configurations > Set Active, then click "Release v3" or "Release v4" depending on your board version. (v4s came out around July 2021)
 1. Project > Build Project and check that the console shows no errors. The last line before "build finished" should be "arm-atollic-eabi-objcopy -O ihex TAStm32.elf TAStm32.hex".
 
 ### Flashing the firmware
@@ -65,7 +73,7 @@ Once you've prepared a movie dump, use it with the TAStm32. Here is one example 
 #### CraftedCart - Designed the awesome-looking 3D case
 #### total (@tewtal) - Helped with NES/SNES protocol and debugging. Provided his code as a reference
 #### booto (@booto) - Helped fix N64/GC protocols, serial-over-USB, and debugging
-#### rasteri (@rasteri) - Standalone USB playback, SNES multitap, and more!
+#### rasteri (@rasteri) - Standalone USB playback, v4 board, and more!
 #### Skippy - Pretty much helped a little bit with everything: including software, hardware, advice on proper tools, and more!
 
 dwangoAC (@dwangoac) - warmly accepting me into the TASBot community
