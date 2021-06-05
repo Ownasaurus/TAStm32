@@ -13,9 +13,6 @@
 #define MAX_DATA_LANES 4
 #define MAX_TRANSITIONS 5
 
-#define BOARDV3
-//#define BOARDV4
-
 #ifdef BOARDV3
 
 #define SWITCH1_Pin GPIO_PIN_6

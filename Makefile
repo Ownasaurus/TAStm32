@@ -150,12 +150,6 @@ MCU = $(CPU) -mthumb $(FPU) $(FLOAT-ABI)
 # AS defines
 AS_DEFS =
 
-# C defines
-C_DEFS =  \
--DUSE_HAL_DRIVER \
--DSTM32F446xx
-
-
 # AS includes
 AS_INCLUDES =
 
@@ -198,9 +192,15 @@ LIBS = -lc -lm -lnosys
 LIBDIR =
 LDFLAGS = $(MCU) -T$(LDSCRIPT) $(LIBDIR) $(LIBS) -Wl,-Map=$(BUILD_DIR)/$(TARGET).map,--cref -Wl,--gc-sections
 
-# default action: build all
-all: $(BUILD_DIR)/$(TARGET).elf $(BUILD_DIR)/$(TARGET).hex $(BUILD_DIR)/$(TARGET).bin
+Nothing:
+	$(info *****Please run either "make v3" or "make v4" depending on which version of the hardware you have!*****)
 
+v3: C_DEFS = -DUSE_HAL_DRIVER -DSTM32F446xx -DBOARDV3
+v3: $(BUILD_DIR)/$(TARGET).elf $(BUILD_DIR)/$(TARGET).hex $(BUILD_DIR)/$(TARGET).bin
+
+
+v4: C_DEFS = -DUSE_HAL_DRIVER -DSTM32F446xx -DBOARDV4
+v4: $(BUILD_DIR)/$(TARGET).elf $(BUILD_DIR)/$(TARGET).hex $(BUILD_DIR)/$(TARGET).bin
 
 #######################################
 # build the application
