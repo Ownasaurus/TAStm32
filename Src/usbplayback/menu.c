@@ -98,7 +98,7 @@ void Menu_Display() {
 
 		// if USB host initiated run, switch menu
 		if (tasrun->initialized){
-			CurrentMenu = MENUTYPE_TASSTATS;
+			CurrentMenu = MENUTYPE_TASINPUTS;
 			break;
 		}
 
