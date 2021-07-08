@@ -161,6 +161,9 @@ class TAStm32():
             elif mode == b'H':
                 # Set Hard Reset
                 command = b''.join([b'T', prefix, mode, struct.pack('I', frame)])
+            elif mode == b'R':
+                # Wait for next rumble
+                command = b''.join([b'T', prefix, mode, struct.pack('I', frame)])
             if command != '':
                 self.write(command)
 
@@ -352,6 +355,8 @@ def main():
                 transition[1] = b'S'
             elif transition[1] == 'H':
                 transition[1] = b'H'
+            elif transition[1] == 'R':
+                transition[1] = b'R'
 
     if args.latchtrain != '':
         args.latchtrain = [int(x) for x in args.latchtrain.split(',')]
@@ -412,6 +417,9 @@ def main():
     elif args.console == 'genesis':
         buffer = rgen.read_input(data, args.players)
         blankframe = b'\x00\x00' * len(args.players)
+
+    if args.melee:
+        dev.write(b'M')
 
     # Transitions
     if args.transition != None:

@@ -58,7 +58,7 @@ Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_exti.c \
 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_flash_ex.c \
 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr_ex.c \
 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pcd.c \
-Drivers/CMSIS/Device/ST/STM32F4xx/Source/Templates/system_stm32f4xx.c \
+Src/system_stm32f4xx.c \
 Src/yaml/parser.c \
 Src/yaml/dumper.c \
 Src/yaml/loader.c \
@@ -242,7 +242,7 @@ $(BUILD_DIR):
 #######################################
 flash:
 	-./python/tastm32-dfu.py
-	sleep 1
+	sleep 3
 	dfu-util -a 0 -s 0x08000000:leave -D $(BUILD_DIR)/$(TARGET).bin
 
 #######################################
