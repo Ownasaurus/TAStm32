@@ -21,6 +21,10 @@ extern RunDataArray *dataptr;
 
 RunDataArray *GetNextFrame()
 {
+	if(tasrun->controller_mode == 1)
+	{
+		return tasrun->runData;
+	}
 	if (tasrun->size == 0) // in case of buffer underflow
 	{
 		return NULL; // buffer underflow
@@ -144,6 +148,13 @@ void ResetRun()
 	GPIO_InitStruct.Pin = P1_DATA_0_Pin | P1_DATA_1_Pin | P1_DATA_2_Pin  | P2_DATA_0_Pin | P2_DATA_1_Pin | P2_DATA_2_Pin;
 	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
 	HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+	// Ensure the reset pin is set to OD mode
+	GPIO_InitStruct.Pin = SNES_RESET_Pin;
+	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+	HAL_GPIO_Init(SNES_RESET_GPIO_Port, &GPIO_InitStruct);
 
 	// clear all interrupts
 	while (HAL_NVIC_GetPendingIRQ(EXTI0_IRQn))
@@ -311,6 +322,12 @@ int ExtractDataAndAddFrame(uint8_t *buffer, uint32_t n)
 		}
 	}
 
+	if (tasrun->controller_mode == 1) // ignore buffer. place at beginning of array
+	{
+		memcpy(tasrun->runData, frame, sizeof(frame));
+		tasrun->size = 1;
+		return 1;
+	}
 	if (tasrun->size == MAX_SIZE)
 	{
 		return 0;
