@@ -31,17 +31,17 @@
 
 #ifdef BOARDV4
 
-#define SWITCH1_Pin GPIO_PIN_12
-#define SWITCH1_GPIO_Port GPIOB
+#define SWITCH4_Pin GPIO_PIN_12
+#define SWITCH4_GPIO_Port GPIOB
 
-#define SWITCH2_Pin GPIO_PIN_13
-#define SWITCH2_GPIO_Port GPIOB
+#define SWITCH3_Pin GPIO_PIN_13
+#define SWITCH3_GPIO_Port GPIOB
 
-#define SWITCH3_Pin GPIO_PIN_8
-#define SWITCH3_GPIO_Port GPIOA
+#define SWITCH2_Pin GPIO_PIN_8
+#define SWITCH2_GPIO_Port GPIOA
 
-#define SWITCH4_Pin GPIO_PIN_10
-#define SWITCH4_GPIO_Port GPIOA
+#define SWITCH1_Pin GPIO_PIN_10
+#define SWITCH1_GPIO_Port GPIOA
 
 #endif //BOARDV4
 
