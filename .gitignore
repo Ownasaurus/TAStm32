@@ -2,7 +2,7 @@
 /.metadata/
 /Debug/
 /Release/
-/.settings/language.settings.xml
+.settings/language.settings.xml
 *.r08
 *.r16m
 *.dtm
