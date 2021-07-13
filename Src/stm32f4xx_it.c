@@ -56,14 +56,23 @@ const uint8_t P1_D0_HIGH_C = 3;
 const uint8_t P1_D0_LOW_C = 19;
 const uint8_t P1_D1_HIGH_C = 2;
 const uint8_t P1_D1_LOW_C = 18;
-const uint8_t P1_D2_HIGH_C = 4;
-const uint8_t P1_D2_LOW_C = 20;
+
 const uint8_t P2_D0_HIGH_C = 8;
 const uint8_t P2_D0_LOW_C = 24;
 const uint8_t P2_D1_HIGH_C = 7;
 const uint8_t P2_D1_LOW_C = 23;
+
 const uint8_t P2_D2_HIGH_C = 9;
 const uint8_t P2_D2_LOW_C = 25;
+const uint8_t P1_D2_HIGH_C = 4;
+const uint8_t P1_D2_LOW_C = 20;
+
+// D2 output pins for v4 board
+const uint8_t P2_D2_OUT_HIGH_B = 10;
+const uint8_t P2_D2_OUT_LOW_B = 26;
+const uint8_t P1_D2_OUT_HIGH_A = 1;
+const uint8_t P1_D2_OUT_LOW_A = 17;
+
 const uint8_t SNES_RESET_HIGH_A = 9;
 const uint8_t SNES_RESET_LOW_A = 25;
 
@@ -121,6 +130,10 @@ uint32_t P1_GPIOC_next[17];
 
 uint32_t P2_GPIOC_current[17];
 uint32_t P2_GPIOC_next[17];
+
+// Since P1D2 and P2D2's outputs are on A1 and B10 respectively, we also need to precalc them
+uint32_t P1_GPIOA_next[2];
+uint32_t P2_GPIOB_next[2];
 
 // extra words for multitap
 
@@ -255,7 +268,6 @@ void EXTI1_IRQHandler(void)
 
 	// P1_LATCH
 	int8_t regbit = 50, databit = -1; // random initial values
-
 	if(tasrun->console == CONSOLE_GEN)
 	{
 		// comment format below: [PIN1 PIN2 PIN3 PIN4 PIN5 PIN6 PIN7 PIN8 PIN9]
@@ -263,34 +275,97 @@ void EXTI1_IRQHandler(void)
 		// whose colors are..    [BRN  ORG  GREY BLK  RED  YEL  BLU  WHI  GRN ]
 		// LOW means pressed, so we put a 1 there
 		// HIGH means un-pressed, so we put a 0 there
-
+ 
 		GENControllerData* pData = (GENControllerData*)dataptr;
 		if(!pData)
 		{
 			pData = &gen_blank;
 		}
-
-		if(P1_LATCH_GPIO_Port->IDR & P1_LATCH_Pin) // rising edge
+ 
+		if(!(tasrun->initialized)) // pre-calculate first frame of data
 		{
-			// [U D L R B C]
-			P1_GPIOC_next[0] = 	(pData->up << P1_D0_LOW_C) | (pData->down << P1_D1_LOW_C) | (pData->left << P1_D2_LOW_C) |
-					(pData->right << P2_D0_LOW_C) | (pData->b << P2_D1_LOW_C) | (pData->c << P2_D2_LOW_C);
-			P1_GPIOC_next[0] |= (((~P1_GPIOC_next[0]) & (ALL_MASK)) >> 16);
-
-			GPIOC->BSRR = P1_GPIOC_next[0];
-
 			dataptr = GetNextFrame();
-			serial_interface_output((uint8_t*)"A", 1); // tell python that we processed a frame
-		}
-		else // falling edge
-		{
+			pData = (GENControllerData*)dataptr;
+ 
 			// [U D LOW LOW A Start]
 			P1_GPIOC_next[0] = 	(pData->up << P1_D0_LOW_C) | (pData->down << P1_D1_LOW_C) | (1 << P1_D2_LOW_C) |
 					(1 << P2_D0_LOW_C) | (pData->a << P2_D1_LOW_C) | (pData->start << P2_D2_LOW_C);
 			P1_GPIOC_next[0] |= (((~P1_GPIOC_next[0]) & (ALL_MASK)) >> 16);
+ 
+			// [U D L R B C]
+			P1_GPIOC_next[1] = 	(pData->up << P1_D0_LOW_C) | (pData->down << P1_D1_LOW_C) | (pData->left << P1_D2_LOW_C) |
+					(pData->right << P2_D0_LOW_C) | (pData->b << P2_D1_LOW_C) | (pData->c << P2_D2_LOW_C);
+			P1_GPIOC_next[1] |= (((~P1_GPIOC_next[1]) & (ALL_MASK)) >> 16);
 
-			GPIOC->BSRR = P1_GPIOC_next[0];
+			// V4 boards have D2 output on a different pin
+			#ifdef BOARDV4
+			P1_GPIOA_next[0] = (1 << P1_D2_OUT_LOW_A);
+			P2_GPIOB_next[0] = pData->start ? (1 << P2_D2_OUT_LOW_B) : (1 << P2_D2_OUT_HIGH_B);
+
+			P1_GPIOA_next[1] = pData->left ? (1 << P1_D2_OUT_LOW_A) : (1 << P1_D2_OUT_HIGH_A);
+			P2_GPIOB_next[1] = pData->c ? (1 << P2_D2_OUT_LOW_B) : (1 << P2_D2_OUT_HIGH_B);
+			#endif
 		}
+		else
+		{
+			if(P1_LATCH_GPIO_Port->IDR & P1_LATCH_Pin) // rising edge
+			{
+				GPIOC->BSRR = P1_GPIOC_next[1];
+
+				#ifdef BOARDV4
+				GPIOA->BSRR = P1_GPIOA_next[1];
+				GPIOB->BSRR = P2_GPIOB_next[1];
+				#endif
+
+				serial_interface_output((uint8_t*)"A", 1); // tell python that we processed a frame
+ 
+				// prepare next frame
+				dataptr = GetNextFrame();
+				pData = (GENControllerData*)dataptr;
+ 
+				// [U D LOW LOW A Start]
+				P1_GPIOC_next[0] = 	(pData->up << P1_D0_LOW_C) | (pData->down << P1_D1_LOW_C) | (1 << P1_D2_LOW_C) |
+						(1 << P2_D0_LOW_C) | (pData->a << P2_D1_LOW_C) | (pData->start << P2_D2_LOW_C);
+				P1_GPIOC_next[0] |= (((~P1_GPIOC_next[0]) & (ALL_MASK)) >> 16);
+	
+				// [U D L R B C]
+				P1_GPIOC_next[1] = 	(pData->up << P1_D0_LOW_C) | (pData->down << P1_D1_LOW_C) | (pData->left << P1_D2_LOW_C) |
+						(pData->right << P2_D0_LOW_C) | (pData->b << P2_D1_LOW_C) | (pData->c << P2_D2_LOW_C);
+				P1_GPIOC_next[1] |= (((~P1_GPIOC_next[1]) & (ALL_MASK)) >> 16);
+
+				// V4 boards have D2 output on a different pin
+				#ifdef BOARDV4
+				P1_GPIOA_next[0] = (1 << P1_D2_OUT_LOW_A);
+				P2_GPIOB_next[0] = pData->start ? (1 << P2_D2_OUT_LOW_B) : (1 << P2_D2_OUT_HIGH_B);
+
+				P1_GPIOA_next[1] = pData->left ? (1 << P1_D2_OUT_LOW_A) : (1 << P1_D2_OUT_HIGH_A);
+				P2_GPIOB_next[1] = pData->c ? (1 << P2_D2_OUT_LOW_B) : (1 << P2_D2_OUT_HIGH_B);
+				#endif
+			}
+			else // falling edge
+			{
+				GPIOC->BSRR = P1_GPIOC_next[0];
+
+				#ifdef BOARDV4
+				GPIOA->BSRR = P1_GPIOA_next[0];
+				GPIOB->BSRR = P2_GPIOB_next[0];
+				#endif
+			}
+
+			// Now bits are set, enable outputs
+
+			#ifdef BOARDV3
+			GPIOC->MODER = (GPIOC->MODER & MODER_DATA_MASK) | tasrun->moder_firstLatch;
+			#endif //BOARDV3
+
+			#ifdef BOARDV4
+			// D0/D1 buffers should be set as output, so just need to enable them
+			HAL_GPIO_WritePin(ENABLE_D0D1_GPIO_Port, ENABLE_D0D1_Pin, GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(ENABLE_P1D2D3_GPIO_Port, ENABLE_P1D2D3_Pin, GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(ENABLE_P2D2D3_GPIO_Port, ENABLE_P2D2D3_Pin, GPIO_PIN_RESET);
+			#endif //BOARDV4
+		}
+
 	}
 	else
 	{

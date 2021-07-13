@@ -262,9 +262,9 @@ void ResetRun()
 static void UpdateRunConfig()
 {
 	tasrun->input_data_size = tasrun->numControllers * tasrun->numDataLanes * tasrun->console_data_size;
-
-	#ifdef BOARDV3
 	tasrun->moder_firstLatch = 0;
+	#ifdef BOARDV3
+	
 
 	// special case for genesis, which uses 6 data lines for 1 controller
 	if(tasrun->console == CONSOLE_GEN)
@@ -444,11 +444,11 @@ void SetNESMode()
 	// MCU D0/D1/D2/D3 output, but they will not actually speak to console yet as buffer is disabled
 	SetupPin(P1_DATA_0_GPIO_Port, P1_DATA_0_Pin, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_PIN_SET);
 	SetupPin(P1_DATA_1_GPIO_Port, P1_DATA_1_Pin, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_PIN_SET);
-	SetupPin(P1_DATA_2_GPIO_Port, P1_DATA_2_Pin, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_PIN_SET);
+	SetupPin(P1_DATA_2_OUT_GPIO_Port, P1_DATA_2_OUT_Pin, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_PIN_SET);
 	SetupPin(P1_DATA_3_GPIO_Port, P1_DATA_3_Pin, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_PIN_SET);
 	SetupPin(P2_DATA_0_GPIO_Port, P2_DATA_0_Pin, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_PIN_SET);
 	SetupPin(P2_DATA_1_GPIO_Port, P2_DATA_1_Pin, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_PIN_SET);
-	SetupPin(P2_DATA_2_GPIO_Port, P2_DATA_2_Pin, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_PIN_SET);
+	SetupPin(P2_DATA_2_OUT_GPIO_Port, P2_DATA_2_OUT_Pin, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_PIN_SET);
 	SetupPin(P2_DATA_3_GPIO_Port, P2_DATA_3_Pin, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_PIN_SET);
 	#endif //BOARDV4
 
@@ -472,10 +472,12 @@ void SetSNESMode()
 	#endif //BOARD V3
 
 	#ifdef BOARDV4
-	// external output buffers should already be tristated. Set direction to output (i.e. high)
+
+	// external output buffers should already be tristated, so set direction to output (i.e. high)
 	// Buffer will be enabled on first latch
 	SetupPin(DIR_D0D1_GPIO_Port, DIR_D0D1_Pin, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_PIN_SET);
-	// D2 buffers should be input - so taken care of by the input buffers, which are always enabled
+	SetupPin(DIR_P1D2D3_GPIO_Port, DIR_P1D2D3_Pin, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_PIN_SET);
+	SetupPin(DIR_P2D2D3_GPIO_Port, DIR_P2D2D3_Pin, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_PIN_SET);
 
 	// Now do the actual MCU pins
 	// MCU D0/D1 output, but they will not actually speak to console yet as buffer is disabled
@@ -496,28 +498,50 @@ void SetSNESMode()
 
 void SetGENMode()
 {
-	GPIO_InitTypeDef GPIO_InitStruct = {0};
-
 	// P1_D0 --> GEN Pin 1
 	// P1_D1 --> GEN Pin 2
 	// P1_D2 --> GEN Pin 3
 	// P2_D0 --> GEN Pin 4
 	// P2_D1 --> GEN Pin 6
 	// P2_D2 --> GEN Pin 9
+	#ifdef BOARDV3
 
+	// MCU D0/D1/D2 input for now, will be made output on first latch
+	SetupPin(P1_DATA_0_GPIO_Port, P1_DATA_0_Pin, GPIO_MODE_INPUT, GPIO_PULLUP, GPIO_PIN_SET);
+	SetupPin(P1_DATA_1_GPIO_Port, P1_DATA_1_Pin, GPIO_MODE_INPUT, GPIO_PULLUP, GPIO_PIN_SET);
+	SetupPin(P1_DATA_2_GPIO_Port, P1_DATA_2_Pin, GPIO_MODE_INPUT, GPIO_PULLUP, GPIO_PIN_SET);
+	SetupPin(P2_DATA_0_GPIO_Port, P2_DATA_0_Pin, GPIO_MODE_INPUT, GPIO_PULLUP, GPIO_PIN_SET);
+	SetupPin(P2_DATA_1_GPIO_Port, P2_DATA_1_Pin, GPIO_MODE_INPUT, GPIO_PULLUP, GPIO_PIN_SET);
+	SetupPin(P2_DATA_2_GPIO_Port, P2_DATA_2_Pin, GPIO_MODE_INPUT, GPIO_PULLUP, GPIO_PIN_SET);
+	
 	// Ensure the latch pin interrupts on BOTH rising and falling. use this as the select line
-	GPIO_InitStruct.Pin = P1_LATCH_Pin;
-	GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
-	GPIO_InitStruct.Pull = GPIO_PULLUP;
+	SetupPin(P1_LATCH_GPIO_Port, P1_LATCH_Pin, GPIO_MODE_IT_RISING_FALLING, GPIO_PULLUP, GPIO_PIN_RESET);
+	#endif
 
-	HAL_GPIO_Init(P1_LATCH_GPIO_Port, &GPIO_InitStruct);
+	#ifdef BOARDV4
 
-	memset (&GPIO_InitStruct, 0, sizeof(GPIO_InitTypeDef));
+	// external output buffers should already be tristated, so set direction to output (i.e. high)
+	// Buffer will be enabled on first latch
+	SetupPin(DIR_D0D1_GPIO_Port, DIR_D0D1_Pin, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_PIN_SET);
+	SetupPin(DIR_P1D2D3_GPIO_Port, DIR_P1D2D3_Pin, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_PIN_SET);
+	SetupPin(DIR_P2D2D3_GPIO_Port, DIR_P2D2D3_Pin, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_PIN_SET);
 
-	// Tristate the data pins until the first latch
-	GPIO_InitStruct.Pin = P1_DATA_0_Pin | P1_DATA_1_Pin | P1_DATA_2_Pin  | P2_DATA_0_Pin | P2_DATA_1_Pin | P2_DATA_2_Pin;
-	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-	HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+	// MCU D0/D1/D2/D3 output, but they will not actually speak to console yet as buffer is disabled
+	SetupPin(P1_DATA_0_GPIO_Port, P1_DATA_0_Pin, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_PIN_SET);
+	SetupPin(P1_DATA_1_GPIO_Port, P1_DATA_1_Pin, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_PIN_SET);
+	SetupPin(P1_DATA_2_OUT_GPIO_Port, P1_DATA_2_OUT_Pin, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_PIN_SET);
+	SetupPin(P1_DATA_3_GPIO_Port, P1_DATA_3_Pin, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_PIN_SET);
+	SetupPin(P2_DATA_0_GPIO_Port, P2_DATA_0_Pin, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_PIN_SET);
+	SetupPin(P2_DATA_1_GPIO_Port, P2_DATA_1_Pin, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_PIN_SET);
+	SetupPin(P2_DATA_2_OUT_GPIO_Port, P2_DATA_2_OUT_Pin, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_PIN_SET);
+	SetupPin(P2_DATA_3_GPIO_Port, P2_DATA_3_Pin, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_PIN_SET);
+
+	
+	// Ensure the latch pin interrupts on BOTH rising and falling. use this as the select line
+	SetupPin(P1_LATCH_GPIO_Port, P1_LATCH_Pin, GPIO_MODE_IT_RISING_FALLING, GPIO_NOPULL, GPIO_PIN_RESET);
+
+	#endif
+
 }
 
 void SetMultitapMode()
