@@ -2,7 +2,7 @@
 #define INPUTS_H_
 
 // How long to wait in ms before input event can be triggered again
-#define DEBOUNCETIME 75
+#define DEBOUNCETIME 25
 
 // How long in ms a button has to be pressed before it's considered held
 #define HOLDTIME 500
