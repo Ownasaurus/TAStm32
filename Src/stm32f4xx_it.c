@@ -341,6 +341,8 @@ void EXTI1_IRQHandler(void)
 				P1_GPIOA_next[1] = pData->left ? (1 << P1_D2_OUT_LOW_A) : (1 << P1_D2_OUT_HIGH_A);
 				P2_GPIOB_next[1] = pData->c ? (1 << P2_D2_OUT_LOW_B) : (1 << P2_D2_OUT_HIGH_B);
 				#endif
+
+				TASRunIncrementFrameCount();
 			}
 			else // falling edge
 			{
@@ -352,18 +354,23 @@ void EXTI1_IRQHandler(void)
 				#endif
 			}
 
-			// Now bits are set, enable outputs
+			// enable data outputs if not already so
+			if(firstLatch && (EXTI->PR & P1_LATCH_Pin))
+			{
+				// Now bits are set, enable outputs
 
-			#ifdef BOARDV3
-			GPIOC->MODER = (GPIOC->MODER & MODER_DATA_MASK) | tasrun->moder_firstLatch;
-			#endif //BOARDV3
+				#ifdef BOARDV3
+				GPIOC->MODER = (GPIOC->MODER & MODER_DATA_MASK) | tasrun->moder_firstLatch;
+				#endif //BOARDV3
 
-			#ifdef BOARDV4
-			// D0/D1 buffers should be set as output, so just need to enable them
-			HAL_GPIO_WritePin(ENABLE_D0D1_GPIO_Port, ENABLE_D0D1_Pin, GPIO_PIN_RESET);
-			HAL_GPIO_WritePin(ENABLE_P1D2D3_GPIO_Port, ENABLE_P1D2D3_Pin, GPIO_PIN_RESET);
-			HAL_GPIO_WritePin(ENABLE_P2D2D3_GPIO_Port, ENABLE_P2D2D3_Pin, GPIO_PIN_RESET);
-			#endif //BOARDV4
+				#ifdef BOARDV4
+				// D0/D1 buffers should be set as output, so just need to enable them
+				HAL_GPIO_WritePin(ENABLE_D0D1_GPIO_Port, ENABLE_D0D1_Pin, GPIO_PIN_RESET);
+				HAL_GPIO_WritePin(ENABLE_P1D2D3_GPIO_Port, ENABLE_P1D2D3_Pin, GPIO_PIN_RESET);
+				HAL_GPIO_WritePin(ENABLE_P2D2D3_GPIO_Port, ENABLE_P2D2D3_Pin, GPIO_PIN_RESET);
+				#endif //BOARDV4
+				firstLatch = 0;
+			}
 		}
 
 	}
