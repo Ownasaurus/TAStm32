@@ -299,7 +299,7 @@ void CalcGenesisRisingEdge(void){
 /**
   * @brief This function handles EXTI line 1 interrupt.
   */
-void EXTI1_IRQHandler(void)
+__attribute__((section(".ramcode"))) void EXTI1_IRQHandler(void)
 {
 	/* USER CODE BEGIN EXTI1_IRQn 0 */
 
