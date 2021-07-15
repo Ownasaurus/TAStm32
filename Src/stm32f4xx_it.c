@@ -303,19 +303,13 @@ __attribute__((section(".ramcode"))) void EXTI1_IRQHandler(void)
 {
 	/* USER CODE BEGIN EXTI1_IRQn 0 */
 
-	GPIOB->BSRR = 0x400;
-	my_wait_100ns_asm(2);
-	GPIOB->BSRR = 0x4000000;
-/*
-	#ifdef BOARDV4
-	GPIOB->BSRR = P2_GPIOB_next[0];
-	GPIOA->BSRR = P1_GPIOA_next[0];
-	#endif
-
 	// set BSRR first no matter what
 	GPIOC->BSRR = P1_GPIOC_next[0];
 
-
+	#ifdef BOARDV4
+	GPIOA->BSRR = P1_GPIOA_next[0];
+	GPIOB->BSRR = P2_GPIOB_next[0];
+	#endif
 
 	// enable data outputs if not already so
 	if(firstLatch && (EXTI->PR & P1_LATCH_Pin))
@@ -355,7 +349,7 @@ __attribute__((section(".ramcode"))) void EXTI1_IRQHandler(void)
 	// whose colors are..    [BRN  ORG  GREY BLK  RED  YEL  BLU  WHI  GRN ]
 	// LOW means pressed, so we put a 1 there
 	// HIGH means un-pressed, so we put a 0 there
-*/
+
 /*	GENControllerData* pData = (GENControllerData*)dataptr;
 	if(!pData)
 	{
