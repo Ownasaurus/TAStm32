@@ -230,7 +230,8 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 					}
 					else if (c == CONSOLE_GEN)
 					{
-						EXTI1_IRQHandler();
+						// first poll will be on a falling edge, so precalc buffers
+						CalcGenesisFallingEdge();
 					}
 
 					tasrun->initialized = 1;

@@ -514,8 +514,9 @@ void SetGENMode()
 	SetupPin(P2_DATA_1_GPIO_Port, P2_DATA_1_Pin, GPIO_MODE_INPUT, GPIO_PULLUP, GPIO_PIN_SET);
 	SetupPin(P2_DATA_2_GPIO_Port, P2_DATA_2_Pin, GPIO_MODE_INPUT, GPIO_PULLUP, GPIO_PIN_SET);
 	
-	// Ensure the latch pin interrupts on BOTH rising and falling. use this as the select line
-	SetupPin(P1_LATCH_GPIO_Port, P1_LATCH_Pin, GPIO_MODE_IT_RISING_FALLING, GPIO_PULLUP, GPIO_PIN_RESET);
+	// Latch pin only interrupts on falling to avoid triggering when console powers on
+	// will be set to rising-falling after first interrupt
+	SetupPin(P1_LATCH_GPIO_Port, P1_LATCH_Pin, GPIO_MODE_IT_FALLING, GPIO_PULLUP, GPIO_PIN_RESET);
 	#endif
 
 	#ifdef BOARDV4
@@ -537,8 +538,9 @@ void SetGENMode()
 	SetupPin(P2_DATA_3_GPIO_Port, P2_DATA_3_Pin, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_PIN_SET);
 
 	
-	// Ensure the latch pin interrupts on BOTH rising and falling. use this as the select line
-	SetupPin(P1_LATCH_GPIO_Port, P1_LATCH_Pin, GPIO_MODE_IT_RISING_FALLING, GPIO_NOPULL, GPIO_PIN_RESET);
+	// Latch pin only interrupts on falling to avoid triggering when console powers on
+	// will be set to rising-falling after first interrupt
+	SetupPin(P1_LATCH_GPIO_Port, P1_LATCH_Pin, GPIO_MODE_IT_FALLING, GPIO_NOPULL, GPIO_PIN_RESET);
 
 	#endif
 
