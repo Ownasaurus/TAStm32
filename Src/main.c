@@ -563,6 +563,9 @@ void JumpToBootLoader(void) {
 	// Prepare to jump
 	volatile uint32_t addr = 0x1FFF0000;
 
+	// Restore VTOR
+	SCB->VTOR = 0x08000000UL; /* Vector Table Relocation in Internal FLASH */
+
 	// reset RCC back to default values
 	HAL_RCC_DeInit();
 

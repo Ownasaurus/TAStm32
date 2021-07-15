@@ -40,7 +40,8 @@ _Min_Stack_Size = 0x400; /* required amount of stack */
 /* Specify the memory areas */
 MEMORY
 {
-RAM (xrw)      : ORIGIN = 0x20000000, LENGTH = 128K
+IVTCOPY (xrw)      : ORIGIN = 0x20000000, LENGTH = 0x400 /* Reserve a portion of RAM for IVT */
+RAM (xrw)      : ORIGIN = 0x20000400, LENGTH = 128K-0x400
 FLASH (rx)      : ORIGIN = 0x8000000, LENGTH = 512K
 }
 

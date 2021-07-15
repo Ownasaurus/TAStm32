@@ -164,6 +164,9 @@ void SystemInit(void)
 #else
   SCB->VTOR = FLASH_BASE | VECT_TAB_OFFSET; /* Vector Table Relocation in Internal FLASH */
 #endif
+
+  memcpy((void*)0x20000000,(void const*)0x08000000,0x3FF); // Move Vector Table from FLASH to RAM
+  SCB->VTOR = 0x20000000; // Point at RAM copy
 }
 
 /**
