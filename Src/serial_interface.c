@@ -226,7 +226,7 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 							clockFix = 1;
 						}
 
-						EXTI1_IRQHandler();
+						NesSnesLatch();
 					}
 					else if (c == CONSOLE_GEN)
 					{
