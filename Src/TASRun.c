@@ -257,6 +257,10 @@ void ResetRun()
 	memset(V2_GPIOC_current, 0, sizeof(V2_GPIOC_current));
 	memset(V2_GPIOC_next, 0, sizeof(V2_GPIOC_next));
 	ClearRunData();
+
+	// Reset callback function is used for pin 1
+	volatile uint32_t* ptr = (void *)(SRAM_BASE + 0x40 + (EXTI1_IRQn * 4));
+	*ptr = (uint32_t) &EXTI1_IRQHandler;
 }
 
 static void UpdateRunConfig()
@@ -454,6 +458,10 @@ void SetNESMode()
 
 	// MCU Clock/latch input, triggered on rising edge
 	SetupPin(GPIOC, P1_CLOCK_Pin|P1_LATCH_Pin|P2_CLOCK_Pin, GPIO_MODE_IT_RISING, GPIO_NOPULL, GPIO_PIN_RESET);
+
+	// Ensure the proper callback function is used for pin 1
+	volatile uint32_t* ptr = (void *)(SRAM_BASE + 0x40 + (EXTI1_IRQn * 4));
+	*ptr = (uint32_t) &NesSnesLatch;
 }
 
 void SetSNESMode()
@@ -494,6 +502,10 @@ void SetSNESMode()
 
 	// MCU Clock/latch input, triggered on rising edge
 	SetupPin(GPIOC, P1_CLOCK_Pin|P1_LATCH_Pin|P2_CLOCK_Pin, GPIO_MODE_IT_RISING, GPIO_NOPULL, GPIO_PIN_RESET);
+
+	// Ensure the proper callback function is used for pin 1
+	volatile uint32_t* ptr = (void *)(SRAM_BASE + 0x40 + (EXTI1_IRQn * 4));
+	*ptr = (uint32_t) &NesSnesLatch;
 }
 
 void SetGENMode()
@@ -543,6 +555,10 @@ void SetGENMode()
 	SetupPin(P1_LATCH_GPIO_Port, P1_LATCH_Pin, GPIO_MODE_IT_FALLING, GPIO_NOPULL, GPIO_PIN_RESET);
 
 	#endif
+
+	// Ensure the proper callback function is used for pin 1
+	volatile uint32_t* ptr = (void *)(SRAM_BASE + 0x40 + (EXTI1_IRQn * 4));
+	*ptr = (uint32_t) &GenesisLatch;
 
 }
 

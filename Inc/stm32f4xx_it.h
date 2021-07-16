@@ -102,6 +102,9 @@ void TIM7_IRQHandler(void);
 void OTG_FS_IRQHandler(void);
 void OTG_HS_IRQHandler(void);
 /* USER CODE BEGIN EFP */
+void GenesisLatch(void);
+void NesSnesLatch(void);
+void CalcGenesisFallingEdge(void);
 void DisableTrainTimer();
 void Disable8msTimer();
 void DisableP1ClockTimer();

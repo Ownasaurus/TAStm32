@@ -184,7 +184,6 @@ uint16_t* latch_trains;
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN PFP */
 void my_wait_us_asm(int n);
-static uint8_t UART2_OutputFunction(uint8_t *buffer, uint16_t n);
 void GCN64_CommandStart(uint8_t player);
 /* USER CODE END PFP */
 
@@ -259,7 +258,8 @@ void EXTI0_IRQHandler(void)
   /* USER CODE END EXTI0_IRQn 1 */
 }
 
-void CalcGenesisFallingEdge(void){
+void CalcGenesisFallingEdge(void)
+{
 	static GENControllerData* pData;
 	// get new frame of data since falling edge is first edge of frame
 	dataptr = GetNextFrame();
@@ -280,7 +280,8 @@ void CalcGenesisFallingEdge(void){
 	TASRunIncrementFrameCount();
 }
 
-void CalcGenesisRisingEdge(void){
+void CalcGenesisRisingEdge(void)
+{
 	static GENControllerData* pData;
 	pData = (GENControllerData*)dataptr;
 
@@ -299,10 +300,24 @@ void CalcGenesisRisingEdge(void){
 /**
   * @brief This function handles EXTI line 1 interrupt.
   */
-__attribute__((section(".ramcode"))) void EXTI1_IRQHandler(void)
+void EXTI1_IRQHandler(void)
 {
-	/* USER CODE BEGIN EXTI1_IRQn 0 */
+  /* USER CODE BEGIN EXTI1_IRQn 0 */
 
+  // NOTE: The callback functions for this data line are overridden depending on which console is used
+  // I added this just to see if it's being called. For debugging.
+  // If so, it'll give buffer overrun notices to terminal.
+  serial_interface_output((uint8_t*)"A", 1);
+
+  /* USER CODE END EXTI1_IRQn 0 */
+  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_1);
+  /* USER CODE BEGIN EXTI1_IRQn 1 */
+
+  /* USER CODE END EXTI1_IRQn 1 */
+}
+
+__attribute__((section(".ramcode"))) void GenesisLatch(void)
+{
 	// set BSRR first no matter what
 	GPIOC->BSRR = P1_GPIOC_next[0];
 
@@ -341,122 +356,11 @@ __attribute__((section(".ramcode"))) void EXTI1_IRQHandler(void)
 	{
 		CalcGenesisRisingEdge();
 	}
-
-
-	// P1_LATCH
-	// comment format below: [PIN1 PIN2 PIN3 PIN4 PIN5 PIN6 PIN7 PIN8 PIN9]
-	// which translates to.. [P1D0 P1D1 P1D2 P2D0 5V   P2D1 SEL  GND  P2D2]
-	// whose colors are..    [BRN  ORG  GREY BLK  RED  YEL  BLU  WHI  GRN ]
-	// LOW means pressed, so we put a 1 there
-	// HIGH means un-pressed, so we put a 0 there
-
-/*	GENControllerData* pData = (GENControllerData*)dataptr;
-	if(!pData)
-	{
-		pData = &gen_blank;
-	}
-
-	if(!(tasrun->initialized)) // pre-calculate first frame of data
-	{
-		dataptr = GetNextFrame();
-		pData = (GENControllerData*)dataptr;
-
-		// [U D LOW LOW A Start]
-		P1_GPIOC_next[0] = 	(pData->up << P1_D0_LOW_C) | (pData->down << P1_D1_LOW_C) | (1 << P1_D2_LOW_C) |
-				(1 << P2_D0_LOW_C) | (pData->a << P2_D1_LOW_C) | (pData->start << P2_D2_LOW_C);
-		P1_GPIOC_next[0] |= (((~P1_GPIOC_next[0]) & (ALL_MASK)) >> 16);
-
-		// [U D L R B C]
-		P1_GPIOC_next[1] = 	(pData->up << P1_D0_LOW_C) | (pData->down << P1_D1_LOW_C) | (pData->left << P1_D2_LOW_C) |
-				(pData->right << P2_D0_LOW_C) | (pData->b << P2_D1_LOW_C) | (pData->c << P2_D2_LOW_C);
-		P1_GPIOC_next[1] |= (((~P1_GPIOC_next[1]) & (ALL_MASK)) >> 16);
-
-		// V4 boards have D2 output on a different pin
-		#ifdef BOARDV4
-		P1_GPIOA_next[0] = (1 << P1_D2_OUT_LOW_A);
-		P2_GPIOB_next[0] = pData->start ? (1 << P2_D2_OUT_LOW_B) : (1 << P2_D2_OUT_HIGH_B);
-
-		P1_GPIOA_next[1] = pData->left ? (1 << P1_D2_OUT_LOW_A) : (1 << P1_D2_OUT_HIGH_A);
-		P2_GPIOB_next[1] = pData->c ? (1 << P2_D2_OUT_LOW_B) : (1 << P2_D2_OUT_HIGH_B);
-		#endif
-	}
-	else
-	{
-		if(P1_LATCH_GPIO_Port->IDR & P1_LATCH_Pin) // rising edge
-		{
-			GPIOC->BSRR = P1_GPIOC_next[1];
-
-			#ifdef BOARDV4
-			GPIOA->BSRR = P1_GPIOA_next[1];
-			GPIOB->BSRR = P2_GPIOB_next[1];
-			#endif
-
-			serial_interface_output((uint8_t*)"A", 1); // tell python that we processed a frame
-
-			// prepare next frame
-			dataptr = GetNextFrame();
-			pData = (GENControllerData*)dataptr;
-
-			// [U D LOW LOW A Start]
-			P1_GPIOC_next[0] = 	(pData->up << P1_D0_LOW_C) | (pData->down << P1_D1_LOW_C) | (1 << P1_D2_LOW_C) |
-					(1 << P2_D0_LOW_C) | (pData->a << P2_D1_LOW_C) | (pData->start << P2_D2_LOW_C);
-			P1_GPIOC_next[0] |= (((~P1_GPIOC_next[0]) & (ALL_MASK)) >> 16);
-
-			// [U D L R B C]
-			P1_GPIOC_next[1] = 	(pData->up << P1_D0_LOW_C) | (pData->down << P1_D1_LOW_C) | (pData->left << P1_D2_LOW_C) |
-					(pData->right << P2_D0_LOW_C) | (pData->b << P2_D1_LOW_C) | (pData->c << P2_D2_LOW_C);
-			P1_GPIOC_next[1] |= (((~P1_GPIOC_next[1]) & (ALL_MASK)) >> 16);
-
-			// V4 boards have D2 output on a different pin
-			#ifdef BOARDV4
-			P1_GPIOA_next[0] = (1 << P1_D2_OUT_LOW_A);
-			P2_GPIOB_next[0] = pData->start ? (1 << P2_D2_OUT_LOW_B) : (1 << P2_D2_OUT_HIGH_B);
-
-			P1_GPIOA_next[1] = pData->left ? (1 << P1_D2_OUT_LOW_A) : (1 << P1_D2_OUT_HIGH_A);
-			P2_GPIOB_next[1] = pData->c ? (1 << P2_D2_OUT_LOW_B) : (1 << P2_D2_OUT_HIGH_B);
-			#endif
-
-			TASRunIncrementFrameCount();
-		}
-		else // falling edge
-		{
-			GPIOC->BSRR = P1_GPIOC_next[0];
-
-			#ifdef BOARDV4
-			GPIOA->BSRR = P1_GPIOA_next[0];
-			GPIOB->BSRR = P2_GPIOB_next[0];
-			#endif
-		}
-
-		// enable data outputs if not already so
-		if(firstLatch && (EXTI->PR & P1_LATCH_Pin))
-		{
-			// Now bits are set, enable outputs
-
-			#ifdef BOARDV3
-			GPIOC->MODER = (GPIOC->MODER & MODER_DATA_MASK) | tasrun->moder_firstLatch;
-			#endif //BOARDV3
-
-			#ifdef BOARDV4
-			// D0/D1 buffers should be set as output, so just need to enable them
-			HAL_GPIO_WritePin(ENABLE_D0D1_GPIO_Port, ENABLE_D0D1_Pin, GPIO_PIN_RESET);
-			HAL_GPIO_WritePin(ENABLE_P1D2D3_GPIO_Port, ENABLE_P1D2D3_Pin, GPIO_PIN_RESET);
-			HAL_GPIO_WritePin(ENABLE_P2D2D3_GPIO_Port, ENABLE_P2D2D3_Pin, GPIO_PIN_RESET);
-			#endif //BOARDV4
-			firstLatch = 0;
-		}
-	}
- 	*/
-
-  /* USER CODE END EXTI1_IRQn 0 */
-  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_1);
-  /* USER CODE BEGIN EXTI1_IRQn 1 */
-
-  /* USER CODE END EXTI1_IRQn 1 */
 }
 
-void NesSnesInterrupt(void){
-int8_t regbit = 50, databit = -1; 
+__attribute__((section(".ramcode"))) void NesSnesLatch(void)
+{
+	int8_t regbit = 50, databit = -1;
 
 	if(recentLatch == 0) // no recent latch
 	{
