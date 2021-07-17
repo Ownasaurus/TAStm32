@@ -263,7 +263,14 @@ void CalcGenesisFallingEdge(void)
 	static GENControllerData* pData;
 	// get new frame of data since falling edge is first edge of frame
 	dataptr = GetNextFrame();
-	pData = (GENControllerData*)dataptr;
+	if(!dataptr)
+	{
+		pData = &gen_blank;
+	}
+	else
+	{
+		pData = (GENControllerData*)dataptr;
+	}
 
 	// [U D LOW LOW A Start]
 	P1_GPIOC_next[0] = 	(pData->up << P1_D0_LOW_C) | (pData->down << P1_D1_LOW_C) | (1 << P1_D2_LOW_C) |
@@ -318,13 +325,13 @@ void EXTI1_IRQHandler(void)
 
 __attribute__((section(".ramcode"))) void GenesisLatch(void)
 {
+	#ifdef BOARDV4
+	GPIOB->BSRR = P2_GPIOB_next[0];
+	GPIOA->BSRR = P1_GPIOA_next[0];
+	#endif
+
 	// set BSRR first no matter what
 	GPIOC->BSRR = P1_GPIOC_next[0];
-
-	#ifdef BOARDV4
-	GPIOA->BSRR = P1_GPIOA_next[0];
-	GPIOB->BSRR = P2_GPIOB_next[0];
-	#endif
 
 	// enable data outputs if not already so
 	if(firstLatch && (EXTI->PR & P1_LATCH_Pin))
@@ -356,6 +363,7 @@ __attribute__((section(".ramcode"))) void GenesisLatch(void)
 	{
 		CalcGenesisRisingEdge();
 	}
+
 	HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_1);
 }
 
@@ -400,8 +408,6 @@ __attribute__((section(".ramcode"))) void NesSnesLatch(void)
 		p1_current_bit = p2_current_bit = 1; // set the next bit to be read
 		__enable_irq();
 
-
-
 		// copy the rest of the bits. do not copy the overread since it will never change
 		// P2 comes before P1 in NES, so copy P2 first
 		memcpy(P2_GPIOC_current, P2_GPIOC_next, 64);
@@ -416,7 +422,6 @@ __attribute__((section(".ramcode"))) void NesSnesLatch(void)
 		}
 
 		// now prepare for the next frame!
-
 		if(toggleNext == 1)
 		{
 			dpcmFix = 1 - dpcmFix;
