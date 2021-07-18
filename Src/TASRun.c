@@ -262,9 +262,15 @@ void ResetRun()
 	memset(V2_GPIOC_next, 0, sizeof(V2_GPIOC_next));
 	ClearRunData();
 
-	// Reset callback function is used for pin 1
+	// Reset callback functions that may have been overridden
 	volatile uint32_t* ptr = (void *)(SRAM_BASE + 0x40 + (EXTI1_IRQn * 4));
 	*ptr = (uint32_t) &EXTI1_IRQHandler;
+
+	ptr = (void *)(SRAM_BASE + 0x40 + (EXTI4_IRQn * 4));
+	*ptr = (uint32_t) &EXTI4_IRQHandler;
+
+	ptr = (void *)(SRAM_BASE + 0x40 + (EXTI9_5_IRQn * 4));
+	*ptr = (uint32_t) &EXTI9_5_IRQHandler;
 }
 
 static void UpdateRunConfig()
@@ -413,6 +419,12 @@ void SetN64Mode()
 
 	// Buffers will already be disabled
 	#endif
+
+	volatile uint32_t* ptr = (void *)(SRAM_BASE + 0x40 + (EXTI4_IRQn * 4));
+	*ptr = (uint32_t) &GCN64_P1_Callback;
+
+	ptr = (void *)(SRAM_BASE + 0x40 + (EXTI9_5_IRQn * 4));
+	*ptr = (uint32_t) &GCN64_P2_Callback;
 }
 
 // quick function to init pin
@@ -569,7 +581,6 @@ void SetGENMode()
 	// Ensure the proper callback function is used for pin 1
 	volatile uint32_t* ptr = (void *)(SRAM_BASE + 0x40 + (EXTI1_IRQn * 4));
 	*ptr = (uint32_t) &GenesisLatch;
-
 }
 
 void SetMultitapMode()

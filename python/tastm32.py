@@ -319,6 +319,7 @@ class TAStm32():
             except KeyboardInterrupt:
                 print('^C Exiting')
                 break
+            time.sleep(1.0/1000000.0) # 1us sleep to prevent eating too many CPU cycles
 
 class RunObject:
     def __init__(self, run_id, buffer, fn, blankframe):

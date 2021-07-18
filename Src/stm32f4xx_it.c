@@ -230,7 +230,7 @@ void SysTick_Handler(void)
 /**
   * @brief This function handles EXTI line 0 interrupt.
   */
-void EXTI0_IRQHandler(void)
+__attribute__((section(".ramcode"))) void EXTI0_IRQHandler(void)
 {
   /* USER CODE BEGIN EXTI0_IRQn 0 */
 	// P1_CLOCK
@@ -675,33 +675,22 @@ __attribute__((section(".ramcode"))) void NesSnesLatch(void)
 /**
   * @brief This function handles EXTI line 4 interrupt.
   */
-void EXTI4_IRQHandler(void)
+__attribute__((section(".ramcode"))) void EXTI4_IRQHandler(void)
 {
   /* USER CODE BEGIN EXTI4_IRQn 0 */
-	// P1_DATA_2 == N64_DATA
-	// Read 64 command
 
 	// If this is a SNES run, this means SEL is going LOW so tell clock interrupts
 	// to start using the second words of multitap frame
-	if (tasrun->console == CONSOLE_SNES)
+	if (tasrun->multitap)
 	{
-		if (tasrun->multitap)
-		{
-			multitapSel = 0;
-			p1_current_bit = p2_current_bit = 1;
+		multitapSel = 0;
+		p1_current_bit = p2_current_bit = 1;
 
-			// quickly set first bit of data for the next frame
-			uint32_t p1_data = P1_GPIOC_current_multitap[0];
-			uint32_t p2_data = P2_GPIOC_current_multitap[0];
-			uint32_t all_data = (p1_data | p2_data);
-			GPIOC->BSRR = all_data;
-		}
-	}
-
-	// Otherwise process as N64 command
-	else
-	{
-		GCN64_CommandStart(1);
+		// quickly set first bit of data for the next frame
+		uint32_t p1_data = P1_GPIOC_current_multitap[0];
+		uint32_t p2_data = P2_GPIOC_current_multitap[0];
+		uint32_t all_data = (p1_data | p2_data);
+		GPIOC->BSRR = all_data;
 	}
 
   /* USER CODE END EXTI4_IRQn 0 */
@@ -714,40 +703,30 @@ void EXTI4_IRQHandler(void)
 /**
   * @brief This function handles EXTI line[9:5] interrupts.
   */
-void EXTI9_5_IRQHandler(void)
+__attribute__((section(".ramcode"))) void EXTI9_5_IRQHandler(void)
 {
   /* USER CODE BEGIN EXTI9_5_IRQn 0 */
-	Console c = tasrun->console;
 
-	if(c == CONSOLE_N64 || c == CONSOLE_GC)
+	// P2_CLOCK
+	if(!p2_clock_filtered)
 	{
-		GCN64_CommandStart(2);
-	}
-	else if(c == CONSOLE_SNES || c == CONSOLE_NES)
-	{
-		// P2_CLOCK
-		if(!p2_clock_filtered)
+		if(clockFix)
 		{
-			if(clockFix)
-			{
-				my_wait_us_asm(2); // necessary to prevent switching too fast in DPCM fix mode
-			}
-
-			uint32_t p2_data = multitapSel ? P2_GPIOC_current[p2_current_bit] : P2_GPIOC_current_multitap[p2_current_bit];
-			GPIOC->BSRR = p2_data;
-
-			ResetAndEnableP2ClockTimer();
-			if(p2_current_bit < 16)
-			{
-				p2_current_bit++;
-			}
+			my_wait_us_asm(2); // necessary to prevent switching too fast in DPCM fix mode
 		}
 
+		uint32_t p2_data = multitapSel ? P2_GPIOC_current[p2_current_bit] : P2_GPIOC_current_multitap[p2_current_bit];
+		GPIOC->BSRR = p2_data;
+
+		ResetAndEnableP2ClockTimer();
+		if(p2_current_bit < 16)
+		{
+			p2_current_bit++;
+		}
 	}
 
 	/* USER CODE END EXTI9_5_IRQn 0 */
 	HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_5);
-	HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_9); // P2D2
 	/* USER CODE BEGIN EXTI9_5_IRQn 1 */
 	/* USER CODE END EXTI9_5_IRQn 1 */
 }
@@ -927,7 +906,23 @@ void ResetAndEnableP2ClockTimer()
 	HAL_TIM_Base_Start_IT(&htim7);
 }
 
-void GCN64_CommandStart(uint8_t player)
+__attribute__((section(".ramcode"))) void GCN64_P1_Callback(void)
+{
+	//void EXTI4_IRQHandler(void)
+	GCN64_CommandStart(1);
+
+	HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_4);
+}
+
+__attribute__((section(".ramcode"))) void GCN64_P2_Callback(void)
+{
+	//void EXTI9_5_IRQHandler(void)
+	GCN64_CommandStart(2);
+
+	HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_9);
+}
+
+inline void GCN64_CommandStart(uint8_t player)
 {
 	GCControllerData gc_data;
 

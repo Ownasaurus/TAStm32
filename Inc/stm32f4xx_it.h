@@ -104,6 +104,8 @@ void OTG_HS_IRQHandler(void);
 /* USER CODE BEGIN EFP */
 void GenesisLatch(void);
 void NesSnesLatch(void);
+void GCN64_P1_Callback(void);
+void GCN64_P2_Callback(void);
 void CalcGenesisFallingEdge(void);
 void DisableTrainTimer();
 void Disable8msTimer();
