@@ -938,8 +938,6 @@ void GCN64_CommandStart(uint8_t player)
 
 	cmd = GCN64_ReadCommand(player);
 
-	my_wait_us_asm(2); // wait a small amount of time before replying
-
 	//-------- SEND RESPONSE
 	SetN64OutputMode(player);
 

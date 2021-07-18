@@ -41,7 +41,7 @@ uint32_t GCN64_ReadCommand(uint8_t player)
 	// HOWEVER, shorten the delay slightly to account for function call
 	// overhead, ISR overhead, etc.
 	// Fix by Sauraen
-	my_wait_100ns_asm(15);
+	my_wait_100ns_asm(14);
 
 	uint32_t command = GCN64_ReadBit(player), bits_read = 1;
 
@@ -101,8 +101,9 @@ static uint8_t GetMiddleOfPulse(uint8_t player)
 
     // now we have the falling edge
 
-    // wait 2 microseconds to be in the middle of the pulse, and read. high --> 1.  low --> 0.
-    my_wait_us_asm(2);
+    // wait a little less than 2 microseconds (due to overhead)
+    // to be in the middle of the pulse, and read. high --> 1.  low --> 0.
+    my_wait_100ns_asm(19);
 
     return GCN64_ReadBit(player);
 }
