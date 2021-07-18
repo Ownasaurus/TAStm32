@@ -3,6 +3,10 @@
 /Debug/
 /build/
 /Release/
+/Releasev3/
+/Releasev4/
+/Debugv3/
+/Debugv4/
 /.settings/language.settings.xml
 *.r08
 *.r16m
@@ -27,5 +31,3 @@ python/*.py
 !python/serial_helper.py
 !python/tastm32*.py
 .code_review_properties
-/Releasev3/
-/Releasev4/

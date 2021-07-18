@@ -33,6 +33,7 @@ inline uint8_t serial_interface_output(uint8_t *buffer, uint16_t n)
 
 void serial_interface_consume(uint8_t *buffer, uint32_t n)
 {
+	GPIO_InitTypeDef GPIO_InitStruct = {0};
 	for (uint32_t i = 0; i != n; ++i)
 	{
 		uint8_t input = buffer[i];
@@ -77,6 +78,11 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 					case 'P': // Power controls
 						instance.state = SERIAL_POWER;
 						break;
+					case 'C': // Controller mode
+						instance.state = SERIAL_CONTROLLER_MODE;
+						break;
+					case 'r': // Relay mode
+						instance.state = SERIAL_RELAY_MODE;
 					case 'M': // Enable Melee polling bug mitigation
 						tasrun->meleeMitigation = 1;
 						break;
@@ -190,7 +196,38 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 				}
 				instance.state = SERIAL_COMPLETE;
 				break;
-
+			case SERIAL_CONTROLLER_MODE:
+				switch(input)
+				{
+					case '0': // disable controller mode
+						tasrun->controller_mode = 0;
+						break;
+					case '1': // enable controller mode
+						tasrun->controller_mode = 1;
+						break;
+				}
+				instance.state = SERIAL_COMPLETE;
+				break;
+			case SERIAL_RELAY_MODE:
+				switch(input)
+				{
+					case '0': // disable relay mode
+						GPIO_InitStruct.Pin = SNES_RESET_Pin;
+						GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
+						GPIO_InitStruct.Pull = GPIO_NOPULL;
+						GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+						HAL_GPIO_Init(SNES_RESET_GPIO_Port, &GPIO_InitStruct);
+						break;
+					case '1': // enable relay mode
+						GPIO_InitStruct.Pin = SNES_RESET_Pin;
+						GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+						GPIO_InitStruct.Pull = GPIO_NOPULL;
+						GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+						HAL_GPIO_Init(SNES_RESET_GPIO_Port, &GPIO_InitStruct);
+						break;
+				}
+				instance.state = SERIAL_COMPLETE;
+				break;
 			case SERIAL_CONTROLLER_DATA_START:
 				instance.controller_data_bytes_read = 0;
 				instance.state = SERIAL_CONTROLLER_DATA_CONTINUE;

@@ -101,9 +101,11 @@ typedef struct
 	uint8_t console_data_size;
 	uint8_t input_data_size;
 	uint32_t moder_firstLatch;
+	uint8_t controller_mode;
 	uint8_t meleeMitigation;
 	uint32_t pollNumber;
 	uint8_t waiting; // if we're waiting on a rumble
+
 	uint8_t multitap;
 	int32_t blank;
 	char inputFile[256];
@@ -147,14 +149,14 @@ maybe_unused static void SetN64OutputMode(uint8_t player)
 		// port C4 to output mode
 		const uint32_t MODER_SLOT = (P1_DATA_2_Pin*P1_DATA_2_Pin);
 		const uint32_t MODER_MASK = 0b11 * MODER_SLOT;
-		const uint32_t MODER_NEW_VALUE = GPIO_MODE_OUTPUT_PP * MODER_SLOT;
+		const uint32_t MODER_NEW_VALUE = GPIO_MODE_OUTPUT_OD * MODER_SLOT;
 		P1_DATA_2_GPIO_Port->MODER = (P1_DATA_2_GPIO_Port->MODER & ~MODER_MASK) | MODER_NEW_VALUE;
 	}
 	else if(player == 2)
 	{
 		const uint32_t MODER_SLOT = (P2_DATA_2_Pin*P2_DATA_2_Pin);
 		const uint32_t MODER_MASK = 0b11 * MODER_SLOT;
-		const uint32_t MODER_NEW_VALUE = GPIO_MODE_OUTPUT_PP * MODER_SLOT;
+		const uint32_t MODER_NEW_VALUE = GPIO_MODE_OUTPUT_OD * MODER_SLOT;
 		P2_DATA_2_GPIO_Port->MODER = (P2_DATA_2_GPIO_Port->MODER & ~MODER_MASK) | MODER_NEW_VALUE;
 	}
 	#endif

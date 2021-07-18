@@ -95,6 +95,18 @@ class TAStm32():
         else:
             raise RuntimeError('Error during reset')
 
+    def enable_controller(self):
+        self.write(b'C1')
+        
+    def disable_controller(self):
+        self.write(b'C0')
+
+    def enable_relay(self):
+        self.write(b'r1')
+        
+    def disable_relay(self):
+        self.write(b'r0')
+
     def power_on(self):
         self.write(b'P1')
 
@@ -360,11 +372,6 @@ def main():
     else:
         dev = TAStm32(args.serial)
 
-    if args.hardreset or args.softreset:
-        dev.power_off()
-        if args.hardreset:
-            time.sleep(2.0)
-
     if args.clock != None:
         args.clock = int(args.clock)
         if args.clock < 0 or args.clock > 63:
@@ -379,6 +386,18 @@ def main():
         sys.exit(0)
 
     dev.reset()
+    
+    if args.relayreset:
+        dev.enable_relay()
+        
+    if args.controller:
+        dev.enable_controller()
+    
+    if args.hardreset or args.softreset or args.relayreset:
+        dev.power_off()
+        if args.hardreset or args.relayreset:
+            time.sleep(2.0)
+            
     run_id = dev.setup_run(args.console, args.players, args.dpcm, args.overread, args.clock)
     if run_id == None:
         raise RuntimeError('ERROR')

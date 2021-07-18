@@ -21,6 +21,10 @@ extern RunDataArray *dataptr;
 
 RunDataArray *GetNextFrame()
 {
+	if(tasrun->controller_mode == 1)
+	{
+		return tasrun->runData;
+	}
 	if (tasrun->size == 0) // in case of buffer underflow
 	{
 		return NULL; // buffer underflow
@@ -360,6 +364,12 @@ int ExtractDataAndAddFrame(uint8_t *buffer, uint32_t n)
 		}
 	}
 
+	if (tasrun->controller_mode == 1) // ignore buffer. place at beginning of array
+	{
+		memcpy(tasrun->runData, frame, sizeof(frame));
+		tasrun->size = 1;
+		return 1;
+	}
 	if (tasrun->size == MAX_SIZE)
 	{
 		return 0;
