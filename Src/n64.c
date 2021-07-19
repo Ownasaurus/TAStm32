@@ -242,7 +242,7 @@ inline void SendByte(uint8_t player, unsigned char b)
     }
 }
 
-void N64_SendRunData(uint8_t player, N64ControllerData n64data)
+inline void N64_SendRunData(uint8_t player, N64ControllerData n64data)
 {
 	unsigned long data = 0;
 	memcpy(&data,&n64data,sizeof(data));
@@ -267,7 +267,7 @@ void N64_SendRunData(uint8_t player, N64ControllerData n64data)
     SendStop(player);
 }
 
-void N64_SendControllerData(uint8_t player, unsigned long data)
+inline void N64_SendControllerData(uint8_t player, unsigned long data)
 {
     // send one byte at a time from MSB to LSB
 	unsigned int size = sizeof(data); // should be 4 bytes

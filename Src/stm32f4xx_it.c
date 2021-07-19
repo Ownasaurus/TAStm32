@@ -1003,11 +1003,14 @@ inline void GCN64_CommandStart(uint8_t player)
 			
 
 			// Skip one out of every thousand frames to work around Melee polling bug
-			if (tasrun->meleeMitigation && tasrun->pollNumber % 1000 == 1){
+			if (tasrun->meleeMitigation && tasrun->pollNumber % 1000 == 1)
+			{
 				GetNextFrame();
 			}
 			if (frame == NULL)
+			{
 			    bufferUnderflow = 1;
+			}
 		}
 
 		if(frame == NULL) // buffer underflow or waiting
