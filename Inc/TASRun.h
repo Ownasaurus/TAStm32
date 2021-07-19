@@ -129,8 +129,8 @@ maybe_unused static void SetN64InputMode(uint8_t player)
 		const uint32_t MODER_MASK = 0b11 * MODER_SLOT;
 		const uint32_t MODER_NEW_VALUE = GPIO_MODE_INPUT * MODER_SLOT;
 		P1_DATA_2_GPIO_Port->MODER = (P1_DATA_2_GPIO_Port->MODER & ~MODER_MASK) | MODER_NEW_VALUE;
-		// no pullup
-		P1_DATA_2_GPIO_Port->PUPDR = (P1_DATA_2_GPIO_Port->PUPDR & ~MODER_MASK) | (0b00 * MODER_SLOT);
+		// with a pullup
+		P1_DATA_2_GPIO_Port->PUPDR = (P1_DATA_2_GPIO_Port->PUPDR & ~MODER_MASK) | (0b01 * MODER_SLOT);
 	}
 	else if(player == 2)
 	{
@@ -139,8 +139,8 @@ maybe_unused static void SetN64InputMode(uint8_t player)
 		const uint32_t MODER_MASK = 0b11 * MODER_SLOT;
 		const uint32_t MODER_NEW_VALUE = GPIO_MODE_INPUT * MODER_SLOT;
 		P2_DATA_2_GPIO_Port->MODER = (P2_DATA_2_GPIO_Port->MODER & ~MODER_MASK) | MODER_NEW_VALUE;
-		// no pullup
-		P2_DATA_2_GPIO_Port->PUPDR = (P2_DATA_2_GPIO_Port->PUPDR & ~MODER_MASK) | (0b00 * MODER_SLOT);
+		// with a pullup
+		P2_DATA_2_GPIO_Port->PUPDR = (P2_DATA_2_GPIO_Port->PUPDR & ~MODER_MASK) | (0b01 * MODER_SLOT);
 	}
 	#endif
 	// v4 board is always in input and output mode simultaneously
