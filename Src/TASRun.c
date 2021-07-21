@@ -163,16 +163,16 @@ void ResetGPIO(void){
 
 	/* EXTI interrupt init*/
 	HAL_NVIC_SetPriority(EXTI0_IRQn, 0, 0);
-	HAL_NVIC_EnableIRQ(EXTI0_IRQn);
+	//HAL_NVIC_EnableIRQ(EXTI0_IRQn);
 
 	HAL_NVIC_SetPriority(EXTI1_IRQn, 1, 0);
-	HAL_NVIC_EnableIRQ(EXTI1_IRQn);
+	//HAL_NVIC_EnableIRQ(EXTI1_IRQn);
 
 	HAL_NVIC_SetPriority(EXTI4_IRQn, 0, 0);
-	HAL_NVIC_EnableIRQ(EXTI4_IRQn);
+	//HAL_NVIC_EnableIRQ(EXTI4_IRQn);
 
 	HAL_NVIC_SetPriority(EXTI9_5_IRQn, 0, 0);
-	HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
+	//HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
 }
 
 
