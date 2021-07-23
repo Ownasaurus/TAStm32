@@ -2286,7 +2286,7 @@ These design rules represent that absolute minimums possible for CircuitHub. If 
 <attribute name="POPULARITY" value="0" x="60.25" y="12.25" size="1.778" layer="27" rot="R270" display="off"/>
 <attribute name="VALUE" x="57.456" y="14.028" size="1.27" layer="27" rot="R270"/>
 </element>
-<element name="CN1" library="TAStm32_v4" package="CA0612KRX7R7BB104" value="330pF" x="64.5428" y="2.25" smashed="yes" rot="R180">
+<element name="CN1" library="TAStm32_v4" package="CA0612KRX7R7BB104" value="DNP" x="64.5428" y="2.25" smashed="yes" rot="R180">
 <attribute name="DESCRIPTION" value="Phycomp Capacitor Array 100nF 16V dc +/-10% 4-way X7R Dielectric 0612 (1632M) Package C-Array Series Surface Mount" x="64.5428" y="2.25" size="1.778" layer="27" rot="R180" display="off"/>
 <attribute name="HEIGHT" value="0mm" x="64.5428" y="2.25" size="1.778" layer="27" rot="R180" display="off"/>
 <attribute name="MANUFACTURER_NAME" value="YAGEO (PHYCOMP)" x="64.5428" y="2.25" size="1.778" layer="27" rot="R180" display="off"/>
@@ -2296,7 +2296,7 @@ These design rules represent that absolute minimums possible for CircuitHub. If 
 <attribute name="NAME" x="66.8168" y="2.4572" size="1.4224" layer="25" font="vector" ratio="15" rot="R90" align="center"/>
 <attribute name="VALUE" x="64.5428" y="2.25" size="1.27" layer="27" rot="R180" align="center"/>
 </element>
-<element name="CN2" library="TAStm32_v4" package="CA0612KRX7R7BB104" value="330pF" x="64.5428" y="12" smashed="yes" rot="R180">
+<element name="CN2" library="TAStm32_v4" package="CA0612KRX7R7BB104" value="DNP" x="64.5428" y="12" smashed="yes" rot="R180">
 <attribute name="DESCRIPTION" value="Phycomp Capacitor Array 100nF 16V dc +/-10% 4-way X7R Dielectric 0612 (1632M) Package C-Array Series Surface Mount" x="70.6388" y="12" size="1.778" layer="27" rot="R180" display="off"/>
 <attribute name="HEIGHT" value="0mm" x="70.6388" y="12" size="1.778" layer="27" rot="R180" display="off"/>
 <attribute name="MANUFACTURER_NAME" value="YAGEO (PHYCOMP)" x="70.6388" y="12" size="1.778" layer="27" rot="R180" display="off"/>
@@ -2414,19 +2414,19 @@ These design rules represent that absolute minimums possible for CircuitHub. If 
 <attribute name="SPICEPREFIX" value="C" x="69.5672" y="9.144" size="1.778" layer="27" rot="R90" display="off"/>
 <attribute name="VALUE" x="66.7976" y="19.3168" size="1.016" layer="27" rot="R90"/>
 </element>
-<element name="S2" library="TAStm32_v4" package="3-1825910-1_318259101" package3d_urn="urn:adsk.eagle:package:29257505/2" value="3-1825910-1_SWITCHN" x="66" y="37" smashed="yes">
+<element name="S2" library="TAStm32_v4" package="3-1825910-1_318259101" package3d_urn="urn:adsk.eagle:package:29257505/2" value="3-1825910-1" x="66" y="37" smashed="yes">
 <attribute name="NAME" x="62.0114" y="41.3768" size="1.27" layer="25" align="center"/>
 <attribute name="VALUE" x="66.265" y="37" size="1.27" layer="27" align="center"/>
 </element>
-<element name="S1" library="TAStm32_v4" package="3-1825910-1_318259101" package3d_urn="urn:adsk.eagle:package:29257505/2" value="3-1825910-1_SWITCHN" x="66" y="30" smashed="yes">
+<element name="S1" library="TAStm32_v4" package="3-1825910-1_318259101" package3d_urn="urn:adsk.eagle:package:29257505/2" value="3-1825910-1" x="66" y="30" smashed="yes">
 <attribute name="NAME" x="65.6622" y="25.9948" size="1.27" layer="25" align="center"/>
 <attribute name="VALUE" x="66.265" y="30" size="1.27" layer="27" align="center"/>
 </element>
-<element name="S4" library="TAStm32_v4" package="3-1825910-1_318259101" package3d_urn="urn:adsk.eagle:package:29257505/2" value="3-1825910-1_SWITCHN" x="34" y="37" smashed="yes">
+<element name="S4" library="TAStm32_v4" package="3-1825910-1_318259101" package3d_urn="urn:adsk.eagle:package:29257505/2" value="3-1825910-1" x="34" y="37" smashed="yes">
 <attribute name="NAME" x="34.4174" y="41.572" size="1.27" layer="25" align="center"/>
 <attribute name="VALUE" x="34.265" y="37" size="1.27" layer="27" align="center"/>
 </element>
-<element name="S3" library="TAStm32_v4" package="3-1825910-1_318259101" package3d_urn="urn:adsk.eagle:package:29257505/2" value="3-1825910-1_SWITCHN" x="34" y="30" smashed="yes">
+<element name="S3" library="TAStm32_v4" package="3-1825910-1_318259101" package3d_urn="urn:adsk.eagle:package:29257505/2" value="3-1825910-1" x="34" y="30" smashed="yes">
 <attribute name="NAME" x="33.741" y="25.3852" size="1.27" layer="25" align="center"/>
 <attribute name="VALUE" x="34.265" y="30" size="1.27" layer="27" align="center"/>
 </element>
@@ -3313,7 +3313,6 @@ These design rules represent that absolute minimums possible for CircuitHub. If 
 <wire x1="50.11345625" y1="43.7516" x2="41.4528" y2="35.09094375" width="0.1524" layer="1"/>
 <wire x1="41.4528" y1="35.09094375" x2="41.4528" y2="32.20734375" width="0.1524" layer="1"/>
 <wire x1="38.68345625" y1="29.438" x2="36.4356" y2="29.438" width="0.1524" layer="1"/>
-<wire x1="37.7952" y1="20.4908" x2="37.8516" y2="20.4344" width="0.1524" layer="16"/>
 <via x="37.8516" y="20.4344" extent="1-16" drill="0.35"/>
 <via x="36.862" y="17.5388" extent="1-16" drill="0.35"/>
 <wire x1="36.862" y1="17.5388" x2="36.8808" y2="17.5576" width="0.1524" layer="16"/>
@@ -3692,7 +3691,6 @@ These design rules represent that absolute minimums possible for CircuitHub. If 
 <wire x1="31.9852" y1="14.3384" x2="31.9852" y2="11.6992" width="0.1524" layer="1"/>
 <contactref element="R1" pad="1"/>
 <contactref element="J5" pad="3"/>
-<wire x1="45.8596" y1="27.5304" x2="45.8184" y2="27.5304" width="0.1524" layer="1"/>
 <wire x1="45.8436" y1="24.66" x2="48.73" y2="24.66" width="0.1524" layer="1"/>
 <wire x1="45.1104" y1="21.336" x2="44.5008" y2="20.7264" width="0.1524" layer="1"/>
 <wire x1="44.5008" y1="20.7264" x2="42.0624" y2="20.7264" width="0.1524" layer="1"/>
@@ -4482,6 +4480,10 @@ These design rules represent that absolute minimums possible for CircuitHub. If 
 <approved hash="4,1,eb043d178f7af76b"/>
 <approved hash="4,16,2b8c7d93419e898c"/>
 <approved hash="4,16,eb043d178f7af76b"/>
+<approved hash="21,19,bb9eb99cb99cbb9e"/>
+<approved hash="21,19,3bdd39df39df3bdd"/>
+<approved hash="21,19,3bdd39df39df3bdd"/>
+<approved hash="21,19,bb9eb99cb99cbb9e"/>
 </errors>
 </board>
 </drawing>
