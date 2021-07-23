@@ -22,9 +22,14 @@ jobs:
       - name: Build and Rename Release Binaries
         run: |
           sudo apt-get install gcc-arm-none-eabi binutils-arm-none-eabi
-          make
-          cp build/*.bin build/tastm32.bin
-          cp build/*.hex build/tastm32.hex
+          mkdir firmware
+          make v3
+          cp build/*.bin firmware/tastm32v3.bin
+          cp build/*.hex firmware/tastm32v3.hex
+          make clean
+          make v4
+          cp build/*.bin firmware/tastm32v4.bin
+          cp build/*.hex firmware/tastm32v4.hex
       - name: Create Python Asset
         run: zip -j python.zip python/*
       - name: Create Latest Release
@@ -45,8 +50,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-          asset_path: ./build/tastm32.bin
-          asset_name: tastm32.bin
+          asset_path: ./firmware/tastm32v4.bin
+          asset_name: tastm32v4.bin
           asset_content_type: application/octet-stream
       - name: Upload Hex Release Asset
         id: upload-release-asset-hex
@@ -55,8 +60,28 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-          asset_path: ./build/tastm32.hex
-          asset_name: tastm32.hex
+          asset_path: ./firmware/tastm32v4.hex
+          asset_name: tastm32v4.hex
+          asset_content_type: application/octet-stream
+      - name: Upload Bin Release Asset
+        id: upload-release-asset-bin2
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+          asset_path: ./firmware/tastm32v3.bin
+          asset_name: tastm32v3.bin
+          asset_content_type: application/octet-stream
+      - name: Upload Hex Release Asset
+        id: upload-release-asset-hex2
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+          asset_path: ./firmware/tastm32v3.hex
+          asset_name: tastm32v3.hex
           asset_content_type: application/octet-stream
       - name: Upload Python Release Asset
         id: upload-release-asset-python

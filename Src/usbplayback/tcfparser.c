@@ -67,7 +67,11 @@ int do_parse_event(struct parser_state *s, yaml_event_t *event) {
 			else if (strcmp(s->key, "blank") == 0)
 				s->run->blank = atoi(s->value);
 			else if (strcmp(s->key, "multitap") == 0)
+			{
 				s->run->multitap = atoi(s->value);
+				if (s->run->multitap)
+					SetMultitapMode();
+			}
 			else if (strcmp(s->key, "console") == 0) {
 				if (strcmp(s->value, "snes") == 0) {
 					TASRunSetConsole(CONSOLE_SNES);
@@ -76,7 +80,7 @@ int do_parse_event(struct parser_state *s, yaml_event_t *event) {
 					TASRunSetNumDataLanes(4);
 				} else if (strcmp(s->value, "nes") == 0) {
 					TASRunSetConsole(CONSOLE_NES);
-					SetSNESMode();
+					SetNESMode();
 					TASRunSetNumControllers(2);
 					TASRunSetNumDataLanes(1);
 				} else if (strcmp(s->value, "n64") == 0) {

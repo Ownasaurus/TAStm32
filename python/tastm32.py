@@ -333,12 +333,12 @@ def main():
     global run_id
     global fn
 
-    if(os.name == 'nt'):
+    '''if(os.name == 'nt'):
         psutil.Process().nice(psutil.REALTIME_PRIORITY_CLASS)
     else:
         psutil.Process().nice(20)
 
-    gc.disable()
+    gc.disable()'''
 
     parser = argparse_helper.setup_parser_full()
 

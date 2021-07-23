@@ -1,8 +1,13 @@
 /build/
 /.metadata/
 /Debug/
+/build/
 /Release/
-.settings/language.settings.xml
+/Releasev3/
+/Releasev4/
+/Debugv3/
+/Debugv4/
+/.settings/language.settings.xml
 *.r08
 *.r16m
 *.dtm

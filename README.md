@@ -59,16 +59,22 @@ Do you want to fork the codebase and make your own tweaks? Here is some informat
     apt install gcc-arm-none-eabi binutils-arm-none-eabi libnewlib-arm-none-eabi
 OR the equivalent in your distribution. Then run:
 
-    make
+    make v3
+    
+Or : 
+
+    make v4
+    
+Depending on if you have a v3 or v4 board. (v4 boards were released after July 2021)
 
 #### Windows
 1. Install Atollic TrueStudio
-1. Right-click on the project > Build Configurations > Set Active > Release.
+1. Right-click on the project > Build Configurations > Set Active, then click "Release v3" or "Release v4" depending on your board version. (v4s came out around July 2021)
 1. Project > Build Project and check that the console shows no errors. The last line before "build finished" should be "arm-atollic-eabi-objcopy -O ihex TAStm32.elf TAStm32.hex".
 1. Feel free to use the helper scripts "setenv.bat" and "update.bat" to assist in flashing firmware. These scripts will work if you have compiled using TrueStudio.
 
 ### Special Thanks
-#### rasteri (@rasteri) - Standalone USB playback, SNES multitap, and more!
+#### rasteri (@rasteri) - Standalone USB playback, SNES multitap, v4 PCB, and more!
 #### TheMas3212 (@TheMas3212) - Aided with all things python, designing the serial communication protocol, helping with PCB design, and debugging throughout the whole process.
 #### total (@tewtal) - Helped with NES/SNES protocol and debugging. Provided his code as a reference
 #### booto (@booto) - Helped fix N64/GC protocols, serial-over-USB, and debugging

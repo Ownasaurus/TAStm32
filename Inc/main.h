@@ -76,13 +76,16 @@ void Error_Handler(void);
 /* USER CODE BEGIN EFP */
 void ReInitClockTimers(void);
 void JumpToBootLoader(void);
+
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define SWITCH4_Pin GPIO_PIN_13
-#define SWITCH4_GPIO_Port GPIOC
-#define SWITCH3_Pin GPIO_PIN_14
-#define SWITCH3_GPIO_Port GPIOC
+#define PC13_Pin GPIO_PIN_13
+#define PC13_GPIO_Port GPIOC
+#define PC14_Pin GPIO_PIN_14
+#define PC14_GPIO_Port GPIOC
+#define PC15_Pin GPIO_PIN_15
+#define PC15_GPIO_Port GPIOC
 #define P1_CLOCK_Pin GPIO_PIN_0
 #define P1_CLOCK_GPIO_Port GPIOC
 #define P1_CLOCK_EXTI_IRQn EXTI0_IRQn
@@ -93,18 +96,38 @@ void JumpToBootLoader(void);
 #define P1_DATA_1_GPIO_Port GPIOC
 #define P1_DATA_0_Pin GPIO_PIN_3
 #define P1_DATA_0_GPIO_Port GPIOC
-#define LD2_Pin GPIO_PIN_5
-#define LD2_GPIO_Port GPIOA
-#define SWITCH1_Pin GPIO_PIN_6
-#define SWITCH1_GPIO_Port GPIOA
-#define SWITCH2_Pin GPIO_PIN_7
-#define SWITCH2_GPIO_Port GPIOA
+#define P1_DATA_3_Pin GPIO_PIN_0
+#define P1_DATA_3_GPIO_Port GPIOA
+#define P1_DATA_2_OUT_Pin GPIO_PIN_1
+#define P1_DATA_2_OUT_GPIO_Port GPIOA
+#define DIR_D0D1_Pin GPIO_PIN_2
+#define DIR_D0D1_GPIO_Port GPIOA
+#define PA3_Pin GPIO_PIN_3
+#define PA3_GPIO_Port GPIOA
+#define DIR_P1D2D3_Pin GPIO_PIN_4
+#define DIR_P1D2D3_GPIO_Port GPIOA
+#define ENABLE_D0D1_Pin GPIO_PIN_5
+#define ENABLE_D0D1_GPIO_Port GPIOA
+#define ENABLE_P1D2D3_Pin GPIO_PIN_6
+#define ENABLE_P1D2D3_GPIO_Port GPIOA
+#define ENABLE_P2D2D3_Pin GPIO_PIN_7
+#define ENABLE_P2D2D3_GPIO_Port GPIOA
 #define P1_DATA_2_Pin GPIO_PIN_4
 #define P1_DATA_2_GPIO_Port GPIOC
 #define P1_DATA_2_EXTI_IRQn EXTI4_IRQn
 #define P2_CLOCK_Pin GPIO_PIN_5
 #define P2_CLOCK_GPIO_Port GPIOC
 #define P2_CLOCK_EXTI_IRQn EXTI9_5_IRQn
+#define DIR_P2D2D3_Pin GPIO_PIN_0
+#define DIR_P2D2D3_GPIO_Port GPIOB
+#define P2_DATA_3_Pin GPIO_PIN_1
+#define P2_DATA_3_GPIO_Port GPIOB
+#define P2_DATA_2_OUT_Pin GPIO_PIN_10
+#define P2_DATA_2_OUT_GPIO_Port GPIOB
+#define PB12_Pin GPIO_PIN_12
+#define PB12_GPIO_Port GPIOB
+#define PB13_Pin GPIO_PIN_13
+#define PB13_GPIO_Port GPIOB
 #define P2_LATCH_Pin GPIO_PIN_6
 #define P2_LATCH_GPIO_Port GPIOC
 #define P2_DATA_1_Pin GPIO_PIN_7
@@ -113,8 +136,12 @@ void JumpToBootLoader(void);
 #define P2_DATA_0_GPIO_Port GPIOC
 #define P2_DATA_2_Pin GPIO_PIN_9
 #define P2_DATA_2_GPIO_Port GPIOC
+#define PA8_Pin GPIO_PIN_8
+#define PA8_GPIO_Port GPIOA
 #define SNES_RESET_Pin GPIO_PIN_9
 #define SNES_RESET_GPIO_Port GPIOA
+#define PA10_Pin GPIO_PIN_10
+#define PA10_GPIO_Port GPIOA
 #define TMS_Pin GPIO_PIN_13
 #define TMS_GPIO_Port GPIOA
 #define TCK_Pin GPIO_PIN_14
@@ -127,8 +154,10 @@ void JumpToBootLoader(void);
 #define V2_DATA_1_GPIO_Port GPIOC
 #define V2_DATA_0_Pin GPIO_PIN_12
 #define V2_DATA_0_GPIO_Port GPIOC
-#define SWO_Pin GPIO_PIN_3
-#define SWO_GPIO_Port GPIOB
+#define V2_DATA_3_Pin GPIO_PIN_2
+#define V2_DATA_3_GPIO_Port GPIOD
+#define V1_DATA_2_Pin GPIO_PIN_3
+#define V1_DATA_2_GPIO_Port GPIOB
 #define V1_CLOCK_Pin GPIO_PIN_4
 #define V1_CLOCK_GPIO_Port GPIOB
 #define V1_LATCH_Pin GPIO_PIN_5

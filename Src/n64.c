@@ -3,6 +3,7 @@
 #include "n64.h"
 #include "stm32f4xx_hal.h"
 #include "main.h"
+#include "TASRun.h"
 
 void my_wait_us_asm(int n);
 void my_wait_100ns_asm(int n);
@@ -40,7 +41,7 @@ uint32_t GCN64_ReadCommand(uint8_t player)
 	// HOWEVER, shorten the delay slightly to account for function call
 	// overhead, ISR overhead, etc.
 	// Fix by Sauraen
-	my_wait_100ns_asm(15);
+	my_wait_100ns_asm(14);
 
 	uint32_t command = GCN64_ReadBit(player), bits_read = 1;
 
@@ -72,6 +73,7 @@ uint32_t GCN64_ReadCommand(uint8_t player)
     }
 }
 
+
 static uint8_t GetMiddleOfPulse(uint8_t player)
 {
 	uint8_t ct = 0;
@@ -99,14 +101,17 @@ static uint8_t GetMiddleOfPulse(uint8_t player)
 
     // now we have the falling edge
 
-    // wait 2 microseconds to be in the middle of the pulse, and read. high --> 1.  low --> 0.
-    my_wait_us_asm(2);
+    // wait a little less than 2 microseconds (due to overhead)
+    // to be in the middle of the pulse, and read. high --> 1.  low --> 0.
+    my_wait_100ns_asm(19);
 
     return GCN64_ReadBit(player);
 }
 
 inline void SendStop(uint8_t player)
 {
+
+	#ifdef BOARDV3
 	if(player == 1)
 	{
 		P1_DATA_2_GPIO_Port->BSRR = P1_DATA_2_Pin<<16;
@@ -119,6 +124,23 @@ inline void SendStop(uint8_t player)
 		my_wait_us_asm(1);
 		P2_DATA_2_GPIO_Port->BSRR = P2_DATA_2_Pin;
 	}
+	#endif
+
+	#ifdef BOARDV4
+	if(player == 1)
+	{
+		ENABLE_P1D2D3_GPIO_Port->BSRR = ENABLE_P1D2D3_Pin<<16;
+		my_wait_us_asm(1);
+		ENABLE_P1D2D3_GPIO_Port->BSRR = ENABLE_P1D2D3_Pin;
+	}
+	else if(player == 2)
+	{
+		ENABLE_P2D2D3_GPIO_Port->BSRR = ENABLE_P2D2D3_Pin<<16;
+		my_wait_us_asm(1);
+		ENABLE_P2D2D3_GPIO_Port->BSRR = ENABLE_P2D2D3_Pin;
+	}
+	#endif
+
 }
 
 inline void N64_SendIdentity(uint8_t player)
@@ -132,6 +154,7 @@ inline void N64_SendIdentity(uint8_t player)
 
 inline void write_1(uint8_t player)
 {
+	#ifdef BOARDV3
 	if(player == 1)
 	{
 		P1_DATA_2_GPIO_Port->BSRR = P1_DATA_2_Pin<<16;
@@ -146,10 +169,28 @@ inline void write_1(uint8_t player)
 		P2_DATA_2_GPIO_Port->BSRR = P2_DATA_2_Pin;
 		my_wait_us_asm(3);
 	}
+	#endif
+	#ifdef BOARDV4
+	if(player == 1)
+	{
+		ENABLE_P1D2D3_GPIO_Port->BSRR = ENABLE_P1D2D3_Pin<<16;
+		my_wait_us_asm(1);
+		ENABLE_P1D2D3_GPIO_Port->BSRR = ENABLE_P1D2D3_Pin;
+		my_wait_us_asm(3);
+	}
+	else if(player == 2)
+	{
+		ENABLE_P2D2D3_GPIO_Port->BSRR = ENABLE_P2D2D3_Pin<<16;
+		my_wait_us_asm(1);
+		ENABLE_P2D2D3_GPIO_Port->BSRR = ENABLE_P2D2D3_Pin;
+		my_wait_us_asm(3);
+	}
+	#endif
 }
 
 inline void write_0(uint8_t player)
 {
+	#ifdef BOARDV3
 	if(player == 1)
 	{
 		P1_DATA_2_GPIO_Port->BSRR = P1_DATA_2_Pin<<16;
@@ -164,6 +205,25 @@ inline void write_0(uint8_t player)
 		P2_DATA_2_GPIO_Port->BSRR = P2_DATA_2_Pin;
 		my_wait_us_asm(1);
 	}
+	#endif
+
+	#ifdef BOARDV4
+	if(player == 1)
+	{
+		ENABLE_P1D2D3_GPIO_Port->BSRR = ENABLE_P1D2D3_Pin<<16;
+		my_wait_us_asm(3);
+		ENABLE_P1D2D3_GPIO_Port->BSRR = ENABLE_P1D2D3_Pin;
+		my_wait_us_asm(1);
+	}
+	else if(player == 2)
+	{
+		ENABLE_P2D2D3_GPIO_Port->BSRR = ENABLE_P2D2D3_Pin<<16;
+		my_wait_us_asm(3);
+		ENABLE_P2D2D3_GPIO_Port->BSRR = ENABLE_P2D2D3_Pin;
+		my_wait_us_asm(1);
+	}
+	#endif
+
 }
 
 // send a byte from LSB to MSB (proper serialization)
@@ -182,7 +242,7 @@ inline void SendByte(uint8_t player, unsigned char b)
     }
 }
 
-void N64_SendRunData(uint8_t player, N64ControllerData n64data)
+inline void N64_SendRunData(uint8_t player, N64ControllerData n64data)
 {
 	unsigned long data = 0;
 	memcpy(&data,&n64data,sizeof(data));
@@ -207,7 +267,7 @@ void N64_SendRunData(uint8_t player, N64ControllerData n64data)
     SendStop(player);
 }
 
-void N64_SendControllerData(uint8_t player, unsigned long data)
+inline void N64_SendControllerData(uint8_t player, unsigned long data)
 {
     // send one byte at a time from MSB to LSB
 	unsigned int size = sizeof(data); // should be 4 bytes

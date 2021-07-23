@@ -263,11 +263,12 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 							clockFix = 1;
 						}
 
-						EXTI1_IRQHandler();
+						NesSnesLatch();
 					}
 					else if (c == CONSOLE_GEN)
 					{
-						dataptr = GetNextFrame();
+						// first poll will be on a falling edge, so precalc buffers
+						CalcGenesisFallingEdge();
 					}
 
 					tasrun->initialized = 1;
@@ -321,7 +322,7 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 						break;
 					case 'N': // setup NES
 						TASRunSetConsole(CONSOLE_NES);
-						SetSNESMode();
+						SetNESMode();
 						instance.state = SERIAL_NUM_CONTROLLERS;
 						break;
 					default: // Error: console type not understood

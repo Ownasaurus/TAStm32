@@ -97,12 +97,16 @@ void EXTI9_5_IRQHandler(void);
 void TIM1_UP_TIM10_IRQHandler(void);
 void TIM2_IRQHandler(void);
 void TIM3_IRQHandler(void);
-void USART2_IRQHandler(void);
 void TIM6_DAC_IRQHandler(void);
 void TIM7_IRQHandler(void);
 void OTG_FS_IRQHandler(void);
 void OTG_HS_IRQHandler(void);
 /* USER CODE BEGIN EFP */
+void GenesisLatch(void);
+void NesSnesLatch(void);
+void GCN64_P1_Callback(void);
+void GCN64_P2_Callback(void);
+void CalcGenesisFallingEdge(void);
 void DisableTrainTimer();
 void Disable8msTimer();
 void DisableP1ClockTimer();
