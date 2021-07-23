@@ -42,7 +42,11 @@ Another option is to use python to run main.py, allowing you to utilize a GUI cr
     apt install dfu-util
 OR the equivalent in your distribution. Then run:
 
-    make && make flash
+    make v3 && make flash
+
+Or :
+
+    make v4 && make flash
 
 #### Windows
 1. Install STM32CubeProgrammer
@@ -71,7 +75,7 @@ Depending on if you have a v3 or v4 board. (v4 boards were released after July 2
 1. Install Atollic TrueStudio
 1. Right-click on the project > Build Configurations > Set Active, then click "Release v3" or "Release v4" depending on your board version. (v4s came out around July 2021)
 1. Project > Build Project and check that the console shows no errors. The last line before "build finished" should be "arm-atollic-eabi-objcopy -O ihex TAStm32.elf TAStm32.hex".
-1. Feel free to use the helper scripts "setenv.bat" and "update.bat" to assist in flashing firmware. These scripts will work if you have compiled using TrueStudio.
+1. Feel free to use the helper scripts "setenv.bat" and either "flashv3.bat" or "flashv4.bat" to assist in flashing firmware. These scripts will work if you have compiled using TrueStudio and if you have STM32CubeProgrammer installed.
 
 ### Special Thanks
 #### rasteri (@rasteri) - Standalone USB playback, SNES multitap, v4 PCB, and more!
