@@ -292,6 +292,10 @@ class TAStm32():
                         if run.fn % 100 == 0:
                             print('Sending Latch: {}'.format(run.fn))
                     except IndexError:
+                        command = []
+                        command.append(run.run_id + run.blankframe)
+                        data = b''.join(command)
+                        self.write(data)
                         pass
                     run.fn += 1
                     frame += 1
