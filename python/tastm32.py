@@ -13,6 +13,7 @@ import argparse_helper
 import r08, r16m, m64, dtm, rgen
 
 DEBUG = False
+CPU_TEMP_FIX = False
 
 int_buffer = 1024 # internal buffer size on replay device
 
@@ -317,6 +318,12 @@ class TAStm32():
                     self.write(run.run_id.lower())
                 if frame > frame_max:
                     break
+                if CPU_TEMP_FIX:
+                    # while loop is too tight, which causes massive CPU usage.
+                    # Temporary fix for it until a better fix can be found.
+                    # Fix adds --cpu-temp-fix flag and causes 10ms pause in
+                    # order to heavily lower CPU usage.
+                    time.sleep(0.01)
             except serial.SerialException:
                 print('ERROR: Serial Exception caught!')
                 break
@@ -333,6 +340,7 @@ class RunObject:
 
 def main():
     global DEBUG
+    global CPU_TEMP_FIX
     global buffer
     global run_id
     global fn
@@ -347,6 +355,8 @@ def main():
     parser = argparse_helper.setup_parser_full()
 
     args = parser.parse_args()
+
+    CPU_TEMP_FIX = args.cpu_temp_fix
 
     if args.transition != None:
         for transition in args.transition:
