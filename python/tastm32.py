@@ -36,7 +36,7 @@ class TAStm32():
         att = 0
         while att < 5:
             try:
-                self.ser = serial.Serial(ser, 115200, timeout=0)
+                self.ser = serial.Serial(ser, 115200, timeout=0.1)
                 break
             except serial.SerialException:
                 att += 1
@@ -336,13 +336,6 @@ def main():
     global buffer
     global run_id
     global fn
-
-    '''if(os.name == 'nt'):
-        psutil.Process().nice(psutil.REALTIME_PRIORITY_CLASS)
-    else:
-        psutil.Process().nice(20)
-
-    gc.disable()'''
 
     parser = argparse_helper.setup_parser_full()
 

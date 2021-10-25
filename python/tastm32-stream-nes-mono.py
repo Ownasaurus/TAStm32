@@ -64,7 +64,7 @@ ser.ser.reset_input_buffer() # clear anything that might be sitting on the seria
 ser.write(bytes([65,1,1,1,1,1,1,1,1]))
 
 while True:
-    c = ser.read(100) # read up to 100 bytes, though we shouldn't ever get that close
+    c = ser.read(1) # keep this loop as tight as possible
     
     if c.count(b'\xB0'): # this should not ever occur based on the protocol
         print("overflow!")
