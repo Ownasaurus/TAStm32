@@ -125,7 +125,7 @@ void USB_Playback_Task() {
 					clockFix = 1;
 				}
 
-				EXTI1_IRQHandler();
+				NesSnesLatch();
 			}
 
 			tasrun->initialized = 1;
