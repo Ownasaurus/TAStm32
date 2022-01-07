@@ -51,7 +51,9 @@ Or :
 #### Windows
 1. Install STM32CubeProgrammer
 1. Run the tastm32-dfu.py script to put the device in DFU mode
-1. Use the STM32CubeProgrammer software to flash the latest firmware. The latest firmware can always be found here: https://github.com/Ownasaurus/TAStm32/releases/download/latest/tastm32.hex 
+1. Use the STM32CubeProgrammer software to flash the latest firmware. The latest firmware can always be found here: https://github.com/Ownasaurus/TAStm32/releases/download/latest/tastm32v3.hex
+or
+https://github.com/Ownasaurus/TAStm32/releases/download/latest/tastm32v4.hex
 
 ## Development (advanced users)
 
