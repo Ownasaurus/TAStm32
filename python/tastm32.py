@@ -5,7 +5,6 @@ import serial
 import struct
 import time
 import gc
-import psutil
 
 import serial_helper
 import argparse_helper
