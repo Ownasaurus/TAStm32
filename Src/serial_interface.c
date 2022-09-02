@@ -107,6 +107,7 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 				{
 					tasrun->paused = 1;
 				}
+				instance.state = SERIAL_COMPLETE;
 				break;
 			case SERIAL_TRAIN_RUN:
 				if(input != 'A')
