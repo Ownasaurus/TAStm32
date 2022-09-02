@@ -993,7 +993,7 @@ inline void GCN64_CommandStart(uint8_t player)
 		}
 
 		// Send blank frame if we're waiting on a rumble
-	  	if (tasrun->waiting)
+	  	if (tasrun->waiting || tasrun->paused)
 		{
 			frame = NULL;
 		}

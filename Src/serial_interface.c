@@ -83,8 +83,12 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 						break;
 					case 'r': // Relay mode
 						instance.state = SERIAL_RELAY_MODE;
+						break;
 					case 'M': // Enable Melee polling bug mitigation
 						tasrun->meleeMitigation = 1;
+						break;
+					case 'p': // pause
+						instance.state = SERIAL_PAUSE;
 						break;
 					case '\xDF':
 						jumpToDFU = 1;
@@ -92,6 +96,16 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 					default: // Error: prefix not understood
 						serial_interface_output((uint8_t*)"\xFF", 1);
 						break;
+				}
+				break;
+			case SERIAL_PAUSE:
+				if(input == '0')
+				{
+					tasrun->paused = 0;
+				}
+				else
+				{
+					tasrun->paused = 1;
 				}
 				break;
 			case SERIAL_TRAIN_RUN:
