@@ -1044,7 +1044,7 @@ inline void GCN64_CommandStart(uint8_t player)
 
 	__enable_irq();
 
-	if(player == 1)
+	if(player == 1 && !(tasrun->paused))
 	{
 		switch(cmd)
 		{
