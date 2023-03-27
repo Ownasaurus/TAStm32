@@ -90,6 +90,9 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 					case 'p': // pause
 						instance.state = SERIAL_PAUSE;
 						break;
+					case 'K': // sKip a poll
+						GetNextFrame();
+						break;
 					case '\xDF':
 						jumpToDFU = 1;
 						break;
