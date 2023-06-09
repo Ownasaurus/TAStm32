@@ -45,9 +45,11 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 				{
 					case 'I': // return device info
 						serial_write_InfoBlob();
+						instance.state = SERIAL_COMPLETE;
 						break;
 					case '\xAA': // ping
 						serial_interface_output((uint8_t*)"\x55", 1); // pong
+						instance.state = SERIAL_COMPLETE;
 						break;
 					case 'U': // set up latch train for a run
 						instance.state = SERIAL_TRAIN_RUN;
@@ -65,6 +67,7 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 						break;
 					case 'a': // 28 frame data burst is complete
 						request_pending = 0;
+						instance.state = SERIAL_COMPLETE;
 						break;
 					case 'Q':
 						instance.state = SERIAL_CMD_Q_1;
@@ -86,12 +89,14 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 						break;
 					case 'M': // Enable Melee polling bug mitigation
 						tasrun->meleeMitigation = 1;
+						instance.state = SERIAL_COMPLETE;
 						break;
 					case 'p': // pause
 						instance.state = SERIAL_PAUSE;
 						break;
 					case 'K': // sKip a poll
 						GetNextFrame();
+						instance.state = SERIAL_COMPLETE;
 						break;
 					case '\xDF':
 						jumpToDFU = 1;
