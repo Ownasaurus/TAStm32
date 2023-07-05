@@ -31,3 +31,4 @@ python/*.py
 !python/serial_helper.py
 !python/tastm32*.py
 .code_review_properties
+/.vscode
