@@ -46,6 +46,7 @@ class TAStm32():
             sys.exit(0)
         else:
             self.activeRuns = {b'A': False, b'B': False, b'C': False, b'D': False}
+            self.latchTrains = {b'A': None, b'B': None, b'C': None, b'D': None}
 
     def get_run_prefix(self):
         if self.activeRuns[b'A']:
@@ -95,14 +96,14 @@ class TAStm32():
             raise RuntimeError('Error during reset')
 
     def enable_controller(self):
-        self.write(b'C1')
-        
+        self.write(b'V1')
+
     def disable_controller(self):
-        self.write(b'C0')
+        self.write(b'V0')
 
     def enable_relay(self):
         self.write(b'r1')
-        
+
     def disable_relay(self):
         self.write(b'r0')
 
@@ -170,6 +171,7 @@ class TAStm32():
         if self.activeRuns[prefix]:
             command = b''.join([b'U', prefix, struct.pack('H', len(latchtrain)), *[struct.pack('H', i) for i in latchtrain]])
             self.write(command)
+            self.latchTrains[prefix] = latchtrain
 
     def setup_run(self, console, players=[1], dpcm=False, overread=False, clock_filter=0):
         prefix = self.get_run_prefix()
@@ -252,10 +254,12 @@ class TAStm32():
         global DEBUG
         frame = 0
         frame_max = len(run.buffer)
+        latchTrain = self.latchTrains[run.run_id]
+        ltCarriage = 0
         while True:
             try:
                 c = self.read(1)
-                if c == '':
+                if c == b'':
                     continue
                 numBytes = self.ser.inWaiting()
                 if numBytes > 0:
@@ -270,18 +274,31 @@ class TAStm32():
                     print('Buffer Overflow x{}'.format(missed))
 
                 # Latch Trains
+                # Console Latched more than expected
                 trainskips = c.count(b'UA')
                 if trainskips != 0:
-                    print(f'--- Extra frame detected. Skipping a frame to compensate. x{trainskips}')
+                    ltCarriage += trainskips
+                    print(f'--- Extra frame detected. Repeating frame to compensate. x{trainskips} Last Carriage: {ltCarriage}')
+                # Console Latched less than expected
                 trainextra = c.count(b'UB')
                 if trainextra != 0:
-                    print(f'--- Short a frame. Adding a frame to compensate. x{trainextra}')
+                    ltCarriage += trainextra
+                    print(f'--- Short a frame. Skipping a frame to compensate. x{trainextra} Last Carriage: {ltCarriage}')
+                # Consoled matched expectations
                 trainfin = c.count(b'UC')
                 if trainfin != 0:
-                    print(f'+++ Latch train success! x{trainfin}')
-                trainfailed = c.count(b'UF')
-                if trainfailed != 0:
-                    print(f'!!! Off by many frames. Run is probably broken. Good luck! x{trainfailed}')
+                    ltCarriage += trainfin
+                    print(f'+++ Latch train success! x{trainfin} Last Carriage: {ltCarriage}')
+
+                trainfailedfatal = c.count(b'UF')
+                if trainfailedfatal != 0:
+                    print(f'!!! Off by many frames. Run is probably broken. Good luck! Last Carriage: {ltCarriage}')
+                    latchError = struct.unpack_from('cch', c, c.index(b'UF'))[2]
+                    actualLength = latchTrain[ltCarriage] - latchError
+                    if latchError == 32767:
+                        print(f'Expected Carriage Size: {latchTrain[ltCarriage]} Actual: {actualLength} Max Difference Exeeded')
+                    else:
+                        print(f'Expected Carriage Size: {latchTrain[ltCarriage]} Actual: {actualLength} Difference: {latchError}')
                     sys.exit(1)
 
                 for latch in range(latches):

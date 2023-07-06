@@ -469,7 +469,14 @@ __attribute__((section(".ramcode"))) void NesSnesLatch(void)
 				else if(diff != 0) // large deviation
 				{
 					// AHHHH!!!!!! Give some sort of unrecoverable error?
-					serial_interface_output((uint8_t*)"UF", 2);
+					// Clamp to range +-30000 otherwise 32767
+					static uint8_t message[4];
+					int16_t sdiff = (abs(diff) > 30000 ? 32767 : (int16_t) diff);
+					message[0] = 'U';
+					message[1] = 'F';
+					message[2] = sdiff & 0xff;
+					message[3] = sdiff >> 8;
+ 					serial_interface_output(message, 4);
 				}
 				else // normalcy
 				{

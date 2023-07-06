@@ -78,7 +78,7 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 					case 'P': // Power controls
 						instance.state = SERIAL_POWER;
 						break;
-					case 'C': // Controller mode
+					case 'V': // Controller mode
 						instance.state = SERIAL_CONTROLLER_MODE;
 						break;
 					case 'r': // Relay mode

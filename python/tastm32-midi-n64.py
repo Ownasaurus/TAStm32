@@ -112,7 +112,7 @@ cmd = ser.read(2)
 print(bytes(cmd))
 
 # enable controller mode
-ser.write(b'C1')
+ser.write(b'V1')
 time.sleep(0.1)
 
 # disable bulk transfer mode
