@@ -35,4 +35,5 @@ def audio_parser():
     parser = argparse.ArgumentParser(description='...')
     parser.add_argument('--serial', help='Preselect the serial port')
     parser.add_argument('--debug', help='Enable Debug Mode', action='store_true')
+    parser.add_argument('--relayreset', help='Perform a hard/slow reset before the run begins, driving the pin using push-pull mode', action='store_true')
     return parser
