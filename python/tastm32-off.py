@@ -17,5 +17,8 @@ ser = dev
 
 print("--- Sending command power the console off")
 
+if args.relayreset:
+    dev.enable_relay()
+
 dev.power_off()
 time.sleep(0.1)
