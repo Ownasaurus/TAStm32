@@ -468,6 +468,8 @@ __attribute__((section(".ramcode"))) void NesSnesLatch(void)
 				}
 				else if(diff != 0) // large deviation
 				{
+					dataptr = GetNextFrame(); // advance anyway, but...
+
 					// AHHHH!!!!!! Give some sort of unrecoverable error?
 					// Clamp to range +-30000 otherwise 32767
 					static uint8_t message[4];
