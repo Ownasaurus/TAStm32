@@ -1002,7 +1002,7 @@ inline void GCN64_CommandStart(uint8_t player)
 		}
 
 		// Send blank frame if we're waiting on a rumble
-	  	if (tasrun->waiting)
+	  	if (tasrun->waiting || tasrun->paused)
 		{
 			frame = NULL;
 		}
@@ -1053,7 +1053,7 @@ inline void GCN64_CommandStart(uint8_t player)
 
 	__enable_irq();
 
-	if(player == 1)
+	if(player == 1 && !(tasrun->paused))
 	{
 		switch(cmd)
 		{

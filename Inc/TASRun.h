@@ -105,6 +105,7 @@ typedef struct
 	uint8_t meleeMitigation;
 	uint32_t pollNumber;
 	uint8_t waiting; // if we're waiting on a rumble
+	uint8_t paused;
 
 	uint8_t multitap;
 	int32_t blank;
