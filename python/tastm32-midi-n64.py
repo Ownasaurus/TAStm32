@@ -30,18 +30,11 @@ else:
     dev = tastm32.TAStm32(args.serial)
 ser = dev
 
-MOVEMENT_VELOCITY_FILTER = 18
-
 tmap = {
   70: 0x00000018, # analog up
   72: 0x000000E8, # analog down
   73: 0x0000E800, # analog left
   71: 0x00001800, # analog right
-  
-  45: 0x00001818, # analog up right
-  38: 0x0000E8E8, # analog down left
-  48: 0x0000E818, # analog up left
-  43: 0x000018E8 # analog down right
 }
 
 bmap = {
@@ -49,11 +42,6 @@ bmap = {
   72: 0x000000B0, # analog down
   73: 0x0000B000, # analog left
   71: 0x00005000, # analog right
-  
-  45: 0x00005050, # analog up right
-  38: 0x0000B0B0, # analog down left
-  48: 0x0000B050, # analog up left
-  43: 0x000050B0, # analog down right
   
   0: 0x01000000, # d-pad up
   1: 0x02000000, # d-pad down
@@ -180,7 +168,7 @@ with mido.open_input(device_list[int(choice)]) as midi_device:
                                 aleft = 0
                                 aright = 0
                             elif message.note == 70: # analog up
-                                if toggle == 1:
+                                if toggle == 1 or message.velocity == 127:
                                     data_to_tastm32 &= 0xFFFF0000 # clear all other directions
                                     if aup == 0:
                                         data_to_tastm32 |= bmap[message.note]
@@ -189,12 +177,13 @@ with mido.open_input(device_list[int(choice)]) as midi_device:
                                     aleft = 0
                                     aright = 0
                                 else:
-                                    if message.velocity < MOVEMENT_VELOCITY_FILTER:
-                                        data_to_tastm32 |= tmap[message.note]
+                                    aup = 0
+                                    if message.velocity >= 80:
+                                        data_to_tastm32 |= 0x00000050 # max velocity
                                     else:
-                                        data_to_tastm32 |= bmap[message.note]
+                                        data_to_tastm32 |= message.velocity
                             elif message.note == 72: # analog down
-                                if toggle == 1:
+                                if toggle == 1 or message.velocity == 127:
                                     data_to_tastm32 &= 0xFFFF0000 # clear all other directions
                                     if adown == 0:
                                         data_to_tastm32 |= bmap[message.note]
@@ -203,12 +192,13 @@ with mido.open_input(device_list[int(choice)]) as midi_device:
                                     aleft = 0
                                     aright = 0
                                 else:
-                                    if message.velocity < MOVEMENT_VELOCITY_FILTER:
-                                        data_to_tastm32 |= tmap[message.note]
+                                    adown = 0
+                                    if message.velocity >= 80:
+                                        data_to_tastm32 |= 0x000000B0 # max velocity
                                     else:
-                                        data_to_tastm32 |= bmap[message.note]
+                                        data_to_tastm32 |= ((~(message.velocity)+1) & 0xFF)
                             elif message.note == 73: # analog left
-                                if toggle == 1:
+                                if toggle == 1 or message.velocity == 127:
                                     data_to_tastm32 &= 0xFFFF0000 # clear all other directions
                                     if aleft == 0:
                                         data_to_tastm32 |= bmap[message.note]
@@ -217,12 +207,13 @@ with mido.open_input(device_list[int(choice)]) as midi_device:
                                     aup = 0
                                     aright = 0
                                 else:
-                                    if message.velocity < MOVEMENT_VELOCITY_FILTER:
-                                        data_to_tastm32 |= tmap[message.note]
+                                    aleft = 0
+                                    if message.velocity >= 80:
+                                        data_to_tastm32 |= 0x0000B000 # max velocity
                                     else:
-                                        data_to_tastm32 |= bmap[message.note]
+                                        data_to_tastm32 |= (((~(message.velocity)+1) & 0xFF) << 8)
                             elif message.note == 71: # analog right
-                                if toggle == 1:
+                                if toggle == 1 or message.velocity == 127:
                                     data_to_tastm32 &= 0xFFFF0000 # clear all other directions
                                     if aright == 0:
                                         data_to_tastm32 |= bmap[message.note]
@@ -231,10 +222,11 @@ with mido.open_input(device_list[int(choice)]) as midi_device:
                                     aleft = 0
                                     aup = 0
                                 else:
-                                    if message.velocity < MOVEMENT_VELOCITY_FILTER:
-                                        data_to_tastm32 |= tmap[message.note]
+                                    aright = 0
+                                    if message.velocity >= 80:
+                                        data_to_tastm32 |= 0x00005000 # max velocity
                                     else:
-                                        data_to_tastm32 |= bmap[message.note]
+                                        data_to_tastm32 |= (message.velocity << 8)
                             elif message.note == 74: # A
                                 data_to_tastm32 |= bmap[message.note]
                                 if toggle == 0 and message.velocity > 50:
@@ -264,6 +256,8 @@ with mido.open_input(device_list[int(choice)]) as midi_device:
                         if message.note == 49: # ignore toggle switch release
                             pass
                         elif toggle == 1 and (message.note == 70 or message.note == 71 or message.note == 72 or message.note == 73): # ignore analog UDLR release in toggle mode
+                            pass
+                        elif (aup == 1 and message.note == 70) or (aright == 1 and message.note == 71) or (adown == 1 and message.note == 72) or (aleft == 1 and message.note == 73):
                             pass
                         elif message.note == 74 and A_time != -1: # A is pressed and its timer is set
                             pass
