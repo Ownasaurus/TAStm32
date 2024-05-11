@@ -246,6 +246,76 @@ void Menu_Display() {
 
 			break;
 
+		case CONSOLE_GC:
+
+			ssd1306_DrawRectangle(0, 15, 30, 45, White);
+			ssd1306_DrawCircle(15, 30, 11, White);
+			ssd1306_DrawPixel(15 + (ct[0][0]->gc_data.a_x_axis - 128) / 13 * 1.5, 30 - (ct[0][0]->gc_data.a_y_axis - 128) / 13 * 1.5, White);
+			ssd1306_DrawRectangle(25 * 1.5, 15, 45 * 1.5, 45, White);
+			ssd1306_DrawCircle(35 * 1.5, 30, 11, White);
+			ssd1306_DrawPixel(35 * 1.5 + (ct[0][0]->gc_data.c_x_axis - 128) / 13 * 1.5, 30 - (ct[0][0]->gc_data.c_y_axis - 128) / 13 * 1.5, White);
+			ssd1306_Line(0, 5 * 1.5, ct[0][0]->gc_data.l_trigger / 12.8 * 1.5, 5 * 1.5, White);
+			ssd1306_Line(0, 5 * 1.5 + 1, 30 - 1, 5 * 1.5 + 1, ct[0][0]->gc_data.l ? White : Black);
+			ssd1306_Line(45 * 1.5 - ct[0][0]->gc_data.r_trigger / 12.8 * 1.5, 5 * 1.5, 45 * 1.5, 5 * 1.5, White);
+			ssd1306_Line(25 * 1.5 + 1, 5 * 1.5 + 1, 45 * 1.5, 5 * 1.5 + 1, ct[0][0]->gc_data.r ? White : Black);
+			ssd1306_SetCursor(84, 0);
+			ssd1306_WriteChar('U', Font_7x10, ct[0][0]->gc_data.d_up ? Black : White);
+			ssd1306_SetCursor(75, 12);
+			ssd1306_WriteChar('L', Font_7x10, ct[0][0]->gc_data.d_left ? Black : White);
+			ssd1306_SetCursor(93, 12);
+			ssd1306_WriteChar('R', Font_7x10, ct[0][0]->gc_data.d_right ? Black : White);
+			ssd1306_SetCursor(84, 24);
+			ssd1306_WriteChar('D', Font_7x10, ct[0][0]->gc_data.d_down ? Black : White);
+			ssd1306_SetCursor(73 * 1.5, 15 * 1.5);
+			ssd1306_WriteChar('A', Font_7x10, ct[0][0]->gc_data.a ? Black : White);
+			ssd1306_SetCursor(67 * 1.5, 23 * 1.5);
+			ssd1306_WriteChar('B', Font_7x10, ct[0][0]->gc_data.b ? Black : White);
+			ssd1306_SetCursor(79 * 1.5, 15 * 1.5);
+			ssd1306_WriteChar('X', Font_7x10, ct[0][0]->gc_data.x ? Black : White);
+			ssd1306_SetCursor(73 * 1.5, 8 * 1.5);
+			ssd1306_WriteChar('Y', Font_7x10, ct[0][0]->gc_data.y ? Black : White);
+			ssd1306_SetCursor(79 * 1.5, 8 * 1.5);
+			ssd1306_WriteChar('Z', Font_7x10, ct[0][0]->gc_data.z ? Black : White);
+			ssd1306_SetCursor(56 * 1.5, 27 * 1.5);
+			ssd1306_WriteChar('S', Font_7x10, ct[0][0]->gc_data.start ? Black : White);
+
+			break;
+
+		case CONSOLE_N64:
+
+			ssd1306_DrawRectangle(54, 22, 74, 42, White);
+			ssd1306_DrawCircle(64, 32, 8, White);
+			ssd1306_DrawPixel(64 + (ct[0][0]->n64_data.x_axis - 128) / 13, 32 - (ct[0][0]->n64_data.y_axis - 128) / 13, White);
+			ssd1306_SetCursor(61, 46);
+			ssd1306_WriteChar('z', Font_6x8, ct[0][0]->n64_data.z ? Black : White);
+			ssd1306_SetCursor(61, 10);
+			ssd1306_WriteChar('s', Font_6x8, ct[0][0]->n64_data.start ? Black : White);
+			ssd1306_SetCursor(28, 28);
+			ssd1306_WriteChar('L', Font_6x8, ct[0][0]->n64_data.left ? Black : White);
+			ssd1306_SetCursor(40, 28);
+			ssd1306_WriteChar('R', Font_6x8, ct[0][0]->n64_data.right ? Black : White);
+			ssd1306_SetCursor(34, 20);
+			ssd1306_WriteChar('U', Font_6x8, ct[0][0]->n64_data.up ? Black : White);
+			ssd1306_SetCursor(34, 36);
+			ssd1306_WriteChar('D', Font_6x8, ct[0][0]->n64_data.down ? Black : White);
+			ssd1306_SetCursor(50, 10);
+			ssd1306_WriteChar('L', Font_6x8, ct[0][0]->n64_data.l ? Black : White);
+			ssd1306_SetCursor(72, 10);
+			ssd1306_WriteChar('R', Font_6x8, ct[0][0]->n64_data.r ? Black : White);
+			ssd1306_SetCursor(88, 36);
+			ssd1306_WriteChar('A', Font_6x8, ct[0][0]->n64_data.a ? Black : White);
+			ssd1306_SetCursor(82, 28);
+			ssd1306_WriteChar('B', Font_6x8, ct[0][0]->n64_data.b ? Black : White);
+			ssd1306_SetCursor(97, 28);
+			ssd1306_WriteChar('l', Font_6x8, ct[0][0]->n64_data.c_left ? Black : White);
+			ssd1306_SetCursor(109, 28);
+			ssd1306_WriteChar('r', Font_6x8, ct[0][0]->n64_data.c_right ? Black : White);
+			ssd1306_SetCursor(103, 20);
+			ssd1306_WriteChar('u', Font_6x8, ct[0][0]->n64_data.c_up ? Black : White);
+			ssd1306_SetCursor(103, 36);
+			ssd1306_WriteChar('d', Font_6x8, ct[0][0]->n64_data.c_down ? Black : White);
+
+			break;
 
 		default:
 			break;
