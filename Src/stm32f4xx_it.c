@@ -283,8 +283,11 @@ void CalcGenesisFallingEdge(void)
 	P2_GPIOB_next[0] = pData->start ? (1 << P2_D2_OUT_LOW_B) : (1 << P2_D2_OUT_HIGH_B);
 	#endif
 
-	serial_interface_output((uint8_t*)"A", 1);
-	TASRunIncrementFrameCount();
+	if(tasrun->console == CONSOLE_GEN)
+	{
+		serial_interface_output((uint8_t*)"A", 1);
+		TASRunIncrementFrameCount();
+	}
 }
 
 void CalcGenesisRisingEdge(void)
@@ -302,6 +305,12 @@ void CalcGenesisRisingEdge(void)
 	P1_GPIOA_next[0] = pData->left ? (1 << P1_D2_OUT_LOW_A) : (1 << P1_D2_OUT_HIGH_A);
 	P2_GPIOB_next[0] = pData->c ? (1 << P2_D2_OUT_LOW_B) : (1 << P2_D2_OUT_HIGH_B);
 	#endif
+
+	if(tasrun->console == CONSOLE_GAMETANK)
+	{
+		serial_interface_output((uint8_t*)"A", 1);
+		TASRunIncrementFrameCount();
+	}
 }
 
 /**

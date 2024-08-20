@@ -23,7 +23,8 @@ VALID_PLAYERS = {
     "snes": (1,2,3,4,5,6,7,8,),
     "nes": (1,5,),
     "gc": (1,),
-    "genesis": (1,5,)
+    "genesis": (1,5,),
+    "gametank": (1,5,)
 }
 
 int_to_byte_struct = struct.Struct('B')
@@ -240,6 +241,16 @@ class TAStm32():
                     pbyte = pbyte ^ 2**(8-p)
                 else:
                     raise RuntimeError('Invalid player for Genesis')
+        elif console == 'gametank':
+            cbyte = b'T'
+            pbyte = 0
+            sbyte = 0
+            for player in players:
+                p = int(player)
+                if p in vp:
+                    pbyte = pbyte ^ 2**(8-p)
+                else:
+                    raise RuntimeError('Invalid player for GameTank')
         command = b'S' + prefix + cbyte + int_to_byte(pbyte) + int_to_byte(sbyte)
         self.write(command)
         time.sleep(0.1)
@@ -428,6 +439,9 @@ def main():
         buffer = dtm.read_input(data)
         blankframe = b'\x00\x00\x00\x00\x00\x00\x00\x00' * len(args.players)
     elif args.console == 'genesis':
+        buffer = rgen.read_input(data, args.players)
+        blankframe = b'\x00\x00' * len(args.players)
+    elif args.console == 'gametank':
         buffer = rgen.read_input(data, args.players)
         blankframe = b'\x00\x00' * len(args.players)
 

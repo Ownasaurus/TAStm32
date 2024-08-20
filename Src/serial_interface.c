@@ -293,6 +293,11 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 						// first poll will be on a falling edge, so precalc buffers
 						CalcGenesisFallingEdge();
 					}
+					else if(c == CONSOLE_GAMETANK)
+					{
+						// first poll will be on a rising edge, so precalc buffers
+						CalcGenesisRisingEdge();
+					}
 
 					tasrun->initialized = 1;
 
@@ -312,7 +317,7 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 						HAL_NVIC_EnableIRQ(EXTI4_IRQn);
 						HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
 					}
-					else if(c == CONSOLE_GEN)
+					else if(c == CONSOLE_GEN || c == CONSOLE_GAMETANK)
 					{
 						HAL_NVIC_EnableIRQ(EXTI1_IRQn);
 					}
@@ -325,6 +330,11 @@ void serial_interface_consume(uint8_t *buffer, uint32_t n)
 				{
 					case 'J': // setup Genesis
 						TASRunSetConsole(CONSOLE_GEN);
+						SetGENMode();
+						instance.state = SERIAL_NUM_CONTROLLERS;
+						break;
+					case 'T': // setup GameTank
+						TASRunSetConsole(CONSOLE_GAMETANK);
 						SetGENMode();
 						instance.state = SERIAL_NUM_CONTROLLERS;
 						break;
