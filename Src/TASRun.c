@@ -560,7 +560,14 @@ void SetGENMode()
 	
 	// Latch pin only interrupts on falling to avoid triggering when console powers on
 	// will be set to rising-falling after first interrupt
-	SetupPin(P1_LATCH_GPIO_Port, P1_LATCH_Pin, GPIO_MODE_IT_FALLING, GPIO_PULLUP, GPIO_PIN_RESET);
+	if(tasrun->console == CONSOLE_GEN)
+	{
+		SetupPin(P1_LATCH_GPIO_Port, P1_LATCH_Pin, GPIO_MODE_IT_FALLING, GPIO_PULLUP, GPIO_PIN_RESET);
+	}
+	else
+	{
+		SetupPin(P1_LATCH_GPIO_Port, P1_LATCH_Pin, GPIO_MODE_IT_RISING, GPIO_PULLUP, GPIO_PIN_RESET);
+	}
 	#endif
 
 	#ifdef BOARDV4
@@ -584,7 +591,14 @@ void SetGENMode()
 	
 	// Latch pin only interrupts on falling to avoid triggering when console powers on
 	// will be set to rising-falling after first interrupt
-	SetupPin(P1_LATCH_GPIO_Port, P1_LATCH_Pin, GPIO_MODE_IT_FALLING, GPIO_NOPULL, GPIO_PIN_RESET);
+	if(tasrun->console == CONSOLE_GEN)
+	{
+		SetupPin(P1_LATCH_GPIO_Port, P1_LATCH_Pin, GPIO_MODE_IT_FALLING, GPIO_PULLUP, GPIO_PIN_RESET);
+	}
+	else
+	{
+		SetupPin(P1_LATCH_GPIO_Port, P1_LATCH_Pin, GPIO_MODE_IT_RISING, GPIO_PULLUP, GPIO_PIN_RESET);
+	}
 
 	#endif
 
