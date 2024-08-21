@@ -262,12 +262,19 @@ void CalcGenesisFallingEdge(void)
 {
 	static GENControllerData* pData;
 	// get new frame of data since falling edge is first edge of frame
-	dataptr = GetNextFrame();
-	if(!dataptr)
+	if(tasrun->console == CONSOLE_GEN)
 	{
-		pData = &gen_blank;
+		dataptr = GetNextFrame();
+		if(!dataptr)
+		{
+			pData = &gen_blank;
+		}
+		else
+		{
+			pData = (GENControllerData*)dataptr;
+		}
 	}
-	else
+	else // for gametank this is the second edge of the frame
 	{
 		pData = (GENControllerData*)dataptr;
 	}
@@ -293,7 +300,23 @@ void CalcGenesisFallingEdge(void)
 void CalcGenesisRisingEdge(void)
 {
 	static GENControllerData* pData;
-	pData = (GENControllerData*)dataptr;
+	// update data pointer
+	if(tasrun->console == CONSOLE_GEN)
+	{
+		pData = (GENControllerData*)dataptr;
+	}
+	else // for gametank this is the FIRST edge of the frame. so get the next frame's data
+	{
+		dataptr = GetNextFrame();
+		if(!dataptr)
+		{
+			pData = &gen_blank;
+		}
+		else
+		{
+			pData = (GENControllerData*)dataptr;
+		}
+	}
 
 	// [U D L R B C]
 	P1_GPIOC_next[0] = 	(pData->up << P1_D0_LOW_C) | (pData->down << P1_D1_LOW_C) | (pData->left << P1_D2_LOW_C) |
