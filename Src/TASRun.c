@@ -347,6 +347,7 @@ void TASRunSetConsole(Console console)
 		tasrun->console_data_size = sizeof(GCControllerData);
 		break;
 	case CONSOLE_GEN:
+	case CONSOLE_GAMETANK:
 		tasrun->console_data_size = sizeof(GENControllerData);
 		break;
 	}

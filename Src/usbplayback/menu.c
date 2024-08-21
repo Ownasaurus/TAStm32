@@ -226,6 +226,7 @@ void Menu_Display() {
 			break;
 
 		case CONSOLE_GEN:
+		case CONSOLE_GAMETANK:
 
 			ssd1306_SetCursor(0, 25);
 			ssd1306_WriteString("L", Font_16x26, ct[0][0]->gen_data.left ? Black : White);
