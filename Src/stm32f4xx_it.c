@@ -276,7 +276,14 @@ void CalcGenesisFallingEdge(void)
 	}
 	else // for gametank this is the second edge of the frame
 	{
-		pData = (GENControllerData*)dataptr;
+		if(dataptr)
+		{
+			pData = (GENControllerData*)dataptr;
+		}
+		else
+		{
+			pData = &gen_blank;
+		}
 	}
 
 	// [U D LOW LOW A Start]
@@ -314,7 +321,14 @@ void CalcGenesisRisingEdge(void)
 		}
 		else
 		{
-			pData = (GENControllerData*)dataptr;
+			if(dataptr)
+			{
+				pData = (GENControllerData*)dataptr;
+			}
+			else
+			{
+				pData = &gen_blank;
+			}
 		}
 	}
 

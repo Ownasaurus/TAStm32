@@ -291,7 +291,7 @@ static void UpdateRunConfig()
 	
 
 	// special case for genesis, which uses 6 data lines for 1 controller
-	if(tasrun->console == CONSOLE_GEN)
+	if(tasrun->console == CONSOLE_GEN || tasrun->console == CONSOLE_GAMETANK)
 	{
 		tasrun->moder_firstLatch 	|= P1_DATA_0_Pin * P1_DATA_0_Pin
 									| P1_DATA_1_Pin * P1_DATA_1_Pin
