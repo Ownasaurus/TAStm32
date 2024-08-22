@@ -7,6 +7,8 @@
 // How long in ms a button has to be pressed before it's considered held
 #define HOLDTIME 500
 
+#include <stdint.h>
+
 extern uint8_t menuNeedsUpdating;
 
 
