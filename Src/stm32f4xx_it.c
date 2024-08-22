@@ -260,30 +260,20 @@ __attribute__((section(".ramcode"))) void EXTI0_IRQHandler(void)
 
 void CalcGenesisFallingEdge(void)
 {
-	static GENControllerData* pData;
-	// get new frame of data since falling edge is first edge of frame
-	if(tasrun->console == CONSOLE_GEN)
+	GENControllerData* pData;
+	// get new frame of data since falling edge is first edge of frame for genesis
+	if(tasrun->console == CONSOLE_GAMETANK)
 	{
 		dataptr = GetNextFrame();
-		if(!dataptr)
-		{
-			pData = &gen_blank;
-		}
-		else
-		{
-			pData = (GENControllerData*)dataptr;
-		}
 	}
-	else // for gametank this is the second edge of the frame
+
+	if(!dataptr)
 	{
-		if(dataptr)
-		{
-			pData = (GENControllerData*)dataptr;
-		}
-		else
-		{
-			pData = &gen_blank;
-		}
+		pData = &gen_blank;
+	}
+	else
+	{
+		pData = (GENControllerData*)dataptr;
 	}
 
 	// [U D LOW LOW A Start]
@@ -306,30 +296,20 @@ void CalcGenesisFallingEdge(void)
 
 void CalcGenesisRisingEdge(void)
 {
-	static GENControllerData* pData;
-	// update data pointer
+	GENControllerData* pData;
+	// get new frame of data since falling edge is first edge of frame for gametank
 	if(tasrun->console == CONSOLE_GEN)
 	{
-		pData = (GENControllerData*)dataptr;
-	}
-	else // for gametank this is the FIRST edge of the frame. so get the next frame's data
-	{
 		dataptr = GetNextFrame();
-		if(!dataptr)
-		{
-			pData = &gen_blank;
-		}
-		else
-		{
-			if(dataptr)
-			{
-				pData = (GENControllerData*)dataptr;
-			}
-			else
-			{
-				pData = &gen_blank;
-			}
-		}
+	}
+
+	if(!dataptr)
+	{
+		pData = &gen_blank;
+	}
+	else
+	{
+		pData = (GENControllerData*)dataptr;
 	}
 
 	// [U D L R B C]
