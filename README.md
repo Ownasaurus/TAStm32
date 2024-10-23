@@ -38,6 +38,8 @@ Another option is to use python to run main.py, allowing you to utilize a GUI cr
 
 ## Upgrading firmware 
 
+If it's the first time you're flashing it, short the "DFU" Pins (J13) while plugging tastm32 in.
+
 #### Linux
     apt install dfu-util
 OR the equivalent in your distribution. Then run:
@@ -50,7 +52,7 @@ Or :
 
 #### Windows
 1. Install STM32CubeProgrammer
-1. Run the tastm32-dfu.py script to put the device in DFU mode
+1. Run the tastm32-dfu.py script to put the device in DFU mode (or if it's the first time you're flashing it, short the "DFU" Pins (J13) while plugging tastm32's USB cable into your computer).
 1. Use the STM32CubeProgrammer software to flash the latest firmware. The latest firmware can always be found here: https://github.com/Ownasaurus/TAStm32/releases/download/latest/tastm32v3.hex
 or
 https://github.com/Ownasaurus/TAStm32/releases/download/latest/tastm32v4.hex
