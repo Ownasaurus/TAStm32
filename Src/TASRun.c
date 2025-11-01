@@ -144,7 +144,7 @@ void ResetGPIO(void){
 
 	// all GPIO pins by default should be input, with a pullup to stop them floating
 	// 87FF/34FB/FFCF chosen to avoid messing with peripheral pins
-	SetupPin(GPIOA, 0x87FF, GPIO_MODE_INPUT, GPIO_PULLUP, GPIO_PIN_RESET);
+	SetupPin(GPIOA, 0x85FF, GPIO_MODE_INPUT, GPIO_PULLUP, GPIO_PIN_RESET);
 	SetupPin(GPIOB, 0x34FB, GPIO_MODE_INPUT, GPIO_PULLUP, GPIO_PIN_RESET);
 	SetupPin(GPIOC, 0xFFCF, GPIO_MODE_INPUT, GPIO_PULLUP, GPIO_PIN_RESET);
 
