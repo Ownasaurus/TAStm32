@@ -243,7 +243,7 @@ $(BUILD_DIR):
 flash:
 	-./python/tastm32-dfu.py
 	sleep 3
-	dfu-util -a 0 -s 0x08000000:leave -D $(BUILD_DIR)/$(TARGET).bin
+	dfu-util -S 'STM32FxSTM32' -a 0 -s 0x08000000:leave -D $(BUILD_DIR)/$(TARGET).bin
 
 #######################################
 # clean up
